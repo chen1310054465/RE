@@ -339,10 +339,10 @@ class json_file_data_loader(file_data_loader):
                 cur_pos = 0
                 pos1 = -1
                 pos2 = -1
-                for j, word_vec in enumerate(words):
+                for j, word in enumerate(words):
                     if j < max_length:
-                        if word_vec in self.word2id:
-                            cur_ref_data_word[j] = self.word2id[word_vec]
+                        if word in self.word2id:
+                            cur_ref_data_word[j] = self.word2id[word]
                         else:
                             cur_ref_data_word[j] = UNK
                     if cur_pos == p1:
@@ -351,8 +351,8 @@ class json_file_data_loader(file_data_loader):
                     if cur_pos == p2:
                         pos2 = j
                         p2 = -1
-                    cur_pos += len(word_vec) + 1
-                for j in range(j + 1, max_length):
+                    cur_pos += len(word) + 1
+                for j in range(len(words), max_length):
                     cur_ref_data_word[j] = BLANK
                 self.data_length[i] = len(words)
                 if len(words) > max_length:
