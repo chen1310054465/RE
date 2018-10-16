@@ -239,7 +239,7 @@ class json_file_data_loader(file_data_loader):
             self.origin_data = json.load(open(self.file_name, "r"))
             print("Finish loading")
             print("Loading word vector file...")
-            self.ori_word_vec = json.load(open(self.word_vec_file_name, "r"))
+            self.origin_word_vec = json.load(open(self.word_vec_file_name, "r"))
             print("Finish loading")
 
             # Eliminate case sensitive
@@ -258,14 +258,14 @@ class json_file_data_loader(file_data_loader):
 
             # Pre-process word vec
             self.word2id = {}
-            self.word_vec_tot = len(self.ori_word_vec)
+            self.word_vec_tot = len(self.origin_word_vec)
             UNK = self.word_vec_tot
             BLANK = self.word_vec_tot + 1
-            self.word_vec_dim = len(self.ori_word_vec[0]['vec'])
+            self.word_vec_dim = len(self.origin_word_vec[0]['vec'])
             print("Got {} words of {} dims".format(self.word_vec_tot, self.word_vec_dim))
             print("Building word vector matrix and mapping...")
             self.word_vec = np.zeros((self.word_vec_tot, self.word_vec_dim), dtype=np.float32)
-            for cur_id, word_vec in enumerate(self.ori_word_vec):
+            for cur_id, word_vec in enumerate(self.origin_word_vec):
                 w = word_vec['word']
                 if not case_sensitive:
                     w = w.lower()
