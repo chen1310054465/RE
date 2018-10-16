@@ -15,7 +15,7 @@ class model_base:
         self.pos1 = tf.placeholder(dtype=tf.int32, shape=[None, max_length], name='pos1')
         self.pos2 = tf.placeholder(dtype=tf.int32, shape=[None, max_length], name='pos2')
         self.label = tf.placeholder(dtype=tf.int32, shape=[batch_size], name='label')
-        self.ins_label = tf.placeholder(dtype=tf.int32, shape=[None], name='ins_label')
+        self.instance_label = tf.placeholder(dtype=tf.int32, shape=[None], name='instance_label')
         self.length = tf.placeholder(dtype=tf.int32, shape=[None], name='length')
         self.scope = tf.placeholder(dtype=tf.int32, shape=[batch_size, 2], name='scope')
         self.word_vec = word_vec
@@ -58,13 +58,13 @@ class model(model_base):
 
         # Selector
         if model.selector == "att":
-            self._logit, self._repre = selector.bag_attention(x, self.scope, self.ins_label,
+            self._logit, self._repre = selector.bag_attention(x, self.scope, self.instance_label,
                                                               self.rel_tot, is_training, keep_prob=self.keep_prob)
         elif model.selector == "ave":
             self._logit, self._repre = selector.bag_average(x, self.scope, self.rel_tot, is_training,
                                                             keep_prob=self.keep_prob)
         elif model.selector == "max":
-            self._logit, self._repre = selector.bag_maximum(x, self.scope, self.ins_label,
+            self._logit, self._repre = selector.bag_maximum(x, self.scope, self.instance_label,
                                                             self.rel_tot, is_training, keep_prob=self.keep_prob)
         else:
             raise NotImplementedError

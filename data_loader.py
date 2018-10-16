@@ -99,7 +99,7 @@ class npy_data_loader(file_data_loader):
             _pos1 = []
             _pos2 = []
             _label = []
-            _ins_label = []
+            _instance_label = []
             _multi_label = []
             _length = []
             _scope = []
@@ -110,7 +110,7 @@ class npy_data_loader(file_data_loader):
                 _pos1.append(self.data_pos1[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])
                 _pos2.append(self.data_pos2[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])
                 _label.append(self.data_label[self.scope[self.order[i]][0]])
-                _ins_label.append(self.data_label[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])
+                _instance_label.append(self.data_label[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])
                 _length.append(self.data_length[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])
                 _mask.append(self.data_mask[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])
                 bag_size = self.scope[self.order[i]][1] - self.scope[self.order[i]][0]
@@ -125,7 +125,7 @@ class npy_data_loader(file_data_loader):
             batch_data['pos1'] = np.concatenate(_pos1)
             batch_data['pos2'] = np.concatenate(_pos2)
             batch_data['label'] = np.stack(_label)
-            batch_data['ins_label'] = np.concatenate(_ins_label)
+            batch_data['instance_label'] = np.concatenate(_instance_label)
             if self.mode == self.MODE_ENTPAIR_BAG:
                 batch_data['multi_label'] = np.stack(_multi_label)
             batch_data['length'] = np.concatenate(_length)
@@ -236,7 +236,7 @@ class json_file_data_loader(file_data_loader):
 
             # Load files
             print("Loading data file...")
-            self.ori_data = json.load(open(self.file_name, "r"))
+            self.origin_data = json.load(open(self.file_name, "r"))
             print("Finish loading")
             print("Loading word vector file...")
             self.ori_word_vec = json.load(open(self.word_vec_file_name, "r"))
@@ -245,15 +245,15 @@ class json_file_data_loader(file_data_loader):
             # Eliminate case sensitive
             if not case_sensitive:
                 print("Eliminating case sensitive problem...")
-                for i in range(len(self.ori_data)):
-                    self.ori_data[i]['sentence'] = self.ori_data[i]['sentence'].lower()
-                    self.ori_data[i]['head']['word'] = self.ori_data[i]['head']['word'].lower()
-                    self.ori_data[i]['tail']['word'] = self.ori_data[i]['tail']['word'].lower()
+                for i in range(len(self.origin_data)):
+                    self.origin_data[i]['sentence'] = self.origin_data[i]['sentence'].lower()
+                    self.origin_data[i]['head']['word'] = self.origin_data[i]['head']['word'].lower()
+                    self.origin_data[i]['tail']['word'] = self.origin_data[i]['tail']['word'].lower()
                 print("Finish eliminating")
 
             # Sort data by entities and relations
             print("Sort data...")
-            self.ori_data.sort(key=lambda a: a['head']['id'] + '#' + a['tail']['id'] + '#' + a['relation'])
+            self.origin_data.sort(key=lambda a: a['head']['id'] + '#' + a['tail']['id'] + '#' + a['relation'])
             print("Finish sorting")
 
             # Pre-process word vec
@@ -277,30 +277,30 @@ class json_file_data_loader(file_data_loader):
 
             # Pre-process data
             print("Pre-processing data...")
-            self.instance_tot = len(self.ori_data)
+            self.instance_tot = len(self.origin_data)
             self.entpair2scope = {}  # (head, tail) -> scope
             self.relfact2scope = {}  # (head, tail, relation) -> scope
             self.data_word = np.zeros((self.instance_tot, self.max_length), dtype=np.int32)
             self.data_pos1 = np.zeros((self.instance_tot, self.max_length), dtype=np.int32)
             self.data_pos2 = np.zeros((self.instance_tot, self.max_length), dtype=np.int32)
-            self.data_label = np.zeros(self.instance_tot, dtype=np.int32)
             self.data_mask = np.zeros((self.instance_tot, self.max_length), dtype=np.int32)
             self.data_length = np.zeros(self.instance_tot, dtype=np.int32)
+            self.data_label = np.zeros(self.instance_tot, dtype=np.int32)
             last_entpair = ''
             last_entpair_pos = -1
             last_relfact = ''
             last_relfact_pos = -1
             for i in range(self.instance_tot):
-                ins = self.ori_data[i]
-                if ins['relation'] in self.rel2id:
-                    self.data_label[i] = self.rel2id[ins['relation']]
+                instance = self.origin_data[i]
+                if instance['relation'] in self.rel2id:
+                    self.data_label[i] = self.rel2id[instance['relation']]
                 else:
                     self.data_label[i] = self.rel2id['NA']
-                sentence = ' '.join(ins['sentence'].split())  # delete extra spaces
-                head = ins['head']['word']
-                tail = ins['tail']['word']
-                cur_entpair = ins['head']['id'] + '#' + ins['tail']['id']
-                cur_relfact = ins['head']['id'] + '#' + ins['tail']['id'] + '#' + ins['relation']
+                sentence = ' '.join(instance['sentence'].split())  # delete extra spaces
+                head = instance['head']['word']
+                tail = instance['tail']['word']
+                cur_entpair = instance['head']['id'] + '#' + instance['tail']['id']
+                cur_relfact = instance['head']['id'] + '#' + instance['tail']['id'] + '#' + instance['relation']
                 if cur_entpair != last_entpair:
                     if last_entpair != '':
                         self.entpair2scope[last_entpair] = [last_entpair_pos, i]  # left closed right open
@@ -491,7 +491,7 @@ class json_file_data_loader(file_data_loader):
             _pos2 = []
             _mask = []
             _label = []
-            _ins_label = []
+            _instance_label = []
             _multi_label = []
             _entpair = []
             _length = []
@@ -503,7 +503,7 @@ class json_file_data_loader(file_data_loader):
                 _pos2.append(self.data_pos2[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])
                 _mask.append(self.data_mask[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])
                 _label.append(self.data_label[self.scope[self.order[i]][0]])
-                _ins_label.append(self.data_label[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])
+                _instance_label.append(self.data_label[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])
                 _length.append(self.data_length[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])
                 bag_size = self.scope[self.order[i]][1] - self.scope[self.order[i]][0]
                 _scope.append([cur_pos, cur_pos + bag_size])
@@ -520,7 +520,7 @@ class json_file_data_loader(file_data_loader):
                 _pos2.append(np.zeros((1, self.data_pos2.shape[-1]), dtype=np.int32))
                 _mask.append(np.zeros((1, self.data_mask.shape[-1]), dtype=np.int32))
                 _label.append(0)
-                _ins_label.append(np.zeros(1, dtype=np.int32))
+                _instance_label.append(np.zeros(1, dtype=np.int32))
                 _length.append(np.zeros(1, dtype=np.int32))
                 _scope.append([cur_pos, cur_pos + 1])
                 cur_pos += 1
@@ -532,7 +532,7 @@ class json_file_data_loader(file_data_loader):
             batch_data['pos2'] = np.concatenate(_pos2)
             batch_data['mask'] = np.concatenate(_mask)
             batch_data['label'] = np.stack(_label)
-            batch_data['ins_label'] = np.concatenate(_ins_label)
+            batch_data['instance_label'] = np.concatenate(_instance_label)
             if self.mode == self.MODE_ENTPAIR_BAG:
                 batch_data['multi_label'] = np.stack(_multi_label)
                 batch_data['entpair'] = _entpair

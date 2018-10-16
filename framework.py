@@ -69,7 +69,7 @@ class framework:
                 model.pos1: batch_data['pos1'],
                 model.pos2: batch_data['pos2'],
                 model.label: batch_data['label'],
-                model.ins_label: batch_data['ins_label'],
+                model.instance_label: batch_data['instance_label'],
                 model.scope: batch_data['scope'],
                 model.length: batch_data['length'],
             })
@@ -89,7 +89,7 @@ class framework:
             model.pos1: batch_data['pos1'],
             model.pos2: batch_data['pos2'],
             model.label: batch_data['label'],
-            model.ins_label: batch_data['ins_label'],
+            model.instance_label: batch_data['instance_label'],
             model.scope: batch_data['scope'],
             model.length: batch_data['length'],
         }
