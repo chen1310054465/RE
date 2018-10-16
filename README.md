@@ -2,7 +2,7 @@
 
 An open-source framework for neural relation extraction.
 
-If you want to learn more about neural relation extraction, visit another project of ours [NREPapers](https://github.com/thunlp/NREPapers).
+If you want to learn more about neural relation extraction, visit another project of ours [NREPapers](https://github.com/zhaohuiqiang/NREPapers).
 
 Features:
 
@@ -100,28 +100,28 @@ This file indicates corresponding IDs for relations to make sure during each tra
 
 NYT10 is a distantly supervised dataset originally released by the paper "Sebastian Riedel, Limin Yao, and Andrew McCallum. Modeling relations and their mentions without labeled text.". Here is the download [link](http://iesl.cs.umass.edu/riedel/ecml/) for the original data.
 
-We've provided a toolkit to convert the original NYT10 data into JSON format that `OpenNRE` could use. You could download the original data + toolkit from [Google Drive](https://drive.google.com/file/d/1eSGYObt-SRLccvYCsWaHx1ldurp9eDN_/view?usp=sharing) or [Tsinghua Cloud](https://cloud.tsinghua.edu.cn/f/11391e48b72749d8b60a/?dl=1). Further instructions are included in the toolkit.
+We've provided a toolkit to convert the original NYT10 data into JSON format that `RE` could use. You could download the original data + toolkit from [Google Drive](https://drive.google.com/file/d/1eSGYObt-SRLccvYCsWaHx1ldurp9eDN_/view?usp=sharing) or [Tsinghua Cloud](https://cloud.tsinghua.edu.cn/f/11391e48b72749d8b60a/?dl=1). Further instructions are included in the toolkit.
 
 ## Installation and Quick Start
 
 1. **Install all the required package.**
 
-2. **Clone the OpenNRE repository:**
+2. **Clone the RE repository:**
 
 ```bash
-git clone https://github.com/thunlp/OpenNRE.git
+git clone https://github.com/zhaohuiqiang/RE.git
 ```
 
 Since there are too many history commits of this project and the `.git` folder is too large, you could use the following command to download only the latest commit:
 
 ```bash
-git clone https://github.com/thunlp/OpenNRE.git --depth 1
+git clone https://github.com/zhaohuiqiang/RE.git --depth 1
 ```
 
 3. **Make data folder in the following structure**
 
 ```
-OpenNRE
+RE
 |-- ... 
 |-- data
     |
