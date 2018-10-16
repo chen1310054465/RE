@@ -1,14 +1,10 @@
-# OpenNRE
+# Relation extraction
 
 An open-source framework for neural relation extraction.
 
-Contributed by [Tianyu Gao](https://github.com/gaotianyu1350), [Xu Han](https://github.com/THUCSTHanxu13), [Shulian Cao](https://github.com/ShulinCao), [Lumin Tang](https://github.com/Tsingularity), [Yankai Lin](https://github.com/Mrlyk423), [Zhiyuan Liu](http://nlp.csai.tsinghua.edu.cn/~lzy/)
-
 If you want to learn more about neural relation extraction, visit another project of ours [NREPapers](https://github.com/thunlp/NREPapers).
 
-**BIG UPDATE**: The project has been completely reconstructed and is faster, more extendable and the codes are easier to read and use now. If you need get to the old version, please refer to branch [old_version](https://github.com/thunlp/OpenNRE/tree/old_version).  
-
-New features:
+Features:
 
 - JSON data support.
 - Multi GPU training.
@@ -16,7 +12,7 @@ New features:
 
 ## Overview
 
-It is a TensorFlow-based framwork for easily building relation extraction (RE) models. We divide the pipeline of relation extraction into four parts, which are embedding, encoder, selector (for distant supervision) and classifier. For each part we have implemented several methods.
+It is a TensorFlow-based framework for easily building relation extraction (RE) models. We divide the pipeline of relation extraction into four parts, which are embedding, encoder, selector (for distant supervision) and classifier. For each part we have implemented several methods.
 
 * Embedding
   * Word embedding
@@ -25,7 +21,7 @@ It is a TensorFlow-based framwork for easily building relation extraction (RE) m
   * PCNN
   * CNN
   * RNN
-  * Bidirection RNN
+  * Bidirectional RNN
 * Selector
   * Attention
   * Maximum
@@ -46,7 +42,7 @@ This project is under MIT license.
 - Numpy (>=1.13.3)
 - TensorFlow (>=1.4.1)
     - CUDA (>=8.0) if you are using gpu
-- Matplotlib (>=2.0.0)
+- matplotlib (>=2.0.0)
 - scikit-learn (>=0.18)
 
 ## Data Format
