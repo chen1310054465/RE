@@ -265,12 +265,12 @@ class json_file_data_loader(file_data_loader):
             print("Got {} words of {} dims".format(self.word_vec_tot, self.word_vec_dim))
             print("Building word vector matrix and mapping...")
             self.word_vec = np.zeros((self.word_vec_tot, self.word_vec_dim), dtype=np.float32)
-            for cur_id, word in enumerate(self.ori_word_vec):
-                w = word['word']
+            for cur_id, word_vec in enumerate(self.ori_word_vec):
+                w = word_vec['word']
                 if not case_sensitive:
                     w = w.lower()
                 self.word2id[w] = cur_id
-                self.word_vec[cur_id, :] = word['vec']
+                self.word_vec[cur_id, :] = word_vec['vec']
             self.word2id['UNK'] = UNK
             self.word2id['BLANK'] = BLANK
             print("Finish building")
@@ -339,10 +339,10 @@ class json_file_data_loader(file_data_loader):
                 cur_pos = 0
                 pos1 = -1
                 pos2 = -1
-                for j, word in enumerate(words):
+                for j, word_vec in enumerate(words):
                     if j < max_length:
-                        if word in self.word2id:
-                            cur_ref_data_word[j] = self.word2id[word]
+                        if word_vec in self.word2id:
+                            cur_ref_data_word[j] = self.word2id[word_vec]
                         else:
                             cur_ref_data_word[j] = UNK
                     if cur_pos == p1:
@@ -351,7 +351,7 @@ class json_file_data_loader(file_data_loader):
                     if cur_pos == p2:
                         pos2 = j
                         p2 = -1
-                    cur_pos += len(word) + 1
+                    cur_pos += len(word_vec) + 1
                 for j in range(j + 1, max_length):
                     cur_ref_data_word[j] = BLANK
                 self.data_length[i] = len(words)
@@ -534,7 +534,7 @@ class json_file_data_loader(file_data_loader):
             batch_data['label'] = np.stack(_label)
             batch_data['ins_label'] = np.concatenate(_ins_label)
             if self.mode == self.MODE_ENTPAIR_BAG:
-                batch_data['multi_label'] = np.stack(_multi_rel)
+                batch_data['multi_label'] = np.stack(_multi_label)
                 batch_data['entpair'] = _entpair
             batch_data['length'] = np.concatenate(_length)
             batch_data['scope'] = np.stack(_scope)
