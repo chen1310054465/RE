@@ -143,7 +143,7 @@ class json_file_data_loader(file_data_loader):
     def _load_preprocessed_file(self):
         name_prefix = '.'.join(self.file_name.split(os.sep)[-1].split('.')[:-1])
         word_vec_name_prefix = '.'.join(self.word_vec_file_name.split(os.sep)[-1].split('.')[:-1])
-        processed_data_dir = '_processed_data'
+        processed_data_dir = 'processed_data'
         if not os.path.isdir(processed_data_dir):
             return False
         word_npy_file_name = os.path.join(processed_data_dir, name_prefix + '_word.npy')
@@ -389,7 +389,7 @@ class json_file_data_loader(file_data_loader):
             print("Storing processed files...")
             name_prefix = '.'.join(file_name.split(os.sep)[-1].split('.')[:-1])
             word_vec_name_prefix = '.'.join(word_vec_file_name.split(os.sep)[-1].split('.')[:-1])
-            processed_data_dir = '_processed_data'
+            processed_data_dir = 'processed_data'
             if not os.path.isdir(processed_data_dir):
                 os.mkdir(processed_data_dir)
             np.save(os.path.join(processed_data_dir, name_prefix + '_word.npy'), self.data_word)
