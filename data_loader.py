@@ -335,16 +335,15 @@ class json_file_data_loader(file_data_loader):
                 #     raise Exception("[ERROR] Sentence doesn't contain the entity, index = {}, sentence = {}, head = {}, tail = {}".format(i, sentence, head, tail))
 
                 words = sentence.split()
-                cur_ref_data_word = self.data_word[i]
                 cur_pos = 0
                 pos1 = -1
                 pos2 = -1
                 for j, word in enumerate(words):
                     if j < max_length:
                         if word in self.word2id:
-                            cur_ref_data_word[j] = self.word2id[word]
+                            self.data_word[i][j] = self.word2id[word]
                         else:
-                            cur_ref_data_word[j] = UNK
+                            self.data_word[i][j] = UNK
                     if cur_pos == p1:
                         pos1 = j
                         p1 = -1
@@ -353,7 +352,7 @@ class json_file_data_loader(file_data_loader):
                         p2 = -1
                     cur_pos += len(word) + 1
                 for j in range(len(words), max_length):
-                    cur_ref_data_word[j] = BLANK
+                    self.data_word[i][j] = BLANK
                 self.data_length[i] = len(words)
                 if len(words) > max_length:
                     self.data_length[i] = max_length
