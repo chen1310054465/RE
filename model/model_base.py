@@ -94,8 +94,8 @@ class model(model_base):
         with tf.variable_scope("weights_table", reuse=tf.AUTO_REUSE):
             print("Calculating weights_table...")
             _weights_table = np.zeros(self.rel_tot, dtype=np.float32)
-            for i in range(len(data_loader.data_rel)):
-                _weights_table[data_loader.data_rel[i]] += 1.0
+            for i in range(len(data_loader.data_label)):
+                _weights_table[data_loader.data_label[i]] += 1.0
             _weights_table = 1 / (_weights_table ** 0.05 + 1e-20)
             weights_table = tf.get_variable(name='weights_table', dtype=tf.float32, trainable=False,
                                             initializer=_weights_table)

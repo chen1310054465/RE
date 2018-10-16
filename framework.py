@@ -68,14 +68,14 @@ class framework:
                 model.word: batch_data['word'],
                 model.pos1: batch_data['pos1'],
                 model.pos2: batch_data['pos2'],
-                model.label: batch_data['rel'],
-                model.ins_label: batch_data['ins_rel'],
+                model.label: batch_data['label'],
+                model.ins_label: batch_data['ins_label'],
                 model.scope: batch_data['scope'],
                 model.length: batch_data['length'],
             })
             if 'mask' in batch_data and hasattr(model, "mask"):
                 feed_dict.update({model.mask: batch_data['mask']})
-            batch_label.append(batch_data['rel'])
+            batch_label.append(batch_data['label'])
         result = sess.run(run_array, feed_dict)
         batch_label = np.concatenate(batch_label)
         if return_label:
@@ -88,8 +88,8 @@ class framework:
             model.word: batch_data['word'],
             model.pos1: batch_data['pos1'],
             model.pos2: batch_data['pos2'],
-            model.label: batch_data['rel'],
-            model.ins_label: batch_data['ins_rel'],
+            model.label: batch_data['label'],
+            model.ins_label: batch_data['ins_label'],
             model.scope: batch_data['scope'],
             model.length: batch_data['length'],
         }
@@ -220,9 +220,9 @@ class framework:
              ckpt=None,
              return_result=False,
              mode=MODE_BAG):
-        if mode == re_framework.MODE_BAG:
+        if mode == framework.MODE_BAG:
             return self.__test_bag__(model, ckpt=ckpt, return_result=return_result)
-        elif mode == re_framework.MODE_INS:
+        elif mode == framework.MODE_INS:
             raise NotImplementedError
         else:
             raise NotImplementedError
@@ -246,19 +246,19 @@ class framework:
         for i, batch_data in enumerate(self.test_data_loader):
             iter_logit = self.one_step(self.sess, model, batch_data, [model.logit()])[0]
             iter_output = iter_logit.argmax(-1)
-            iter_correct = (iter_output == batch_data['rel']).sum()
-            iter_not_na_correct = np.logical_and(iter_output == batch_data['rel'], batch_data['rel'] != 0).sum()
+            iter_correct = (iter_output == batch_data['label']).sum()
+            iter_not_na_correct = np.logical_and(iter_output == batch_data['label'], batch_data['label'] != 0).sum()
             tot_correct += iter_correct
             tot_not_na_correct += iter_not_na_correct
-            tot += batch_data['rel'].shape[0]
-            tot_not_na += (batch_data['rel'] != 0).sum()
+            tot += batch_data['label'].shape[0]
+            tot_not_na += (batch_data['label'] != 0).sum()
             if tot_not_na > 0:
                 sys.stdout.write("[TEST] step %d | not NA accuracy: %f, accuracy: %f\r" % (
                     i, float(tot_not_na_correct) / tot_not_na, float(tot_correct) / tot))
                 sys.stdout.flush()
             for idx in range(len(iter_logit)):
                 for rel in range(1, self.test_data_loader.rel_tot):
-                    test_result.append({'score': iter_logit[idx][rel], 'flag': batch_data['multi_rel'][idx][rel]})
+                    test_result.append({'score': iter_logit[idx][rel], 'flag': batch_data['multi_label'][idx][rel]})
                     if batch_data['entpair'][idx] != "None#None":
                         pred_result.append({'score': float(iter_logit[idx][rel]),
                                             'entpair': batch_data['entpair'][idx].encode('utf-8'), 'relation': rel})

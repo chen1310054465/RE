@@ -37,7 +37,7 @@ class npy_data_loader(file_data_loader):
         self.data_pos1 = np.load(os.path.join(data_dir, prefix + "_pos1.npy"))
         self.data_pos2 = np.load(os.path.join(data_dir, prefix + "_pos2.npy"))
         self.data_mask = np.load(os.path.join(data_dir, prefix + "_mask.npy"))
-        self.data_rel = np.load(os.path.join(data_dir, prefix + "_label.npy"))
+        self.data_label = np.load(os.path.join(data_dir, prefix + "_label.npy"))
         self.data_length = np.load(os.path.join(data_dir, prefix + "_len.npy"))
         self.scope = np.load(os.path.join(data_dir, prefix + "_instance_scope.npy"))
         self.triple = np.load(os.path.join(data_dir, prefix + "_instance_triple.npy"))
@@ -83,7 +83,7 @@ class npy_data_loader(file_data_loader):
             batch_data['word'] = self.data_word[idx0:idx1]
             batch_data['pos1'] = self.data_pos1[idx0:idx1]
             batch_data['pos2'] = self.data_pos2[idx0:idx1]
-            batch_data['rel'] = self.data_rel[idx0:idx1]
+            batch_data['label'] = self.data_label[idx0:idx1]
             batch_data['length'] = self.data_length[idx0:idx1]
             batch_data['scope'] = np.stack([list(range(idx1 - idx0)), list(range(1, idx1 - idx0 + 1))], axis=1)
         elif self.mode == self.MODE_ENTPAIR_BAG or self.mode == self.MODE_RELFACT_BAG:
@@ -98,9 +98,9 @@ class npy_data_loader(file_data_loader):
             _word = []
             _pos1 = []
             _pos2 = []
-            _rel = []
-            _ins_rel = []
-            _multi_rel = []
+            _label = []
+            _ins_label = []
+            _multi_label = []
             _length = []
             _scope = []
             _mask = []
@@ -109,8 +109,8 @@ class npy_data_loader(file_data_loader):
                 _word.append(self.data_word[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])
                 _pos1.append(self.data_pos1[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])
                 _pos2.append(self.data_pos2[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])
-                _rel.append(self.data_rel[self.scope[self.order[i]][0]])
-                _ins_rel.append(self.data_rel[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])
+                _label.append(self.data_label[self.scope[self.order[i]][0]])
+                _ins_label.append(self.data_label[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])
                 _length.append(self.data_length[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])
                 _mask.append(self.data_mask[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])
                 bag_size = self.scope[self.order[i]][1] - self.scope[self.order[i]][0]
@@ -119,15 +119,15 @@ class npy_data_loader(file_data_loader):
                 if self.mode == self.MODE_ENTPAIR_BAG:
                     _one_multi_rel = np.zeros(self.rel_tot, dtype=np.int32)
                     for j in range(self.scope[self.order[i]][0], self.scope[self.order[i]][1]):
-                        _one_multi_rel[self.data_rel[j]] = 1
-                    _multi_rel.append(_one_multi_rel)
+                        _one_multi_rel[self.data_label[j]] = 1
+                    _multi_label.append(_one_multi_rel)
             batch_data['word'] = np.concatenate(_word)
             batch_data['pos1'] = np.concatenate(_pos1)
             batch_data['pos2'] = np.concatenate(_pos2)
-            batch_data['rel'] = np.stack(_rel)
-            batch_data['ins_rel'] = np.concatenate(_ins_rel)
+            batch_data['label'] = np.stack(_label)
+            batch_data['ins_label'] = np.concatenate(_ins_label)
             if self.mode == self.MODE_ENTPAIR_BAG:
-                batch_data['multi_rel'] = np.stack(_multi_rel)
+                batch_data['multi_label'] = np.stack(_multi_label)
             batch_data['length'] = np.concatenate(_length)
             batch_data['scope'] = np.stack(_scope)
             batch_data['mask'] = np.concatenate(_mask)
@@ -149,7 +149,7 @@ class json_file_data_loader(file_data_loader):
         word_npy_file_name = os.path.join(processed_data_dir, name_prefix + '_word.npy')
         pos1_npy_file_name = os.path.join(processed_data_dir, name_prefix + '_pos1.npy')
         pos2_npy_file_name = os.path.join(processed_data_dir, name_prefix + '_pos2.npy')
-        rel_npy_file_name = os.path.join(processed_data_dir, name_prefix + '_rel.npy')
+        label_npy_file_name = os.path.join(processed_data_dir, name_prefix + '_label.npy')
         mask_npy_file_name = os.path.join(processed_data_dir, name_prefix + '_mask.npy')
         length_npy_file_name = os.path.join(processed_data_dir, name_prefix + '_length.npy')
         entpair2scope_file_name = os.path.join(processed_data_dir, name_prefix + '_entpair2scope.json')
@@ -159,7 +159,7 @@ class json_file_data_loader(file_data_loader):
         if not os.path.exists(word_npy_file_name) or \
                 not os.path.exists(pos1_npy_file_name) or \
                 not os.path.exists(pos2_npy_file_name) or \
-                not os.path.exists(rel_npy_file_name) or \
+                not os.path.exists(label_npy_file_name) or \
                 not os.path.exists(mask_npy_file_name) or \
                 not os.path.exists(length_npy_file_name) or \
                 not os.path.exists(entpair2scope_file_name) or \
@@ -171,7 +171,7 @@ class json_file_data_loader(file_data_loader):
         self.data_word = np.load(word_npy_file_name)
         self.data_pos1 = np.load(pos1_npy_file_name)
         self.data_pos2 = np.load(pos2_npy_file_name)
-        self.data_rel = np.load(rel_npy_file_name)
+        self.data_label = np.load(label_npy_file_name)
         self.data_mask = np.load(mask_npy_file_name)
         self.data_length = np.load(length_npy_file_name)
         self.entpair2scope = json.load(open(entpair2scope_file_name))
@@ -283,7 +283,7 @@ class json_file_data_loader(file_data_loader):
             self.data_word = np.zeros((self.instance_tot, self.max_length), dtype=np.int32)
             self.data_pos1 = np.zeros((self.instance_tot, self.max_length), dtype=np.int32)
             self.data_pos2 = np.zeros((self.instance_tot, self.max_length), dtype=np.int32)
-            self.data_rel = np.zeros(self.instance_tot, dtype=np.int32)
+            self.data_label = np.zeros(self.instance_tot, dtype=np.int32)
             self.data_mask = np.zeros((self.instance_tot, self.max_length), dtype=np.int32)
             self.data_length = np.zeros(self.instance_tot, dtype=np.int32)
             last_entpair = ''
@@ -293,9 +293,9 @@ class json_file_data_loader(file_data_loader):
             for i in range(self.instance_tot):
                 ins = self.ori_data[i]
                 if ins['relation'] in self.rel2id:
-                    self.data_rel[i] = self.rel2id[ins['relation']]
+                    self.data_label[i] = self.rel2id[ins['relation']]
                 else:
-                    self.data_rel[i] = self.rel2id['NA']
+                    self.data_label[i] = self.rel2id['NA']
                 sentence = ' '.join(ins['sentence'].split())  # delete extra spaces
                 head = ins['head']['word']
                 tail = ins['tail']['word']
@@ -395,7 +395,7 @@ class json_file_data_loader(file_data_loader):
             np.save(os.path.join(processed_data_dir, name_prefix + '_word.npy'), self.data_word)
             np.save(os.path.join(processed_data_dir, name_prefix + '_pos1.npy'), self.data_pos1)
             np.save(os.path.join(processed_data_dir, name_prefix + '_pos2.npy'), self.data_pos2)
-            np.save(os.path.join(processed_data_dir, name_prefix + '_rel.npy'), self.data_rel)
+            np.save(os.path.join(processed_data_dir, name_prefix + '_label.npy'), self.data_label)
             np.save(os.path.join(processed_data_dir, name_prefix + '_mask.npy'), self.data_mask)
             np.save(os.path.join(processed_data_dir, name_prefix + '_length.npy'), self.data_length)
             json.dump(self.entpair2scope,
@@ -464,7 +464,7 @@ class json_file_data_loader(file_data_loader):
             batch_data['word'] = self.data_word[idx0:idx1]
             batch_data['pos1'] = self.data_pos1[idx0:idx1]
             batch_data['pos2'] = self.data_pos2[idx0:idx1]
-            batch_data['rel'] = self.data_rel[idx0:idx1]
+            batch_data['label'] = self.data_label[idx0:idx1]
             batch_data['mask'] = self.data_mask[idx0:idx1]
             batch_data['length'] = self.data_length[idx0:idx1]
             batch_data['scope'] = np.stack([list(range(batch_size)), list(range(1, batch_size + 1))], axis=1)
@@ -478,7 +478,7 @@ class json_file_data_loader(file_data_loader):
                     [batch_data['pos2'], np.zeros((padding, self.data_pos2.shape[-1]), dtype=np.int32)])
                 batch_data['mask'] = np.concatenate(
                     [batch_data['mask'], np.zeros((padding, self.data_mask.shape[-1]), dtype=np.int32)])
-                batch_data['rel'] = np.concatenate([batch_data['rel'], np.zeros(padding, dtype=np.int32)])
+                batch_data['label'] = np.concatenate([batch_data['label'], np.zeros(padding, dtype=np.int32)])
                 batch_data['length'] = np.concatenate([batch_data['length'], np.zeros(padding, dtype=np.int32)])
         elif self.mode == self.MODE_ENTPAIR_BAG or self.mode == self.MODE_RELFACT_BAG:
             idx0 = self.idx
@@ -490,9 +490,9 @@ class json_file_data_loader(file_data_loader):
             _pos1 = []
             _pos2 = []
             _mask = []
-            _rel = []
-            _ins_rel = []
-            _multi_rel = []
+            _label = []
+            _ins_label = []
+            _multi_label = []
             _entpair = []
             _length = []
             _scope = []
@@ -502,8 +502,8 @@ class json_file_data_loader(file_data_loader):
                 _pos1.append(self.data_pos1[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])
                 _pos2.append(self.data_pos2[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])
                 _mask.append(self.data_mask[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])
-                _rel.append(self.data_rel[self.scope[self.order[i]][0]])
-                _ins_rel.append(self.data_rel[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])
+                _label.append(self.data_label[self.scope[self.order[i]][0]])
+                _ins_label.append(self.data_label[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])
                 _length.append(self.data_length[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])
                 bag_size = self.scope[self.order[i]][1] - self.scope[self.order[i]][0]
                 _scope.append([cur_pos, cur_pos + bag_size])
@@ -511,30 +511,30 @@ class json_file_data_loader(file_data_loader):
                 if self.mode == self.MODE_ENTPAIR_BAG:
                     _one_multi_rel = np.zeros(self.rel_tot, dtype=np.int32)
                     for j in range(self.scope[self.order[i]][0], self.scope[self.order[i]][1]):
-                        _one_multi_rel[self.data_rel[j]] = 1
-                    _multi_rel.append(_one_multi_rel)
+                        _one_multi_rel[self.data_label[j]] = 1
+                    _multi_label.append(_one_multi_rel)
                     _entpair.append(self.scope_name[self.order[i]])
             for i in range(batch_size - (idx1 - idx0)):
                 _word.append(np.zeros((1, self.data_word.shape[-1]), dtype=np.int32))
                 _pos1.append(np.zeros((1, self.data_pos1.shape[-1]), dtype=np.int32))
                 _pos2.append(np.zeros((1, self.data_pos2.shape[-1]), dtype=np.int32))
                 _mask.append(np.zeros((1, self.data_mask.shape[-1]), dtype=np.int32))
-                _rel.append(0)
-                _ins_rel.append(np.zeros(1, dtype=np.int32))
+                _label.append(0)
+                _ins_label.append(np.zeros(1, dtype=np.int32))
                 _length.append(np.zeros(1, dtype=np.int32))
                 _scope.append([cur_pos, cur_pos + 1])
                 cur_pos += 1
                 if self.mode == self.MODE_ENTPAIR_BAG:
-                    _multi_rel.append(np.zeros(self.rel_tot, dtype=np.int32))
+                    _multi_label.append(np.zeros(self.rel_tot, dtype=np.int32))
                     _entpair.append('None#None')
             batch_data['word'] = np.concatenate(_word)
             batch_data['pos1'] = np.concatenate(_pos1)
             batch_data['pos2'] = np.concatenate(_pos2)
             batch_data['mask'] = np.concatenate(_mask)
-            batch_data['rel'] = np.stack(_rel)
-            batch_data['ins_rel'] = np.concatenate(_ins_rel)
+            batch_data['label'] = np.stack(_label)
+            batch_data['ins_label'] = np.concatenate(_ins_label)
             if self.mode == self.MODE_ENTPAIR_BAG:
-                batch_data['multi_rel'] = np.stack(_multi_rel)
+                batch_data['multi_label'] = np.stack(_multi_rel)
                 batch_data['entpair'] = _entpair
             batch_data['length'] = np.concatenate(_length)
             batch_data['scope'] = np.stack(_scope)
