@@ -141,10 +141,10 @@ RE
 
 You could use your own data or download datasets provided above.
 
-4. **Run `train_demo.py {DATASET_NAME} {ENCODER_NAME} {SELECTOR_NAME}`. For example, if you want to train model with PCNN as the encoder and attention as the selector on the `nyt` dataset, run the following command**
+4. **Run `train.py {DATASET_NAME} {ENCODER_NAME} {SELECTOR_NAME}`. For example, if you want to train model with PCNN as the encoder and attention as the selector on the `nyt` dataset, run the following command**
 
 ```
-python train_demo.py nyt pcnn att
+python train.py nyt pcnn att
 ```
 
 Currently `{ENCODER_NAME}` includes `pcnn`, `cnn`, `rnn` and `birnn`, and `{SELECTOR_NAME}` includes `att` (for attention), `max` (for maximum) and `ave` (for average). The model will be named as `{DATASET_NAME}_{ENCODER_NAME}_{SELECTOR_NAME}` automatically.
@@ -159,10 +159,10 @@ python draw_plot.py {MODEL_NAME_1} {MODEL_NAME_2} ...
 
 All the results of the models mentioned will be printed and precision-recall curves containing all the models will be saved in `./test_result/pr_curve.png`.
 
-6. **If you have the checkpoint of the model and want to evaluate it, run `test_demo.py {DATASET_NAME} {ENCODER_NAME} {SELECTOR_NAME}`. For example:**
+6. **If you have the checkpoint of the model and want to evaluate it, run `test.py {DATASET_NAME} {ENCODER_NAME} {SELECTOR_NAME}`. For example:**
 
 ```
-python test_demo.py nyt pcnn att
+python test.py nyt pcnn att
 ```
 
 The prediction results will be stored in `test_result/nyt_pcnn_att_pred.json`.
