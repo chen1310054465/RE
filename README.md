@@ -2,7 +2,7 @@
 
 An open-source framework for neural relation extraction.
 
-If you want to learn more about neural relation extraction, visit another project of ours [NREPapers](https://github.com/zhaohuiqiang/NREPapers).
+If you want to learn more about neural relation extraction, visit another project of ours [NREPapers](https://github.com/thunlp/NREPapers).
 
 Features:
 
