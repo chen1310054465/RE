@@ -104,13 +104,13 @@ class model(model_base):
 
 
 dataset_name = 'nyt'
-dataset_dir = os.path.join('data', dataset_name)
+dataset_dir = os.path.join('origin_data', dataset_name)
 fw = None
 
 
 def init():
     global dataset_name, dataset_dir, fw
-    # The first 3 parameters are train / test data file name, word embedding file name and relation-id mapping file name respectively.
+    # The first 3 parameters are train / test origin_data file name, word embedding file name and relation-id mapping file name respectively.
     train_loader = dl.json_file_data_loader(os.path.join(dataset_dir, 'train.json'),
                                             os.path.join(dataset_dir, 'word_vec.json'),
                                             os.path.join(dataset_dir, 'rel2id.json'),
@@ -125,7 +125,7 @@ def init():
 
     if len(sys.argv) > 1:
         dataset_name = sys.argv[1]
-        dataset_dir = os.path.join('data', dataset_name)
+        dataset_dir = os.path.join('origin_data', dataset_name)
     if not os.path.isdir(dataset_dir):
         raise Exception("[ERROR] Dataset dir %s doesn't exist!" % dataset_dir)
     if len(sys.argv) > 2:

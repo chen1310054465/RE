@@ -187,7 +187,7 @@ class json_file_data_loader(file_data_loader):
     def __init__(self, file_name, word_vec_file_name, rel2id_file_name, mode, shuffle=True, max_length=120,
                  case_sensitive=False, reprocess=False, batch_size=160):
         """
-        file_name: Json file storing the data in the following format
+        file_name: Json file storing the origin_data in the following format
             [
                 {
                     'sentence': 'Bill Gates is the founder of Microsoft .',
@@ -210,10 +210,10 @@ class json_file_data_loader(file_data_loader):
                 ...
             }
             **IMPORTANT**: make sure the id of NA is 0!
-        mode: Specify how to get a batch of data. See MODE_* constants for details.
-        shuffle: Whether to shuffle the data, default as True. You should use shuffle when training.
+        mode: Specify how to get a batch of origin_data. See MODE_* constants for details.
+        shuffle: Whether to shuffle the origin_data, default as True. You should use shuffle when training.
         max_length: The length that all the sentences need to be extend to, default as 120.
-        case_sensitive: Whether the data processing is case-sensitive, default as False.
+        case_sensitive: Whether the origin_data processing is case-sensitive, default as False.
         reprocess: Do the pre-processing whether there exist pre-processed files, default as False.
         batch_size: The size of each batch, default as 160.
         """
@@ -235,7 +235,7 @@ class json_file_data_loader(file_data_loader):
                 raise Exception("[ERROR] Word vector file doesn't exist")
 
             # Load files
-            print("Loading data file...")
+            print("Loading origin_data file...")
             self.origin_data = json.load(open(self.file_name, "r"))
             print("Finish loading")
             print("Loading word vector file...")
@@ -251,8 +251,8 @@ class json_file_data_loader(file_data_loader):
                     self.origin_data[i]['tail']['word'] = self.origin_data[i]['tail']['word'].lower()
                 print("Finish eliminating")
 
-            # Sort data by entities and relations
-            print("Sort data...")
+            # Sort origin_data by entities and relations
+            print("Sort origin_data...")
             self.origin_data.sort(key=lambda a: a['head']['id'] + '#' + a['tail']['id'] + '#' + a['relation'])
             print("Finish sorting")
 
@@ -275,8 +275,8 @@ class json_file_data_loader(file_data_loader):
             self.word2id['BLANK'] = BLANK
             print("Finish building")
 
-            # Pre-process data
-            print("Pre-processing data...")
+            # Pre-process origin_data
+            print("Pre-processing origin_data...")
             self.instance_tot = len(self.origin_data)
             self.entpair2scope = {}  # (head, tail) -> scope
             self.relfact2scope = {}  # (head, tail, relation) -> scope
