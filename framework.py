@@ -7,6 +7,10 @@ import sklearn.metrics
 import tensorflow as tf
 
 
+def dropout(x, keep_prob=1.0):
+    return tf.contrib.layers.dropout(x, keep_prob=keep_prob)
+
+
 def average_gradients(tower_grads):
     """Calculate the average gradient for each shared variable across all towers.
 
@@ -45,11 +49,11 @@ def average_gradients(tower_grads):
     return average_grads
 
 
-class re_framework:
+class framework:
     MODE_BAG = 0  # Train and test the model at bag level.
     MODE_INS = 1  # Train and test the model at instance level
 
-    def __init__(self, train_data_loader=None, test_data_loader=None):
+    def __init__(self, train_data_loader, test_data_loader):
         self.train_data_loader = train_data_loader
         self.test_data_loader = test_data_loader
         self.sess = None
