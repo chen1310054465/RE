@@ -68,10 +68,10 @@ class framework:
                 model.word: batch_data['word'],
                 model.pos1: batch_data['pos1'],
                 model.pos2: batch_data['pos2'],
+                model.length: batch_data['length'],
                 model.label: batch_data['label'],
                 model.instance_label: batch_data['instance_label'],
                 model.scope: batch_data['scope'],
-                model.length: batch_data['length'],
             })
             if 'mask' in batch_data and hasattr(model, "mask"):
                 feed_dict.update({model.mask: batch_data['mask']})
@@ -88,10 +88,10 @@ class framework:
             model.word: batch_data['word'],
             model.pos1: batch_data['pos1'],
             model.pos2: batch_data['pos2'],
+            model.length: batch_data['length'],
             model.label: batch_data['label'],
             model.instance_label: batch_data['instance_label'],
             model.scope: batch_data['scope'],
-            model.length: batch_data['length'],
         }
         if 'mask' in batch_data and hasattr(model, "mask"):
             feed_dict.update({model.mask: batch_data['mask']})

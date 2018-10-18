@@ -489,11 +489,11 @@ class json_file_data_loader(file_data_loader):
             _pos1 = []
             _pos2 = []
             _mask = []
+            _length = []
             _label = []
             _instance_label = []
             _multi_label = []
             _entpair = []
-            _length = []
             _scope = []
             cur_pos = 0
             for i in range(idx0, idx1):
@@ -501,9 +501,9 @@ class json_file_data_loader(file_data_loader):
                 _pos1.append(self.data_pos1[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])
                 _pos2.append(self.data_pos2[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])
                 _mask.append(self.data_mask[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])
+                _length.append(self.data_length[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])
                 _label.append(self.data_label[self.scope[self.order[i]][0]])
                 _instance_label.append(self.data_label[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])
-                _length.append(self.data_length[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])
                 bag_size = self.scope[self.order[i]][1] - self.scope[self.order[i]][0]
                 _scope.append([cur_pos, cur_pos + bag_size])
                 cur_pos = cur_pos + bag_size
@@ -518,9 +518,9 @@ class json_file_data_loader(file_data_loader):
                 _pos1.append(np.zeros((1, self.data_pos1.shape[-1]), dtype=np.int32))
                 _pos2.append(np.zeros((1, self.data_pos2.shape[-1]), dtype=np.int32))
                 _mask.append(np.zeros((1, self.data_mask.shape[-1]), dtype=np.int32))
+                _length.append(np.zeros(1, dtype=np.int32))
                 _label.append(0)
                 _instance_label.append(np.zeros(1, dtype=np.int32))
-                _length.append(np.zeros(1, dtype=np.int32))
                 _scope.append([cur_pos, cur_pos + 1])
                 cur_pos += 1
                 if self.mode == self.MODE_ENTPAIR_BAG:
