@@ -14,9 +14,9 @@ class model_base:
         self.word = tf.placeholder(dtype=tf.int32, shape=[None, max_length], name='word')
         self.pos1 = tf.placeholder(dtype=tf.int32, shape=[None, max_length], name='pos1')
         self.pos2 = tf.placeholder(dtype=tf.int32, shape=[None, max_length], name='pos2')
+        self.length = tf.placeholder(dtype=tf.int32, shape=[None], name='length')
         self.label = tf.placeholder(dtype=tf.int32, shape=[batch_size], name='label')
         self.instance_label = tf.placeholder(dtype=tf.int32, shape=[None], name='instance_label')
-        self.length = tf.placeholder(dtype=tf.int32, shape=[None], name='length')
         self.scope = tf.placeholder(dtype=tf.int32, shape=[batch_size, 2], name='scope')
         self.word_vec = word_vec
         self.rel_tot = rel_tot
