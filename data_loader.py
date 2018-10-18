@@ -530,12 +530,12 @@ class json_file_data_loader(file_data_loader):
             batch_data['pos1'] = np.concatenate(_pos1)
             batch_data['pos2'] = np.concatenate(_pos2)
             batch_data['mask'] = np.concatenate(_mask)
+            batch_data['length'] = np.concatenate(_length)
             batch_data['label'] = np.stack(_label)
             batch_data['instance_label'] = np.concatenate(_instance_label)
             if self.mode == self.MODE_ENTPAIR_BAG:
                 batch_data['multi_label'] = np.stack(_multi_label)
                 batch_data['entpair'] = _entpair
-            batch_data['length'] = np.concatenate(_length)
             batch_data['scope'] = np.stack(_scope)
 
         return batch_data
