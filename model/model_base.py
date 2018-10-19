@@ -35,7 +35,7 @@ def init():
         print('**  --en: encoder(such as: cnn pcnn rnn birnn)                                     **')
         print('**  --se: selector(such as: att ave max)                                           **')
         print('**  --cl: classifier(such as: softmax soft_label)                                  **')
-        print('**  --ac: activation(such as: ' + str([ac for ac in activations]) + ')           **')
+        print('**  --ac: activation(such as: ' + str([act for act in activations]) + ')           **')
         print('**  --op: optimizer(such as: ' + str([op for op in optimizers]) + ')   **')
         print('**  --gn: gpu_nums(denotes num of gpu for training)                                **')
         print('*************************************************************************************')
