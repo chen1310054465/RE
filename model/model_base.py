@@ -7,7 +7,7 @@ import tensorflow as tf
 from network import embedding, encoder, selector, classifier
 
 # define some parameter
-tf.flags.DEFINE_string('ds', 'nyt', 'dataset_name')
+tf.flags.DEFINE_string('dn', 'nyt', 'dataset_name')
 tf.flags.DEFINE_string('en', 'pcnn', 'encoder')
 tf.flags.DEFINE_string('se', 'att', 'selector')
 tf.flags.DEFINE_string('cl', 'softmax', 'classifier')
@@ -15,7 +15,7 @@ tf.flags.DEFINE_string('ac', 'relu', 'activation')
 tf.flags.DEFINE_string('op', 'sgd', 'optimizer')
 tf.flags.DEFINE_integer('gn', 1, 'gpu_nums')
 FLAGS = tf.flags.FLAGS
-dataset_dir = os.path.join('origin_data', FLAGS.ds)
+dataset_dir = os.path.join('origin_data', FLAGS.dn)
 optimizer = tf.train.GradientDescentOptimizer
 activation = tf.nn.relu
 
@@ -27,11 +27,11 @@ def init():
                   'adagrad': tf.train.AdagradOptimizer, 'adadelta': tf.train.AdadeltaOptimizer,
                   'adam': tf.train.AdamOptimizer}
     if 'help' in sys.argv:
-        print('Usage: python3 ' + sys.argv[0] + ' [--ds dataset_name] [--en encoder] '
+        print('Usage: python3 ' + sys.argv[0] + ' [--dn dataset_name] [--en encoder] '
               + '[--se selector] [--cl classifier] [--ac activation] '
               + '[--op optimizer] [--gn gpu_nums]')
         print('*******************************args details******************************************')
-        print('**  --ds: dataset_name(nyt: New York Times dataset)                                **')
+        print('**  --dn: dataset_name(nyt: New York Times dataset)                                **')
         print('**  --en: encoder(such as: cnn pcnn rnn birnn)                                     **')
         print('**  --se: selector(such as: att ave max)                                           **')
         print('**  --cl: classifier(such as: softmax soft_label)                                  **')
