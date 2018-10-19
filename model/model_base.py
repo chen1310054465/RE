@@ -4,8 +4,6 @@ import sys
 import numpy as np
 import tensorflow as tf
 
-import data_loader as dl
-from framework import framework
 from network import embedding, encoder, selector, classifier
 
 
@@ -105,23 +103,10 @@ class model(model_base):
 
 dataset_name = 'nyt'
 dataset_dir = os.path.join('origin_data', dataset_name)
-fw = None
 
 
 def init():
-    global dataset_name, dataset_dir, fw
-    # The first 3 parameters are train / test origin_data file name, word embedding file name and relation-id mapping file name respectively.
-    train_loader = dl.json_file_data_loader(os.path.join(dataset_dir, 'train.json'),
-                                            os.path.join(dataset_dir, 'word_vec.json'),
-                                            os.path.join(dataset_dir, 'rel2id.json'),
-                                            mode=dl.json_file_data_loader.MODE_RELFACT_BAG,
-                                            shuffle=True)
-    test_loader = dl.json_file_data_loader(os.path.join(dataset_dir, 'test.json'),
-                                           os.path.join(dataset_dir, 'word_vec.json'),
-                                           os.path.join(dataset_dir, 'rel2id.json'),
-                                           mode=dl.json_file_data_loader.MODE_ENTPAIR_BAG,
-                                           shuffle=False)
-    fw = framework(train_loader, test_loader)
+    global dataset_name, dataset_dir
 
     if len(sys.argv) > 1:
         dataset_name = sys.argv[1]

@@ -53,7 +53,7 @@ class framework:
     MODE_BAG = 0  # Train and test the model at bag level.
     MODE_INS = 1  # Train and test the model at instance level
 
-    def __init__(self, train_data_loader, test_data_loader):
+    def __init__(self, train_data_loader=None, test_data_loader=None):
         self.train_data_loader = train_data_loader
         self.test_data_loader = test_data_loader
         self.sess = None
