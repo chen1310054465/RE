@@ -27,7 +27,6 @@ def _cnn_cell(x, hidden_size=230, kernel_size=3, stride_size=1):
 
 def cnn(x, hidden_size=230, kernel_size=3, stride_size=1, activation=tf.nn.relu, var_scope=None, keep_prob=1.0):
     with tf.variable_scope(var_scope or "cnn", reuse=tf.AUTO_REUSE):
-        # max_length = x.shape[1]
         x = _cnn_cell(x, hidden_size, kernel_size, stride_size)
         x = _pooling(x)
         x = activation(x)
@@ -37,7 +36,6 @@ def cnn(x, hidden_size=230, kernel_size=3, stride_size=1, activation=tf.nn.relu,
 
 def pcnn(x, mask, hidden_size=230, kernel_size=3, stride_size=1, activation=tf.nn.relu, var_scope=None, keep_prob=1.0):
     with tf.variable_scope(var_scope or "pcnn", reuse=tf.AUTO_REUSE):
-        # max_length = x.shape[1]
         x = _cnn_cell(x, hidden_size, kernel_size, stride_size)
         x = _piecewise_pooling(x, mask)
         x = activation(x)
