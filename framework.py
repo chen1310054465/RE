@@ -220,13 +220,13 @@ class framework:
              return_result=False,
              mode=MODE_BAG):
         if mode == framework.MODE_BAG:
-            return self.__test_bag__(model, ckpt=ckpt, return_result=return_result)
+            return self._test_bag(model, ckpt=ckpt, return_result=return_result)
         elif mode == framework.MODE_INS:
             raise NotImplementedError
         else:
             raise NotImplementedError
 
-    def __test_bag__(self, model, ckpt=None, return_result=False):
+    def _test_bag(self, model, ckpt=None, return_result=False):
         print("Testing...")
         if self.sess is None:
             self.sess = tf.Session()
