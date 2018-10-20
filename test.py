@@ -21,9 +21,12 @@ def test_loader():
 if __name__ == '__main__':
     mb.init()
     fw = framework(test_data_loader=test_loader())
-    auc, pred_result = fw.test(mb.model,
-                               ckpt="./checkpoint/" + mb.dataset_dir.split(os.sep)[-1] + "_" +
-                                    FLAGS.en + "_" + FLAGS.se, return_result=True)
+    auc, pred_result = fw.test(mb.model, ckpt="./checkpoint/" + mb.dataset_dir.split(os.sep)[-1]  # dataset_name
+                                              + '_' + FLAGS.en + "_" + FLAGS.se +  # encoder selector
+                                              (('_' + FLAGS.cl) if FLAGS.cl != 'softmax' else '') +  # classifier
+                                              (('_' + FLAGS.ac) if FLAGS.ac != 'relu' else '') +  # activation
+                                              (('_' + FLAGS.op) if FLAGS.op != 'sgd' else ''),  # optimizer
+                               return_result=True)
     with open('./test_result/' + mb.dataset_dir.split(os.sep)[-1]
               + "_" + FLAGS.en + "_" + FLAGS.se + "_pred.json", 'w') as outfile:
         json.dump(pred_result, outfile)

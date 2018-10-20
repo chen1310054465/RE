@@ -143,11 +143,10 @@ class framework:
 
         # Saver
         saver = tf.train.Saver(max_to_keep=None)
-        if pretrain_model is None:
-            self.sess.run(tf.global_variables_initializer())
-        else:
+        if pretrain_model is not None:
             saver.restore(self.sess, pretrain_model)
-
+        else:
+            self.sess.run(tf.global_variables_initializer())
         # Training
         best_metric = 0
         best_prec = None
@@ -205,7 +204,7 @@ class framework:
             if not_best_count >= 20:
                 break
 
-        summary_writer.add_summary(tf.summary.merge_all())
+        summary_writer.close()
         print("######")
         print("Finish training " + model_name)
         print("Best epoch auc = %f" % best_metric)

@@ -23,6 +23,10 @@ def train_loader():
 if __name__ == '__main__':
     mb.init()
     fw = framework(train_loader(), test_loader())
-    fw.train(mb.model, ckpt_dir="checkpoint",
-             model_name=mb.dataset_dir.split(os.sep)[-1] + "_" + FLAGS.en + "_" + FLAGS.se,
+    fw.train(mb.model, ckpt_dir="checkpoint",  # ckpt_dir
+             model_name=mb.dataset_dir.split(os.sep)[-1]  # dataset_name
+                        + '_' + FLAGS.en + "_" + FLAGS.se +  # encoder selector
+                        (('_' + FLAGS.cl) if FLAGS.cl != 'softmax' else '') +  # classifier
+                        (('_' + FLAGS.ac) if FLAGS.ac != 'relu' else '') +  # activation
+                        (('_' + FLAGS.op) if FLAGS.op != 'sgd' else ''),  # optimizer
              max_epoch=60, optimizer=mb.optimizer, gpu_nums=FLAGS.gn)
