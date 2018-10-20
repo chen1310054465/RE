@@ -52,7 +52,7 @@ def init(is_training=True):
 
 
 class model:
-    def __init__(self, dl, batch_size, max_len=120, is_training=True):
+    def __init__(self, data_loader, batch_size, max_len=120, is_training=True):
         self.word = tf.placeholder(dtype=tf.int32, shape=[None, max_len], name='word')
         self.pos1 = tf.placeholder(dtype=tf.int32, shape=[None, max_len], name='pos1')
         self.pos2 = tf.placeholder(dtype=tf.int32, shape=[None, max_len], name='pos2')
@@ -61,29 +61,29 @@ class model:
         self.label = tf.placeholder(dtype=tf.int32, shape=[batch_size], name='label')
         self.instance_label = tf.placeholder(dtype=tf.int32, shape=[None], name='instance_label')
         self.scope = tf.placeholder(dtype=tf.int32, shape=[batch_size, 2], name='scope')
-        self.data_loader = dl
+        self.data_loader = data_loader
         self.is_training = is_training
         self.keep_prob = 0.5 if is_training else 1.0
 
+        # embedding
+        wp_embedding = self._embedding()
+        # encoder_selector_classifier
+        self._encoder_selector_classifier(wp_embedding, reuse=False if FLAGS.ad else True)
+        # adversarial_training
+        self._adversarial(wp_embedding, max_len, FLAGS.ad)
+
+    def _encoder_selector_classifier(self, wp_embedding, reuse=True):
         with tf.variable_scope(FLAGS.en + "_" + FLAGS.se +
                                (('_' + FLAGS.cl) if FLAGS.cl != 'softmax' else '') +  # classifier
                                (('_' + FLAGS.ac) if FLAGS.ac != 'relu' else '') +  # activation
                                (('_' + FLAGS.op) if FLAGS.op != 'sgd' else ''),  # optimizer
-                               reuse=False if FLAGS.ad else True):
-            # embedding
-            wp_embedding = embedding.word_position_embedding(dl.word, dl.word_vec, self.pos1, self.pos2)
-            # encoder_selector
-            self._encoder_selector(wp_embedding)
-            # classifier
-            self._classifier()
-        # adversarial_training
-        self._adversarial(wp_embedding, max_len, FLAGS.ad)
+                               reuse=reuse):
+            x = self._encoder(wp_embedding)  # encoder
+            self._selector(x)  # selector
+            self._classifier()  # classifier
 
-    def _encoder_selector(self, wp_embedding):
-        # encoder
-        x = self._encoder(wp_embedding)
-        # selector
-        self._selector(x)
+    def _embedding(self):
+        return embedding.word_position_embedding(self.data_loader.word, self.data_loader.word_vec, self.pos1, self.pos2)
 
     def _encoder(self, wp_embedding):
         if FLAGS.en == "pcnn":
@@ -130,13 +130,7 @@ class model:
             perturb = tf.gradients(self._loss, wp_embedding)
             perturb = tf.reshape((0.01 * tf.stop_gradient(tf.nn.l2_normalize(perturb, dim=[0, 1, 2]))),
                                  [-1, max_len, wp_embedding.shape[-1]])
-            with tf.variable_scope(FLAGS.en + "_" + FLAGS.se +
-                                   (('_' + FLAGS.cl) if FLAGS.cl != 'softmax' else '') +  # classifier
-                                   (('_' + FLAGS.ac) if FLAGS.ac != 'relu' else '') +  # activation
-                                   (('_' + FLAGS.op) if FLAGS.op != 'sgd' else ''),  # optimizer
-                                   reuse=True):
-                self._encoder_selector(wp_embedding + perturb)
-                self._classifier()
+            self._encoder_selector_classifier(wp_embedding + perturb)
 
     def _get_weights_table(self):
         with tf.variable_scope("weights_table", reuse=tf.AUTO_REUSE):
