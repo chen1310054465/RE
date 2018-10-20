@@ -21,25 +21,26 @@ optimizer = tf.train.GradientDescentOptimizer
 activation = tf.nn.relu
 
 
-def init():
+def init(is_training=True):
     activations = {'sigmoid': tf.nn.sigmoid, 'tanh': tf.nn.tanh,
                    'relu': tf.nn.relu, 'leaky_relu': tf.nn.leaky_relu}
     optimizers = {'sgd': tf.train.GradientDescentOptimizer, 'momentum': tf.train.MomentumOptimizer,
                   'adagrad': tf.train.AdagradOptimizer, 'adadelta': tf.train.AdadeltaOptimizer,
                   'adam': tf.train.AdamOptimizer}
     if 'help' in sys.argv:
-        print('Usage: python3 ' + sys.argv[0] + ' [--dn dataset_name] [--en encoder] '
-              + '[--se selector] [--cl classifier] [--ac activation] '
-              + '[--op optimizer] [--ad adversarial_training] [--gn gpu_nums]')
+        print('Usage: python3 ' + sys.argv[0] + ' [--dn dataset_name] [--en encoder] [--se selector] '
+              + ('[--cl classifier] [--ac activation] [--op optimizer] [--ad adversarial_training] '
+                 + '[--gn gpu_nums]' if is_training else ''))
         print('*******************************args details******************************************')
         print('**  --dn: dataset_name: [nyt(New York Times dataset)]                              **')
         print('**  --en: encoder: [cnn pcnn rnn birnn]                                            **')
         print('**  --se: selector: [att ave max rl]                                               **')
-        print('**  --cl: classifier: [softmax soft_label]                                         **')
-        print('**  --ac: activation: ' + str([act for act in activations]) + '                    **')
-        print('**  --op: optimizer: ' + str([op for op in optimizers]) + '            **')
-        print('**  --ad: adversarial_training(whether add perturbation while training)            **')
-        print('**  --gn: gpu_nums(denotes num of gpu for training)                                **')
+        if is_training:
+            print('**  --cl: classifier: [softmax soft_label]                                         **')
+            print('**  --ac: activation: ' + str([act for act in activations]) + '                    **')
+            print('**  --op: optimizer: ' + str([op for op in optimizers]) + '            **')
+            print('**  --ad: adversarial_training(whether add perturbation while training)            **')
+            print('**  --gn: gpu_nums(denotes num of gpu for training)                                **')
         print('*************************************************************************************')
         exit()
 

@@ -19,7 +19,7 @@ def test_loader():
 
 
 if __name__ == '__main__':
-    mb.init()
+    mb.init(is_training=False)
     fw = framework(test_data_loader=test_loader())
     auc, pred_result = fw.test(mb.model, ckpt="./checkpoint/" + mb.dataset_dir.split(os.sep)[-1]  # dataset_name
                                               + '_' + FLAGS.en + "_" + FLAGS.se +  # encoder selector
