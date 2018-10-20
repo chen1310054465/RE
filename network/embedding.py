@@ -31,10 +31,11 @@ def pos_embedding(pos1, pos2, var_scope=None, pos_embedding_dim=5, max_length=12
         return x
 
 
-def word_position_embedding(word, word_vec_mat, pos1, pos2, var_scope=None, word_embedding_dim=50, pos_embedding_dim=5,
+def word_position_embedding(word, word_vec, pos1, pos2, var_scope=None, word_embedding_dim=50, pos_embedding_dim=5,
                             max_length=120, add_unk_and_blank=True):
-    w_embedding = word_embedding(word, word_vec_mat, var_scope=var_scope, word_embedding_dim=word_embedding_dim,
-                                 add_unk_and_blank=add_unk_and_blank)
-    p_embedding = pos_embedding(pos1, pos2, var_scope=var_scope, pos_embedding_dim=pos_embedding_dim,
-                                max_length=max_length)
-    return tf.concat([w_embedding, p_embedding], -1)
+    with tf.variable_scope(var_scope or 'embedding', reuse=tf.AUTO_REUSE):
+        w_embedding = word_embedding(word, word_vec, var_scope=var_scope, word_embedding_dim=word_embedding_dim,
+                                     add_unk_and_blank=add_unk_and_blank)
+        p_embedding = pos_embedding(pos1, pos2, var_scope=var_scope, pos_embedding_dim=pos_embedding_dim,
+                                    max_length=max_length)
+        return tf.concat([w_embedding, p_embedding], -1)

@@ -1,28 +1,31 @@
 import numpy as np
 import tensorflow as tf
+
 from framework import dropout
 
 
 def _pooling(x):
-    return tf.reduce_max(x, axis=-2)
+    with tf.variable_scope("pooling", reuse=tf.AUTO_REUSE):
+        return tf.reduce_max(x, axis=-2)
 
 
 def _piecewise_pooling(x, mask):
-    mask_embedding = tf.constant([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype=np.float32)
-    mask = tf.nn.embedding_lookup(mask_embedding, mask)
-    hidden_size = x.shape[-1]
-    x = tf.reduce_max(tf.expand_dims(mask * 100, 2) + tf.expand_dims(x, 3), axis=1) - 100
-    return tf.reshape(x, [-1, hidden_size * 3])
+    with tf.variable_scope("piecewise_pooling", reuse=tf.AUTO_REUSE):
+        mask_embedding = tf.constant([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype=np.float32)
+        mask = tf.nn.embedding_lookup(mask_embedding, mask)
+        hidden_size = x.shape[-1]
+        x = tf.reduce_max(tf.expand_dims(mask * 100, 2) + tf.expand_dims(x, 3), axis=1) - 100
+        return tf.reshape(x, [-1, hidden_size * 3])
 
 
 def _cnn_cell(x, hidden_size=230, kernel_size=3, stride_size=1):
-    x = tf.layers.conv1d(inputs=x,
-                         filters=hidden_size,
-                         kernel_size=kernel_size,
-                         strides=stride_size,
-                         padding='same',
-                         kernel_initializer=tf.contrib.layers.xavier_initializer())
-    return x
+    with tf.variable_scope("cnn_cell", reuse=tf.AUTO_REUSE):
+        return tf.layers.conv1d(inputs=x,
+                                filters=hidden_size,
+                                kernel_size=kernel_size,
+                                strides=stride_size,
+                                padding='same',
+                                kernel_initializer=tf.contrib.layers.xavier_initializer())
 
 
 def cnn(x, hidden_size=230, kernel_size=3, stride_size=1, activation=tf.nn.relu, var_scope=None, keep_prob=1.0):
@@ -44,16 +47,17 @@ def pcnn(x, mask, hidden_size=230, kernel_size=3, stride_size=1, activation=tf.n
 
 
 def _rnn_cell(hidden_size, cell_name='lstm'):
-    if isinstance(cell_name, list) or isinstance(cell_name, tuple):
-        if len(cell_name) == 1:
-            return _rnn_cell(hidden_size, cell_name[0])
-        cells = [_rnn_cell(hidden_size, c) for c in cell_name]
-        return tf.contrib.rnn.MultiRNNCell(cells, state_is_tuple=True)
-    if cell_name.lower() == 'lstm':
-        return tf.contrib.rnn.BasicLSTMCell(hidden_size, state_is_tuple=True)
-    elif cell_name.lower() == 'gru':
-        return tf.contrib.rnn.GRUCell(hidden_size)
-    raise NotImplementedError
+    with tf.variable_scope(cell_name, reuse=tf.AUTO_REUSE):
+        if isinstance(cell_name, list) or isinstance(cell_name, tuple):
+            if len(cell_name) == 1:
+                return _rnn_cell(hidden_size, cell_name[0])
+            cells = [_rnn_cell(hidden_size, c) for c in cell_name]
+            return tf.contrib.rnn.MultiRNNCell(cells, state_is_tuple=True)
+        if cell_name.lower() == 'lstm':
+            return tf.contrib.rnn.BasicLSTMCell(hidden_size, state_is_tuple=True)
+        elif cell_name.lower() == 'gru':
+            return tf.contrib.rnn.GRUCell(hidden_size)
+        raise NotImplementedError
 
 
 def rnn(x, length, hidden_size=230, cell_name='lstm', var_scope=None, keep_prob=1.0):

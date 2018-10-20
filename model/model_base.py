@@ -13,6 +13,7 @@ tf.flags.DEFINE_string('se', 'att', 'selector')
 tf.flags.DEFINE_string('cl', 'softmax', 'classifier')
 tf.flags.DEFINE_string('ac', 'relu', 'activation')
 tf.flags.DEFINE_string('op', 'sgd', 'optimizer')
+tf.flags.DEFINE_integer('ad', 0, 'adversarial training')
 tf.flags.DEFINE_integer('gn', 1, 'gpu_nums')
 FLAGS = tf.flags.FLAGS
 dataset_dir = os.path.join('origin_data', FLAGS.dn)
@@ -29,14 +30,15 @@ def init():
     if 'help' in sys.argv:
         print('Usage: python3 ' + sys.argv[0] + ' [--dn dataset_name] [--en encoder] '
               + '[--se selector] [--cl classifier] [--ac activation] '
-              + '[--op optimizer] [--gn gpu_nums]')
+              + '[--op optimizer] [--ad adversarial_training] [--gn gpu_nums]')
         print('*******************************args details******************************************')
-        print('**  --dn: dataset_name(nyt: New York Times dataset)                                **')
-        print('**  --en: encoder(such as: cnn pcnn rnn birnn)                                     **')
-        print('**  --se: selector(such as: att ave max)                                           **')
-        print('**  --cl: classifier(such as: softmax soft_label)                                  **')
-        print('**  --ac: activation(such as: ' + str([act for act in activations]) + ')           **')
-        print('**  --op: optimizer(such as: ' + str([op for op in optimizers]) + ')   **')
+        print('**  --dn: dataset_name: [nyt(New York Times dataset)]                              **')
+        print('**  --en: encoder: [cnn pcnn rnn birnn]                                            **')
+        print('**  --se: selector: [att ave max rl]                                               **')
+        print('**  --cl: classifier: [softmax soft_label]                                         **')
+        print('**  --ac: activation: ' + str([act for act in activations]) + '                    **')
+        print('**  --op: optimizer: ' + str([op for op in optimizers]) + '            **')
+        print('**  --ad: adversarial_training(whether add perturbation while training)            **')
         print('**  --gn: gpu_nums(denotes num of gpu for training)                                **')
         print('*************************************************************************************')
         exit()
@@ -48,39 +50,42 @@ def init():
         model.optimizer = optimizers[FLAGS.op]
 
 
-class model_base:
-    def __init__(self, word_vec, rel_tot, batch_size, max_length=120):
-        self.word = tf.placeholder(dtype=tf.int32, shape=[None, max_length], name='word')
-        self.pos1 = tf.placeholder(dtype=tf.int32, shape=[None, max_length], name='pos1')
-        self.pos2 = tf.placeholder(dtype=tf.int32, shape=[None, max_length], name='pos2')
+class model:
+    def __init__(self, dl, batch_size, max_len=120, is_training=True):
+        self.word = tf.placeholder(dtype=tf.int32, shape=[None, max_len], name='word')
+        self.pos1 = tf.placeholder(dtype=tf.int32, shape=[None, max_len], name='pos1')
+        self.pos2 = tf.placeholder(dtype=tf.int32, shape=[None, max_len], name='pos2')
+        self.mask = tf.placeholder(dtype=tf.int32, shape=[None, max_len], name="mask") if "pcnn" in FLAGS.en else None
         self.length = tf.placeholder(dtype=tf.int32, shape=[None], name='length')
         self.label = tf.placeholder(dtype=tf.int32, shape=[batch_size], name='label')
         self.instance_label = tf.placeholder(dtype=tf.int32, shape=[None], name='instance_label')
         self.scope = tf.placeholder(dtype=tf.int32, shape=[batch_size, 2], name='scope')
-        self.word_vec = word_vec
-        self.rel_tot = rel_tot
-
-    def loss(self):
-        raise NotImplementedError
-
-    def logit(self):
-        raise NotImplementedError
-
-
-class model(model_base):
-    def __init__(self, data_loader, batch_size, max_length=120, is_training=True):
-        model_base.__init__(self, data_loader.word_vec, data_loader.rel_tot, batch_size, max_length)
+        self.data_loader = dl
         self.is_training = is_training
-        self.keep_prob = 1.0
-        if is_training:
-            self.keep_prob = 0.5
+        self.keep_prob = 0.5 if is_training else 1.0
 
-        # embedding
-        wp_embedding = embedding.word_position_embedding(self.word, self.word_vec, self.pos1, self.pos2)
+        with tf.variable_scope(FLAGS.en + "_" + FLAGS.se +
+                               (('_' + FLAGS.cl) if FLAGS.cl != 'softmax' else '') +  # classifier
+                               (('_' + FLAGS.ac) if FLAGS.ac != 'relu' else '') +  # activation
+                               (('_' + FLAGS.op) if FLAGS.op != 'sgd' else ''),  # optimizer
+                               reuse=False if FLAGS.ad else True):
+            # embedding
+            wp_embedding = embedding.word_position_embedding(dl.word, dl.word_vec, self.pos1, self.pos2)
+            # encoder_selector
+            self._encoder_selector(wp_embedding)
+            # classifier
+            self._classifier()
+        # adversarial_training
+        self._adversarial(wp_embedding, max_len, FLAGS.ad)
 
+    def _encoder_selector(self, wp_embedding):
         # encoder
+        x = self._encoder(wp_embedding)
+        # selector
+        self._selector(x)
+
+    def _encoder(self, wp_embedding):
         if FLAGS.en == "pcnn":
-            self.mask = tf.placeholder(dtype=tf.int32, shape=[None, max_length], name="mask")
             x = encoder.pcnn(wp_embedding, self.mask, activation=activation, keep_prob=self.keep_prob)
         elif FLAGS.en == "cnn":
             x = encoder.cnn(wp_embedding, activation=activation, keep_prob=self.keep_prob)
@@ -90,31 +95,59 @@ class model(model_base):
             x = encoder.birnn(wp_embedding, self.length, keep_prob=self.keep_prob)
         else:
             raise NotImplementedError
+        return x
 
-        # selector
+    def _selector(self, x):
         if FLAGS.se == "att":
             self._logit, self._repre = selector.bag_attention(x, self.scope, self.instance_label,
-                                                              self.rel_tot, is_training, keep_prob=self.keep_prob)
+                                                              self.data_loader.rel_tot, self.is_training,
+                                                              keep_prob=self.keep_prob)
         elif FLAGS.se == "ave":
-            self._logit, self._repre = selector.bag_average(x, self.scope, self.rel_tot, is_training,
+            self._logit, self._repre = selector.bag_average(x, self.scope, self.data_loader.rel_tot, self.is_training,
                                                             keep_prob=self.keep_prob)
         elif FLAGS.se == "max":
             self._logit, self._repre = selector.bag_maximum(x, self.scope, self.instance_label,
-                                                            self.rel_tot, is_training, keep_prob=self.keep_prob)
+                                                            self.data_loader.rel_tot, self.is_training,
+                                                            keep_prob=self.keep_prob)
         else:
             raise NotImplementedError
 
-        if is_training:
-            # classifier
+    def _classifier(self):
+        if self.is_training:
             if FLAGS.cl == "softmax":
-                self._loss = classifier.softmax_cross_entropy(self._logit, self.label, self.rel_tot,
-                                                              weights_table=self.get_weights_table(data_loader))
+                self._loss = classifier.softmax_cross_entropy(self._logit, self.label, self.data_loader.rel_tot,
+                                                              weights_table=self._get_weights_table())
             elif FLAGS.cl == "soft_label":
-                self._loss = classifier.soft_label_softmax_cross_entropy(self._logit, self.label, self.rel_tot,
-                                                                         weights_table=self.get_weights_table(
-                                                                             data_loader))
+                self._loss = classifier.soft_label_softmax_cross_entropy(self._logit, self.label,
+                                                                         self.data_loader.rel_tot,
+                                                                         weights_table=self._get_weights_table())
             else:
                 raise NotImplementedError
+
+    def _adversarial(self, wp_embedding, max_len, add_adversarial):
+        if add_adversarial:
+            perturb = tf.gradients(self._loss, wp_embedding)
+            perturb = tf.reshape((0.01 * tf.stop_gradient(tf.nn.l2_normalize(perturb, dim=[0, 1, 2]))),
+                                 [-1, max_len, wp_embedding.shape[-1]])
+            with tf.variable_scope(FLAGS.en + "_" + FLAGS.se +
+                                   (('_' + FLAGS.cl) if FLAGS.cl != 'softmax' else '') +  # classifier
+                                   (('_' + FLAGS.ac) if FLAGS.ac != 'relu' else '') +  # activation
+                                   (('_' + FLAGS.op) if FLAGS.op != 'sgd' else ''),  # optimizer
+                                   reuse=True):
+                self._encoder_selector(wp_embedding + perturb)
+                self._classifier()
+
+    def _get_weights_table(self):
+        with tf.variable_scope("weights_table", reuse=tf.AUTO_REUSE):
+            print("Calculating weights_table...")
+            _weights_table = np.zeros(self.data_loader.rel_tot, dtype=np.float32)
+            for i in range(len(self.data_loader.data_label)):
+                _weights_table[self.data_loader.data_label[i]] += 1.0
+            _weights_table = 1 / (_weights_table ** 0.05 + 1e-20)
+            weights_table = tf.get_variable(name='weights_table', dtype=tf.float32, trainable=False,
+                                            initializer=_weights_table)
+            print("Finish calculating")
+        return weights_table
 
     def loss(self):
         return self._loss
@@ -124,15 +157,3 @@ class model(model_base):
 
     def repre(self):
         return self._repre
-
-    def get_weights_table(self, data_loader):
-        with tf.variable_scope("weights_table", reuse=tf.AUTO_REUSE):
-            print("Calculating weights_table...")
-            _weights_table = np.zeros(self.rel_tot, dtype=np.float32)
-            for i in range(len(data_loader.data_label)):
-                _weights_table[data_loader.data_label[i]] += 1.0
-            _weights_table = 1 / (_weights_table ** 0.05 + 1e-20)
-            weights_table = tf.get_variable(name='weights_table', dtype=tf.float32, trainable=False,
-                                            initializer=_weights_table)
-            print("Finish calculating")
-        return weights_table
