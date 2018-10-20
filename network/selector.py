@@ -32,8 +32,7 @@ def _attention_test_logit(x, rel_tot, var_scope=None):
 def instance(x, rel_tot, var_scope=None, keep_prob=1.0):
     with tf.variable_scope(var_scope or "instance", reuse=tf.AUTO_REUSE):
         x = dropout(x, keep_prob)
-        x = _logit(x, rel_tot)
-    return x
+        return _logit(x, rel_tot), x
 
 
 def bag_attention(x, scope, query, rel_tot, is_training, var_scope=None, dropout_before=False, keep_prob=1.0):
