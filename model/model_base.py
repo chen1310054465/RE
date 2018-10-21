@@ -65,6 +65,9 @@ class model:
         self.is_training = is_training
         self.keep_prob = 0.5 if is_training else 1.0
 
+        self._network(max_len)
+
+    def _network(self, max_len):
         # embedding
         wp_embedding = self._embedding()
         # encoder_selector_classifier
