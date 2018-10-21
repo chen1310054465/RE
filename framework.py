@@ -127,10 +127,10 @@ class framework:
                 with tf.name_scope("gpu_%d" % gpu_id):
                     cur_model = model(self.train_data_loader, self.train_data_loader.batch_size // gpu_nums,
                                       self.train_data_loader.max_length)
-                    tower_grads.append(optimizer.compute_gradients(cur_model.loss()))
+                    tower_grads.append(optimizer.compute_gradients(cur_model.loss))
                     tower_models.append(cur_model)
-                    tf.add_to_collection("loss", cur_model.loss())
-                    tf.add_to_collection("train_logit", cur_model.logit())
+                    tf.add_to_collection("loss", cur_model.loss)
+                    tf.add_to_collection("train_logit", cur_model.logit)
 
         loss_collection = tf.get_collection("loss")
         loss = tf.add_n(loss_collection) / len(loss_collection)
@@ -243,7 +243,7 @@ class framework:
         pred_result = []
 
         for i, batch_data in enumerate(self.test_data_loader):
-            iter_logit = self.one_step(self.sess, model, batch_data, [model.logit()])[0]
+            iter_logit = self.one_step(self.sess, model, batch_data, [model.logit])[0]
             iter_output = iter_logit.argmax(-1)
             iter_correct = (iter_output == batch_data['label']).sum()
             iter_not_na_correct = np.logical_and(iter_output == batch_data['label'], batch_data['label'] != 0).sum()
