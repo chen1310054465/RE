@@ -25,6 +25,8 @@
         <list>
           <option value="Document_pb2.Relation.*" />
           <option value="bool.sum" />
+          <option value="tensorflow.nn.dynamic_rnn" />
+          <option value="tensorflow.nn.bidirectional_dynamic_rnn" />
         </list>
       </option>
     </inspection_tool>

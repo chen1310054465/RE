@@ -64,7 +64,7 @@ def rnn(x, length, hidden_size=230, cell_name='lstm', var_scope=None, keep_prob=
     with tf.variable_scope(var_scope or "rnn", reuse=tf.AUTO_REUSE):
         x = dropout(x, keep_prob)
         cell = _rnn_cell(hidden_size, cell_name)
-        _, states = tf.contrib.dynamic_rnn(cell, x, sequence_length=length, dtype=tf.float32, scope='dynamic_rnn')
+        _, states = tf.nn.dynamic_rnn(cell, x, sequence_length=length, dtype=tf.float32, scope='dynamic_rnn')
         if isinstance(states, tuple):
             states = states[0]
         return states
@@ -75,7 +75,7 @@ def birnn(x, length, hidden_size=230, cell_name='lstm', var_scope=None, keep_pro
         x = dropout(x, keep_prob)
         fw_cell = _rnn_cell(hidden_size, cell_name)
         bw_cell = _rnn_cell(hidden_size, cell_name)
-        _, states = tf.contrib.bidirectional_dynamic_rnn(fw_cell, bw_cell, x, sequence_length=length, dtype=tf.float32,
+        _, states = tf.nn.bidirectional_dynamic_rnn(fw_cell, bw_cell, x, sequence_length=length, dtype=tf.float32,
                                                          scope='dynamic_bi_rnn')
         fw_states, bw_states = states
         if isinstance(fw_states, tuple):
