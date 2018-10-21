@@ -52,11 +52,11 @@ def _rnn_cell(hidden_size, cell_name='lstm'):
             if len(cell_name) == 1:
                 return _rnn_cell(hidden_size, cell_name[0])
             cells = [_rnn_cell(hidden_size, c) for c in cell_name]
-            return tf.contrib.rnn.MultiRNNCell(cells, state_is_tuple=True)
+            return tf.nn.rnn_cell.MultiRNNCell(cells, state_is_tuple=True)
         if cell_name.lower() == 'lstm':
-            return tf.contrib.rnn.BasicLSTMCell(hidden_size, state_is_tuple=True)
+            return tf.nn.rnn_cell.LSTMCell(hidden_size, state_is_tuple=True)
         elif cell_name.lower() == 'gru':
-            return tf.contrib.rnn.GRUCell(hidden_size)
+            return tf.nn.rnn_cell.GRUCell(hidden_size)
         raise NotImplementedError
 
 
