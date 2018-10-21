@@ -73,7 +73,7 @@ class framework:
                 model.instance_label: batch_data['instance_label'],
                 model.scope: batch_data['scope'],
             })
-            if 'mask' in batch_data and hasattr(model, "mask"):
+            if 'mask' in batch_data and model.mask is not None:  # hasattr(model, "mask"):
                 feed_dict.update({model.mask: batch_data['mask']})
             batch_label.append(batch_data['label'])
         result = sess.run(run_array, feed_dict)
