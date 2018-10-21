@@ -90,10 +90,15 @@ class model:
             x = encoder.pcnn(wp_embedding, self.mask, activation=activation, keep_prob=self.keep_prob)
         elif FLAGS.en == "cnn":
             x = encoder.cnn(wp_embedding, activation=activation, keep_prob=self.keep_prob)
-        elif FLAGS.en == "rnn":
-            x = encoder.rnn(wp_embedding, self.length, keep_prob=self.keep_prob)
-        elif FLAGS.en == "birnn":
-            x = encoder.birnn(wp_embedding, self.length, keep_prob=self.keep_prob)
+        elif "rnn" in FLAGS.en:
+            ens = FLAGS.en.split('_')
+            cell_name = ens[1] if len(ens) > 1 else "lstm"
+            if ens[0] == "rnn":
+                x = encoder.rnn(wp_embedding, self.length, cell_name=cell_name, keep_prob=self.keep_prob)
+            elif ens[0] == "birnn":
+                x = encoder.birnn(wp_embedding, self.length, cell_name=cell_name, keep_prob=self.keep_prob)
+            else:
+                raise NotImplementedError
         else:
             raise NotImplementedError
         return x
