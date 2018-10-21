@@ -83,7 +83,7 @@ class model:
             self._classifier()  # classifier
 
     def _embedding(self):
-        return embedding.word_position_embedding(self.data_loader.word, self.data_loader.word_vec, self.pos1, self.pos2)
+        return embedding.word_position_embedding(self.word, self.data_loader.word_vec, self.pos1, self.pos2)
 
     def _encoder(self, wp_embedding):
         if FLAGS.en == "pcnn":
@@ -110,6 +110,8 @@ class model:
             self._logit, self._repre = selector.bag_maximum(x, self.scope, self.instance_label,
                                                             self.data_loader.rel_tot, self.is_training,
                                                             keep_prob=self.keep_prob)
+        elif FLAGS.se == "instance":
+            self._logit, self._repre = selector.instance(x, self.data_loader.rel_tot, keep_prob=self.keep_prob)
         else:
             raise NotImplementedError
 
