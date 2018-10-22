@@ -17,8 +17,8 @@ tf.flags.DEFINE_integer('ad', 0, 'adversarial training')
 tf.flags.DEFINE_integer('gn', 1, 'gpu_nums')
 FLAGS = tf.flags.FLAGS
 dataset_dir = os.path.join('origin_data', FLAGS.dn)
-optimizer = tf.train.GradientDescentOptimizer
-activation = tf.nn.relu
+optimizer = tf.train.GradientDescentOptimizer  # optimizer
+activation = tf.nn.relu  # activation
 
 
 def init(is_training=True):
@@ -34,7 +34,7 @@ def init(is_training=True):
         print('*******************************args details******************************************')
         print('**  --dn: dataset_name: [nyt(New York Times dataset)]                              **')
         print('**  --en: encoder: [cnn pcnn rnn birnn rnn_gru birnn_gru                           **')
-        print('**  --se: selector: [att ave max att_rl ave_rl max_rl]                             **')
+        print('**  --se: selector: [instance att ave max att_rl ave_rl max_rl]                    **')
         if is_training:
             print('**  --cl: classifier: [softmax soft_label]                                         **')
             print('**  --ac: activation: ' + str([act for act in activations]) + '                    **')
@@ -58,6 +58,7 @@ class model:
         self.max_len = data_loader.max_length
         self.keep_prob = 0.5 if is_training else 1.0
         batch_size = data_loader.batch_size // FLAGS.gn if is_training else data_loader.batch_size
+        self.hidden_size = 230
         en = FLAGS.en
 
         self.word = tf.placeholder(dtype=tf.int32, shape=[None, self.max_len], name='word')
@@ -72,19 +73,21 @@ class model:
         self._network()
 
     def _network(self):
-        # embedding
-        self.embedding = self._embedding()
-        # encoder_selector_classifier
-        self._encoder_selector_classifier(reuse=False if FLAGS.ad else True)
-        # adversarial_training
-        self._adversarial()
-
-    def _encoder_selector_classifier(self, reuse=True):
-        with tf.variable_scope(FLAGS.en + "_" + FLAGS.se +
+        with tf.variable_scope("re_" + FLAGS.en + "_" + FLAGS.se +
                                (('_' + FLAGS.cl) if FLAGS.cl != 'softmax' else '') +  # classifier
                                (('_' + FLAGS.ac) if FLAGS.ac != 'relu' else '') +  # activation
                                (('_' + FLAGS.op) if FLAGS.op != 'sgd' else ''),  # optimizer
-                               reuse=reuse):
+                               reuse=tf.AUTO_REUSE):
+            # embedding
+            self.embedding = self._embedding()
+            # encoder_selector_classifier
+            self._encoder_selector_classifier(reuse=False if FLAGS.ad else True)
+            # adversarial_training
+            self._adversarial()
+
+    def _encoder_selector_classifier(self, reuse=True):
+        with tf.variable_scope(FLAGS.en + "_" + FLAGS.se +
+                               (('_' + FLAGS.cl) if FLAGS.cl != 'softmax' else ''), reuse=reuse):
             self._encoder()  # encoder
             self._selector()  # selector
             self._classifier()  # classifier
@@ -94,16 +97,20 @@ class model:
 
     def _encoder(self):
         if FLAGS.en == "pcnn":
-            self.encoder = encoder.pcnn(self.embedding, self.mask, activation=activation, keep_prob=self.keep_prob)
+            self.encoder = encoder.pcnn(self.embedding, self.mask, self.hidden_size, activation=activation,
+                                        keep_prob=self.keep_prob)
         elif FLAGS.en == "cnn":
-            self.encoder = encoder.cnn(self.embedding, activation=activation, keep_prob=self.keep_prob)
+            self.encoder = encoder.cnn(self.embedding, self.hidden_size, activation=activation,
+                                       keep_prob=self.keep_prob)
         elif "rnn" in FLAGS.en:
             ens = FLAGS.en.split('_')
-            cn = ens[1] if len(ens) > 1 else "lstm"
+            cell_name = ens[1] if len(ens) > 1 else "lstm"
             if ens[0] == "rnn":
-                self.encoder = encoder.rnn(self.embedding, self.length, cell_name=cn, keep_prob=self.keep_prob)
+                self.encoder = encoder.rnn(self.embedding, self.length, self.hidden_size, cell_name=cell_name,
+                                           keep_prob=self.keep_prob)
             elif ens[0] == "birnn":
-                self.encoder = encoder.birnn(self.embedding, self.length, cell_name=cn, keep_prob=self.keep_prob)
+                self.encoder = encoder.birnn(self.embedding, self.length, self.hidden_size, cell_name=cell_name,
+                                             keep_prob=self.keep_prob)
             else:
                 raise NotImplementedError
         else:
