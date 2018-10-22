@@ -140,7 +140,7 @@ class model:
                 raise NotImplementedError
 
     def _adversarial(self):
-        if FLAGS.ad:
+        if self.is_training and FLAGS.ad:
             perturb = tf.gradients(self.loss, self.embedding)
             perturb = tf.reshape((0.01 * tf.stop_gradient(tf.nn.l2_normalize(perturb, dim=[0, 1, 2]))),
                                  [-1, self.max_len, self.embedding.shape[-1]])
