@@ -117,18 +117,22 @@ class model:
             raise NotImplementedError
 
     def _selector(self):
-        if FLAGS.se == "att":
+        ses = FLAGS.se.split('_')
+        se, rl = ses[0], ses[1] if len(ses) > 1 else (ses[0], None)
+        if rl is not None and rl != 'rl':
+            raise NotImplementedError
+        if se == "att":
             self.logit, self.repre = selector.bag_attention(self.encoder, self.scope, self.instance_label,
                                                             self.data_loader.rel_tot, self.is_training,
                                                             keep_prob=self.keep_prob)
-        elif FLAGS.se == "ave":
+        elif se == "ave":
             self.logit, self.repre = selector.bag_average(self.encoder, self.scope, self.data_loader.rel_tot,
                                                           self.is_training, keep_prob=self.keep_prob)
-        elif FLAGS.se == "max":
+        elif se == "max":
             self.logit, self.repre = selector.bag_maximum(self.encoder, self.scope, self.instance_label,
                                                           self.data_loader.rel_tot, self.is_training,
                                                           keep_prob=self.keep_prob)
-        elif FLAGS.se == "instance":
+        elif se == "instance":
             self.logit, self.repre = selector.instance(self.encoder, self.data_loader.rel_tot,
                                                        keep_prob=self.keep_prob)
         else:
