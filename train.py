@@ -28,5 +28,6 @@ if __name__ == '__main__':
                         + '_' + FLAGS.en + "_" + FLAGS.se +  # encoder selector
                         (('_' + FLAGS.cl) if FLAGS.cl != 'softmax' else '') +  # classifier
                         (('_' + FLAGS.ac) if FLAGS.ac != 'relu' else '') +  # activation
-                        (('_' + FLAGS.op) if FLAGS.op != 'sgd' else ''),  # optimizer
+                        (('_' + FLAGS.op) if FLAGS.op != 'sgd' else '') +  # optimizer
+                        ('_ad' if FLAGS.ad else ''),  # adversarial_training
              max_epoch=60, optimizer=mb.optimizer, gpu_nums=FLAGS.gn)
