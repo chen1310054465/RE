@@ -33,8 +33,8 @@ def init(is_training=True):
                  + '[--gn gpu_nums]' if is_training else ''))
         print('*******************************args details******************************************')
         print('**  --dn: dataset_name: [nyt(New York Times dataset)]                              **')
-        print('**  --en: encoder: [cnn pcnn rnn birnn]                                            **')
-        print('**  --se: selector: [att ave max rl]                                               **')
+        print('**  --en: encoder: [cnn pcnn rnn birnn rnn_gru birnn_gru                           **')
+        print('**  --se: selector: [att ave max att_rl ave_rl max_rl]                             **')
         if is_training:
             print('**  --cl: classifier: [softmax soft_label]                                         **')
             print('**  --ac: activation: ' + str([act for act in activations]) + '                    **')
@@ -52,19 +52,22 @@ def init(is_training=True):
 
 
 class model:
-    def __init__(self, data_loader, batch_size, max_len=120, is_training=True):
-        self.word = tf.placeholder(dtype=tf.int32, shape=[None, max_len], name='word')
-        self.pos1 = tf.placeholder(dtype=tf.int32, shape=[None, max_len], name='pos1')
-        self.pos2 = tf.placeholder(dtype=tf.int32, shape=[None, max_len], name='pos2')
-        self.mask = tf.placeholder(dtype=tf.int32, shape=[None, max_len], name="mask") if "pcnn" in FLAGS.en else None
+    def __init__(self, data_loader, is_training=True):
+        self.data_loader = data_loader
+        self.is_training = is_training
+        self.max_len = data_loader.max_length
+        self.keep_prob = 0.5 if is_training else 1.0
+        batch_size = data_loader.batch_size // FLAGS.gn if is_training else data_loader.batch_size
+        en = FLAGS.en
+
+        self.word = tf.placeholder(dtype=tf.int32, shape=[None, self.max_len], name='word')
+        self.pos1 = tf.placeholder(dtype=tf.int32, shape=[None, self.max_len], name='pos1')
+        self.pos2 = tf.placeholder(dtype=tf.int32, shape=[None, self.max_len], name='pos2')
+        self.mask = tf.placeholder(dtype=tf.int32, shape=[None, self.max_len], name="mask") if 'pcnn' in en else None
         self.length = tf.placeholder(dtype=tf.int32, shape=[None], name='length')
         self.label = tf.placeholder(dtype=tf.int32, shape=[batch_size], name='label')
         self.instance_label = tf.placeholder(dtype=tf.int32, shape=[None], name='instance_label')
         self.scope = tf.placeholder(dtype=tf.int32, shape=[batch_size, 2], name='scope')
-        self.max_len = max_len
-        self.data_loader = data_loader
-        self.is_training = is_training
-        self.keep_prob = 0.5 if is_training else 1.0
 
         self._network()
 
@@ -96,11 +99,11 @@ class model:
             self.encoder = encoder.cnn(self.embedding, activation=activation, keep_prob=self.keep_prob)
         elif "rnn" in FLAGS.en:
             ens = FLAGS.en.split('_')
-            cell_name = ens[1] if len(ens) > 1 else "lstm"
+            cn = ens[1] if len(ens) > 1 else "lstm"
             if ens[0] == "rnn":
-                self.encoder = encoder.rnn(self.embedding, self.length, cell_name=cell_name, keep_prob=self.keep_prob)
+                self.encoder = encoder.rnn(self.embedding, self.length, cell_name=cn, keep_prob=self.keep_prob)
             elif ens[0] == "birnn":
-                self.encoder = encoder.birnn(self.embedding, self.length, cell_name=cell_name, keep_prob=self.keep_prob)
+                self.encoder = encoder.birnn(self.embedding, self.length, cell_name=cn, keep_prob=self.keep_prob)
             else:
                 raise NotImplementedError
         else:

@@ -125,8 +125,7 @@ class framework:
         for gpu_id in range(gpu_nums):
             with tf.device("/gpu:%d" % gpu_id):
                 with tf.name_scope("gpu_%d" % gpu_id):
-                    cur_model = model(self.train_data_loader, self.train_data_loader.batch_size // gpu_nums,
-                                      self.train_data_loader.max_length)
+                    cur_model = model(self.train_data_loader)
                     tower_grads.append(optimizer.compute_gradients(cur_model.loss))
                     tower_models.append(cur_model)
                     tf.add_to_collection("loss", cur_model.loss)
@@ -230,7 +229,7 @@ class framework:
         print("Testing...")
         if self.sess is None:
             self.sess = tf.Session()
-        model = model(self.test_data_loader, self.test_data_loader.batch_size, self.test_data_loader.max_length, is_training=False)
+        model = model(self.test_data_loader, is_training=False)
         if not ckpt is None:
             saver = tf.train.Saver()
             saver.restore(self.sess, ckpt)
