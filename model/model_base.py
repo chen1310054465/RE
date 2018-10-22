@@ -74,7 +74,7 @@ class model:
         # encoder_selector_classifier
         self._encoder_selector_classifier(reuse=False if FLAGS.ad else True)
         # adversarial_training
-        self._adversarial(FLAGS.ad)
+        self._adversarial()
 
     def _encoder_selector_classifier(self, reuse=True):
         with tf.variable_scope(FLAGS.en + "_" + FLAGS.se +
@@ -136,8 +136,8 @@ class model:
             else:
                 raise NotImplementedError
 
-    def _adversarial(self, add_adversarial):
-        if add_adversarial:
+    def _adversarial(self):
+        if FLAGS.ad:
             perturb = tf.gradients(self.loss, self.embedding)
             perturb = tf.reshape((0.01 * tf.stop_gradient(tf.nn.l2_normalize(perturb, dim=[0, 1, 2]))),
                                  [-1, self.max_len, self.embedding.shape[-1]])
