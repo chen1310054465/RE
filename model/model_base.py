@@ -8,7 +8,7 @@ from network import embedding, encoder, selector, classifier
 
 FLAGS = tf.flags.FLAGS
 # define some configurable parameter
-tf.flags.DEFINE_string('dn', 'nyt', 'dataset_name')
+tf.flags.DEFINE_string('dn', 'nyt', 'dataset name')
 tf.flags.DEFINE_string('en', 'pcnn', 'encoder')
 tf.flags.DEFINE_string('se', 'att', 'selector')
 tf.flags.DEFINE_string('cl', 'softmax', 'classifier')
@@ -16,11 +16,15 @@ tf.flags.DEFINE_string('ac', 'relu', 'activation')
 tf.flags.DEFINE_string('op', 'sgd', 'optimizer')
 tf.flags.DEFINE_integer('ad', 0, 'adversarial training')
 tf.flags.DEFINE_integer('gn', 1, 'gpu_nums')
+tf.flags.DEFINE_string('pm', None, 'pretrain model')
 # define some specified parameter
+tf.flags.DEFINE_integer('max_epoch', 60, 'max epoch')
+tf.flags.DEFINE_integer('test_epoch', 1, 'test epoch')
 tf.flags.DEFINE_integer('hidden_size', 230, 'hidden size')
-tf.flags.DEFINE_float('lr', 0.5, 'learning rate')
+tf.flags.DEFINE_float('learning_rate', 0.5, 'learning rate')
 tf.flags.DEFINE_string('ckpt_dir', './checkpoint', 'checkpoint dir')
 tf.flags.DEFINE_string('summary_dir', './summary', 'summary dir')
+tf.flags.DEFINE_string('test_result_dir', './test_result', 'test result dir')
 tf.flags.DEFINE_string('dataset_dir', os.path.join('origin_data', FLAGS.dn), 'origin dataset dir')
 tf.flags.DEFINE_string('model_name', (FLAGS.dn + '_' + FLAGS.en + "_" + FLAGS.se +  # dataset_name encoder selector
                                       (('_' + FLAGS.cl) if FLAGS.cl != 'softmax' else '') +  # classifier
@@ -42,10 +46,10 @@ def init(is_training=True):
     if 'help' in sys.argv:
         print('Usage: python3 ' + sys.argv[0] + ' [--dn dataset_name] [--en encoder] [--se selector] '
               + ('[--cl classifier] [--ac activation] [--op optimizer] [--ad adversarial_training] '
-                 + '[--gn gpu_nums]' if is_training else ''))
+                 + '[--gn gpu_nums] [--pm pretrain_model]' if is_training else ''))
         print('*******************************args details******************************************')
         print('**  --dn: dataset_name: [nyt(New York Times dataset)]                              **')
-        print('**  --en: encoder: [cnn pcnn rnn birnn rnn_gru birnn_gru                           **')
+        print('**  --en: encoder: [cnn pcnn rnn birnn rnn_gru birnn_gru]                          **')
         print('**  --se: selector: [instance att ave max att_rl ave_rl max_rl]                    **')
         if is_training:
             print('**  --cl: classifier: [softmax soft_label]                                         **')
@@ -53,6 +57,7 @@ def init(is_training=True):
             print('**  --op: optimizer: ' + str([op for op in optimizers]) + '            **')
             print('**  --ad: adversarial_training(whether add perturbation while training)            **')
             print('**  --gn: gpu_nums(denotes num of gpu for training)                                **')
+            print('**  --pm: pretrain_model(denotes the name of model to pretrain, such as:pcnn_att)  **')
         print('*************************************************************************************')
         exit()
 

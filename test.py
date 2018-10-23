@@ -25,5 +25,5 @@ if __name__ == '__main__':
 
     fw = framework(test_data_loader=test_loader())
     auc, pred_result = fw.test(model, model_name=FLAGS.model_name, return_result=True)
-    with open('./test_result/' + FLAGS.model_name + "_pred.json", 'w') as of:
+    with open(FLAGS.test_result_dir + FLAGS.model_name + "_pred.json", 'w') as of:
         json.dump(pred_result, of)

@@ -26,5 +26,8 @@ if __name__ == '__main__':
     model = mr.model_rl if 'rl' in FLAGS.se else mb.model
 
     fw = framework(train_loader(), test_loader())
-    fw.train(model, model_name=FLAGS.model_name, max_epoch=60, optimizer=mb.optimizer, gpu_nums=FLAGS.gn)
+    fw.train(model,  optimizer=mb.optimizer)
 
+    if isinstance(model, mr.model_rl):
+        fw.pretrain_policy_agent(max_epoch=1)
+        fw.train_rl(max_epoch=2)
