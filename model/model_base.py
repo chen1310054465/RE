@@ -128,7 +128,7 @@ class model:
 
     def _selector(self):
         ses = FLAGS.se.split('_')
-        se, rl = ses[0], ses[1] if len(ses) > 1 else (ses[0], None)
+        se, rl = (ses[0], ses[1]) if len(ses) > 1 else (ses[0], None)
         if rl is not None and rl != 'rl':
             raise NotImplementedError
         if se == "att":
