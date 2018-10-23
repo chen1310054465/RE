@@ -29,5 +29,9 @@ if __name__ == '__main__':
                                               ('_ad' if FLAGS.ad else ''),  # adversarial_training
                                return_result=True)
     with open('./test_result/' + mb.dataset_dir.split(os.sep)[-1]
-              + "_" + FLAGS.en + "_" + FLAGS.se + "_pred.json", 'w') as outfile:
+              + '_' + FLAGS.en + "_" + FLAGS.se +  # encoder selector
+              (('_' + FLAGS.cl) if FLAGS.cl != 'softmax' else '') +  # classifier
+              (('_' + FLAGS.ac) if FLAGS.ac != 'relu' else '') +  # activation
+              (('_' + FLAGS.op) if FLAGS.op != 'sgd' else '') +  # optimizer
+              ('_ad' if FLAGS.ad else '') + "_pred.json", 'w') as outfile:
         json.dump(pred_result, outfile)
