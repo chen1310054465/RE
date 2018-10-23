@@ -6,7 +6,8 @@ import tensorflow as tf
 
 from network import embedding, encoder, selector, classifier
 
-# define some parameter
+FLAGS = tf.flags.FLAGS
+# define some configurable parameter
 tf.flags.DEFINE_string('dn', 'nyt', 'dataset_name')
 tf.flags.DEFINE_string('en', 'pcnn', 'encoder')
 tf.flags.DEFINE_string('se', 'att', 'selector')
@@ -15,13 +16,24 @@ tf.flags.DEFINE_string('ac', 'relu', 'activation')
 tf.flags.DEFINE_string('op', 'sgd', 'optimizer')
 tf.flags.DEFINE_integer('ad', 0, 'adversarial training')
 tf.flags.DEFINE_integer('gn', 1, 'gpu_nums')
-FLAGS = tf.flags.FLAGS
-dataset_dir = os.path.join('origin_data', FLAGS.dn)
-optimizer = tf.train.GradientDescentOptimizer  # optimizer
+# define some specified parameter
+tf.flags.DEFINE_integer('hidden_size', 230, 'hidden size')
+tf.flags.DEFINE_float('lr', 0.5, 'learning rate')
+tf.flags.DEFINE_string('ckpt_dir', './checkpoint', 'checkpoint dir')
+tf.flags.DEFINE_string('summary_dir', './summary', 'summary dir')
+tf.flags.DEFINE_string('dataset_dir', os.path.join('origin_data', FLAGS.dn), 'origin dataset dir')
+tf.flags.DEFINE_string('model_name', (FLAGS.dn + '_' + FLAGS.en + "_" + FLAGS.se +  # dataset_name encoder selector
+                                      (('_' + FLAGS.cl) if FLAGS.cl != 'softmax' else '') +  # classifier
+                                      (('_' + FLAGS.ac) if FLAGS.ac != 'relu' else '') +  # activation
+                                      (('_' + FLAGS.op) if FLAGS.op != 'sgd' else '') +  # optimizer
+                                      ('_ad' if FLAGS.ad else '')), 'model_name')  # adversarial_training
+
 activation = tf.nn.relu  # activation
+optimizer = tf.train.GradientDescentOptimizer  # optimizer
 
 
 def init(is_training=True):
+    global activation, optimizer
     activations = {'sigmoid': tf.nn.sigmoid, 'tanh': tf.nn.tanh,
                    'relu': tf.nn.relu, 'leaky_relu': tf.nn.leaky_relu}
     optimizers = {'sgd': tf.train.GradientDescentOptimizer, 'momentum': tf.train.MomentumOptimizer,
@@ -45,26 +57,24 @@ def init(is_training=True):
         exit()
 
     if FLAGS.ac in activations:
-        model.activation = activations[FLAGS.ac]
+        activation = activations[FLAGS.ac]
 
     if FLAGS.op in optimizers:
-        model.optimizer = optimizers[FLAGS.op]
+        optimizer = optimizers[FLAGS.op]
 
 
 class model:
     def __init__(self, data_loader, is_training=True):
         self.data_loader = data_loader
         self.is_training = is_training
-        self.max_len = data_loader.max_length
         self.keep_prob = 0.5 if is_training else 1.0
         batch_size = data_loader.batch_size // FLAGS.gn if is_training else data_loader.batch_size
-        self.hidden_size = 230
-        en = FLAGS.en
 
-        self.word = tf.placeholder(dtype=tf.int32, shape=[None, self.max_len], name='word')
-        self.pos1 = tf.placeholder(dtype=tf.int32, shape=[None, self.max_len], name='pos1')
-        self.pos2 = tf.placeholder(dtype=tf.int32, shape=[None, self.max_len], name='pos2')
-        self.mask = tf.placeholder(dtype=tf.int32, shape=[None, self.max_len], name="mask") if 'pcnn' in en else None
+        self.word = tf.placeholder(dtype=tf.int32, shape=[None, self.data_loader.max_length], name='word')
+        self.pos1 = tf.placeholder(dtype=tf.int32, shape=[None, self.data_loader.max_length], name='pos1')
+        self.pos2 = tf.placeholder(dtype=tf.int32, shape=[None, self.data_loader.max_length], name='pos2')
+        self.mask = tf.placeholder(dtype=tf.int32, shape=[None, self.data_loader.max_length],
+                                   name="mask") if 'pcnn' in FLAGS.en else None
         self.length = tf.placeholder(dtype=tf.int32, shape=[None], name='length')
         self.label = tf.placeholder(dtype=tf.int32, shape=[batch_size], name='label')
         self.instance_label = tf.placeholder(dtype=tf.int32, shape=[None], name='instance_label')
@@ -97,19 +107,19 @@ class model:
 
     def _encoder(self):
         if FLAGS.en == "pcnn":
-            self.encoder = encoder.pcnn(self.embedding, self.mask, self.hidden_size, activation=activation,
+            self.encoder = encoder.pcnn(self.embedding, self.mask, FLAGS.hidden_size, activation=activation,
                                         keep_prob=self.keep_prob)
         elif FLAGS.en == "cnn":
-            self.encoder = encoder.cnn(self.embedding, self.hidden_size, activation=activation,
+            self.encoder = encoder.cnn(self.embedding, FLAGS.hidden_size, activation=activation,
                                        keep_prob=self.keep_prob)
         elif "rnn" in FLAGS.en:
             ens = FLAGS.en.split('_')
             cell_name = ens[1] if len(ens) > 1 else "lstm"
             if ens[0] == "rnn":
-                self.encoder = encoder.rnn(self.embedding, self.length, self.hidden_size, cell_name=cell_name,
+                self.encoder = encoder.rnn(self.embedding, self.length, FLAGS.hidden_size, cell_name=cell_name,
                                            keep_prob=self.keep_prob)
             elif ens[0] == "birnn":
-                self.encoder = encoder.birnn(self.embedding, self.length, self.hidden_size, cell_name=cell_name,
+                self.encoder = encoder.birnn(self.embedding, self.length, FLAGS.hidden_size, cell_name=cell_name,
                                              keep_prob=self.keep_prob)
             else:
                 raise NotImplementedError
@@ -154,7 +164,7 @@ class model:
         if self.is_training and FLAGS.ad:
             perturb = tf.gradients(self.loss, self.embedding)
             perturb = tf.reshape((0.01 * tf.stop_gradient(tf.nn.l2_normalize(perturb, dim=[0, 1, 2]))),
-                                 [-1, self.max_len, self.embedding.shape[-1]])
+                                 [-1, self.data_loader.max_length, self.embedding.shape[-1]])
             self.embedding = self.embedding + perturb
             self._encoder_selector_classifier()
 

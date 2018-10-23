@@ -215,24 +215,25 @@ class framework:
 
     def test(self,
              model,
-             ckpt=None,
+             model_name=None,
+             ckpt_dir='./checkpoint',
              return_result=False,
              mode=MODE_BAG):
         if mode == framework.MODE_BAG:
-            return self._test_bag(model, ckpt=ckpt, return_result=return_result)
+            return self._test_bag(model, model_name, ckpt_dir=ckpt_dir, return_result=return_result)
         elif mode == framework.MODE_INS:
             raise NotImplementedError
         else:
             raise NotImplementedError
 
-    def _test_bag(self, model, ckpt=None, return_result=False):
+    def _test_bag(self, model, model_name=None, ckpt_dir='./checkpoint', return_result=False):
         print("Testing...")
         if self.sess is None:
             self.sess = tf.Session()
         model = model(self.test_data_loader, is_training=False)
-        if not ckpt is None:
+        if not model_name is None:
             saver = tf.train.Saver()
-            saver.restore(self.sess, ckpt)
+            saver.restore(self.sess, os.path.join(ckpt_dir, model_name))
         tot_correct = 0
         tot_not_na_correct = 0
         tot = 0
@@ -279,3 +280,4 @@ class framework:
             return auc
         else:
             return auc, pred_result
+
