@@ -29,5 +29,5 @@ if __name__ == '__main__':
     fw.train(model,  optimizer=mb.optimizer)
 
     if isinstance(model, mr.model_rl):
-        fw.pretrain_policy_agent(max_epoch=1)
-        fw.train_rl(max_epoch=2)
+        fw.pretrain_policy_agent(model, optimizer=mb.optimizer, max_epoch=1)
+        fw.train_rl(model, max_epoch=2)

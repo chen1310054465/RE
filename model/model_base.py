@@ -84,6 +84,9 @@ class model:
         self.label = tf.placeholder(dtype=tf.int32, shape=[batch_size], name='label')
         self.instance_label = tf.placeholder(dtype=tf.int32, shape=[None], name='instance_label')
         self.scope = tf.placeholder(dtype=tf.int32, shape=[batch_size, 2], name='scope')
+        self.weights = tf.placeholder(dtype=tf.float32, shape=[batch_size], name='scope')
+        if is_training:
+            self._set_weights_table()
 
         self._network()
 
@@ -154,14 +157,14 @@ class model:
             raise NotImplementedError
 
     def _classifier(self):
+        self.output = classifier.output(self.logit)
         if self.is_training:
             if FLAGS.cl == "softmax":
                 self.loss = classifier.softmax_cross_entropy(self.logit, self.label, self.data_loader.rel_tot,
-                                                             weights_table=self._get_weights_table())
+                                                             weights=self.weights)
             elif FLAGS.cl == "soft_label":
                 self.loss = classifier.soft_label_softmax_cross_entropy(self.logit, self.label,
-                                                                        self.data_loader.rel_tot,
-                                                                        weights_table=self._get_weights_table())
+                                                                        self.data_loader.rel_tot, weights=self.weights)
             else:
                 raise NotImplementedError
 
@@ -173,14 +176,20 @@ class model:
             self.embedding = self.embedding + perturb
             self._encoder_selector_classifier()
 
-    def _get_weights_table(self):
+    def _set_weights_table(self):
         with tf.variable_scope("weights_table", reuse=tf.AUTO_REUSE):
             print("Calculating weights_table...")
             _weights_table = np.zeros(self.data_loader.rel_tot, dtype=np.float32)
             for i in range(len(self.data_loader.data_label)):
                 _weights_table[self.data_loader.data_label[i]] += 1.0
             _weights_table = 1 / (_weights_table ** 0.05 + 1e-20)
-            weights_table = tf.get_variable(name='weights_table', dtype=tf.float32, trainable=False,
-                                            initializer=_weights_table)
+            self.weights_table = tf.get_variable(name='weights_table', dtype=tf.float32, trainable=False,
+                                                 initializer=_weights_table)
             print("Finish calculating")
-        return weights_table
+
+    def get_weights(self, label):
+        if self.weights_table is None:
+            weights = 1.0
+        else:
+            weights = tf.nn.embedding_lookup(self.weights_table, label)
+        return weights
