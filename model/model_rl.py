@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from model.model_base import model
+import model.model_base as mb
 
 FLAGS = tf.flags.FLAGS
 
@@ -12,7 +12,7 @@ def _set_params(*args):
     return ovs
 
 
-class model_rl(model):
+class model_rl(mb.model):
     def __init__(self, data_loader, is_training=True):
         super().__init__(data_loader, is_training)
 
@@ -27,7 +27,10 @@ class model_rl(model):
             self.policy_agent_output = self.output
             self.policy_agent_loss = self.loss
             self.policy_agent_global_step = tf.Variable(0, name='policy_agent_global_step', trainable=False)
-            self.policy_agent_op = None
+            policy_agent_optimizer = mb.optimizer(FLAGS.learning_rate)
+            policy_agent_grads_vars = policy_agent_optimizer.compute_gradients(self.policy_agent_loss)
+            self.policy_agent_op = policy_agent_optimizer.apply_gradients(policy_agent_grads_vars,
+                                                                          global_step=self.policy_agent_global_step)
 
             _set_params(*ovs)
         super()._network()

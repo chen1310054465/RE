@@ -29,5 +29,5 @@ if __name__ == '__main__':
     with tf.variable_scope(FLAGS.model_name, reuse=tf.AUTO_REUSE):
         fw.train(model,  optimizer=mb.optimizer)
         if isinstance(model, mr.model_rl):
-            fw.pretrain_policy_agent(model, optimizer=mb.optimizer, max_epoch=1)
+            fw.pretrain_policy_agent(model, max_epoch=1)
             fw.train_rl(model, max_epoch=2)

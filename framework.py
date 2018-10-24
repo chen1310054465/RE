@@ -281,11 +281,7 @@ class framework:
             return auc, pred_result
 
     # rl part
-    def pretrain_policy_agent(self, model, optimizer=tf.train.GradientDescentOptimizer, max_epoch=1):
-        policy_agent_optimizer = optimizer(FLAGS.learning_rate)
-        policy_agent_grads_vars = policy_agent_optimizer.compute_gradients(model.policy_agent_loss)
-        model.policy_agent_op = policy_agent_optimizer.apply_gradients(policy_agent_grads_vars,
-                                                                       global_step=model.policy_agent_global_step)
+    def pretrain_policy_agent(self, model, max_epoch=1):
         for epoch in range(max_epoch):
             print(('[pretrain policy agent] ' + 'epoch ' + str(epoch) + ' starts...'))
             self.acc_total.clear()
