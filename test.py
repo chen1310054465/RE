@@ -24,6 +24,7 @@ if __name__ == '__main__':
     model = mr.model_rl if 'rl' in FLAGS.se else mb.model
 
     fw = framework(test_data_loader=test_loader())
-    auc, pred_result = fw.test(model, model_name=FLAGS.model_name, return_result=True)
+    with tf.variable_scope(FLAGS.model_name, reuse=tf.AUTO_REUSE):
+        auc, pred_result = fw.test(model, model_name=FLAGS.model_name, return_result=True)
     with open(FLAGS.test_result_dir + FLAGS.model_name + "_pred.json", 'w') as of:
         json.dump(pred_result, of)

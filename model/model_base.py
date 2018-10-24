@@ -91,13 +91,13 @@ class model:
         self._network()
 
     def _network(self):
+        # embedding
+        self._embedding()
         with tf.variable_scope("re_" + FLAGS.en + "_" + FLAGS.se +
                                (('_' + FLAGS.cl) if FLAGS.cl != 'softmax' else '') +  # classifier
                                (('_' + FLAGS.ac) if FLAGS.ac != 'relu' else '') +  # activation
                                (('_' + FLAGS.op) if FLAGS.op != 'sgd' else ''),  # optimizer
                                reuse=tf.AUTO_REUSE):
-            # embedding
-            self.embedding = self._embedding()
             # encoder_selector_classifier
             self._encoder_selector_classifier(reuse=False if FLAGS.ad else True)
             # adversarial_training
@@ -111,7 +111,9 @@ class model:
             self._classifier()  # classifier
 
     def _embedding(self):
-        return embedding.word_position_embedding(self.word, self.data_loader.word_vec, self.pos1, self.pos2)
+        if not hasattr(self, 'embedding'):
+            self.embedding = embedding.word_position_embedding(self.word, self.data_loader.word_vec,
+                                                               self.pos1, self.pos2)
 
     def _encoder(self):
         if FLAGS.en == "pcnn":
@@ -157,7 +159,6 @@ class model:
             raise NotImplementedError
 
     def _classifier(self):
-        self.output = classifier.output(self.logit)
         if self.is_training:
             if FLAGS.cl == "softmax":
                 self.loss = classifier.softmax_cross_entropy(self.logit, self.label, self.data_loader.rel_tot,
@@ -167,29 +168,34 @@ class model:
                                                                         self.data_loader.rel_tot, weights=self.weights)
             else:
                 raise NotImplementedError
+        self.output = classifier.output(self.logit)
 
     def _adversarial(self):
         if self.is_training and FLAGS.ad:
-            perturb = tf.gradients(self.loss, self.embedding)
-            perturb = tf.reshape((0.01 * tf.stop_gradient(tf.nn.l2_normalize(perturb, dim=[0, 1, 2]))),
-                                 [-1, self.data_loader.max_length, self.embedding.shape[-1]])
-            self.embedding = self.embedding + perturb
-            self._encoder_selector_classifier()
+            with tf.variable_scope(FLAGS.en + '_' + FLAGS.se +
+                                   (('_' + FLAGS.cl) if FLAGS.cl != 'softmax' else '') +
+                                   '_adversarial', reuse=tf.AUTO_REUSE):
+                perturb = tf.gradients(self.loss, self.embedding)
+                perturb = tf.reshape((0.01 * tf.stop_gradient(tf.nn.l2_normalize(perturb, dim=[0, 1, 2]))),
+                                     [-1, self.data_loader.max_length, self.embedding.shape[-1]])
+                self.embedding = self.embedding + perturb
+                self._encoder_selector_classifier()
 
     def _set_weights_table(self):
         with tf.variable_scope("weights_table", reuse=tf.AUTO_REUSE):
             print("Calculating weights_table...")
-            _weights_table = np.zeros(self.data_loader.rel_tot, dtype=np.float32)
+            self.weights_table = np.zeros(self.data_loader.rel_tot, dtype=np.float32)
             for i in range(len(self.data_loader.data_label)):
-                _weights_table[self.data_loader.data_label[i]] += 1.0
-            _weights_table = 1 / (_weights_table ** 0.05 + 1e-20)
-            self.weights_table = tf.get_variable(name='weights_table', dtype=tf.float32, trainable=False,
-                                                 initializer=_weights_table)
+                self.weights_table[self.data_loader.data_label[i]] += 1.0
+            self.weights_table = [weight if weight == 0 else 1 / (weight ** 0.05) for weight in self.weights_table]
+
             print("Finish calculating")
 
-    def get_weights(self, label):
+    def get_weights(self, labels):
         if self.weights_table is None:
-            weights = 1.0
+            weights = np.ones(len(labels), dtype=np.float32)
         else:
-            weights = tf.nn.embedding_lookup(self.weights_table, label)
+            weights = []
+            for label in labels:
+                weights.append(self.weights_table[label])
         return weights

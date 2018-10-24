@@ -21,7 +21,9 @@ class model_rl(model):
             ovs = _set_params('cnn', 'instance', 2)
             super()._network()
 
+            self.policy_agent_encoder = self.encoder
             self.policy_agent_logit = self.logit
+            self.policy_agent_repre = self.repre
             self.policy_agent_output = self.output
             self.policy_agent_loss = self.loss
             self.policy_agent_global_step = tf.Variable(0, name='policy_agent_global_step', trainable=False)

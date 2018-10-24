@@ -9,7 +9,8 @@ def word_embedding(word, word_vec_mat, var_scope=None, word_embedding_dim=50, ad
             w_embedding = tf.concat([w_embedding,
                                      tf.get_variable("unk_word_embedding", [1, word_embedding_dim], dtype=tf.float32,
                                                      initializer=tf.contrib.layers.xavier_initializer()),
-                                     tf.constant(np.zeros((1, word_embedding_dim), dtype=np.float32))], 0)
+                                     tf.constant(np.zeros((1, word_embedding_dim), dtype=np.float32),
+                                                 name='blank_word_embedding')], 0)
         x = tf.nn.embedding_lookup(w_embedding, word)
         return x
 
