@@ -37,8 +37,8 @@ class npy_data_loader(file_data_loader):
         self.data_pos1 = np.load(os.path.join(data_dir, prefix + "_pos1.npy"))
         self.data_pos2 = np.load(os.path.join(data_dir, prefix + "_pos2.npy"))
         self.data_mask = np.load(os.path.join(data_dir, prefix + "_mask.npy"))
-        self.data_label = np.load(os.path.join(data_dir, prefix + "_label.npy"))
         self.data_length = np.load(os.path.join(data_dir, prefix + "_len.npy"))
+        self.data_label = np.load(os.path.join(data_dir, prefix + "_label.npy"))
         self.scope = np.load(os.path.join(data_dir, prefix + "_instance_scope.npy"))
         self.triple = np.load(os.path.join(data_dir, prefix + "_instance_triple.npy"))
         self.relfact_tot = len(self.triple)
@@ -83,8 +83,9 @@ class npy_data_loader(file_data_loader):
             batch_data['word'] = self.data_word[idx0:idx1]
             batch_data['pos1'] = self.data_pos1[idx0:idx1]
             batch_data['pos2'] = self.data_pos2[idx0:idx1]
-            batch_data['label'] = self.data_label[idx0:idx1]
+            batch_data['mask'] = self.data_mask[idx0:idx1]
             batch_data['length'] = self.data_length[idx0:idx1]
+            batch_data['label'] = self.data_label[idx0:idx1]
             batch_data['scope'] = np.stack([list(range(idx1 - idx0)), list(range(1, idx1 - idx0 + 1))], axis=1)
         elif self.mode == self.MODE_ENTPAIR_BAG or self.mode == self.MODE_RELFACT_BAG:
             idx0 = self.idx
@@ -98,21 +99,21 @@ class npy_data_loader(file_data_loader):
             _word = []
             _pos1 = []
             _pos2 = []
+            _mask = []
+            _length = []
             _label = []
             _instance_label = []
-            _multi_label = []
-            _length = []
             _scope = []
-            _mask = []
+            _multi_label = []
             cur_pos = 0
             for i in range(idx0, idx1):
                 _word.append(self.data_word[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])
                 _pos1.append(self.data_pos1[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])
                 _pos2.append(self.data_pos2[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])
+                _mask.append(self.data_mask[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])
+                _length.append(self.data_length[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])
                 _label.append(self.data_label[self.scope[self.order[i]][0]])
                 _instance_label.append(self.data_label[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])
-                _length.append(self.data_length[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])
-                _mask.append(self.data_mask[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])
                 bag_size = self.scope[self.order[i]][1] - self.scope[self.order[i]][0]
                 _scope.append([cur_pos, cur_pos + bag_size])
                 cur_pos = cur_pos + bag_size
@@ -124,13 +125,13 @@ class npy_data_loader(file_data_loader):
             batch_data['word'] = np.concatenate(_word)
             batch_data['pos1'] = np.concatenate(_pos1)
             batch_data['pos2'] = np.concatenate(_pos2)
+            batch_data['mask'] = np.concatenate(_mask)
+            batch_data['length'] = np.concatenate(_length)
             batch_data['label'] = np.stack(_label)
             batch_data['instance_label'] = np.concatenate(_instance_label)
+            batch_data['scope'] = np.stack(_scope)
             if self.mode == self.MODE_ENTPAIR_BAG:
                 batch_data['multi_label'] = np.stack(_multi_label)
-            batch_data['length'] = np.concatenate(_length)
-            batch_data['scope'] = np.stack(_scope)
-            batch_data['mask'] = np.concatenate(_mask)
 
         return batch_data
 
@@ -463,9 +464,9 @@ class json_file_data_loader(file_data_loader):
             batch_data['word'] = self.data_word[idx0:idx1]
             batch_data['pos1'] = self.data_pos1[idx0:idx1]
             batch_data['pos2'] = self.data_pos2[idx0:idx1]
-            batch_data['label'] = self.data_label[idx0:idx1]
             batch_data['mask'] = self.data_mask[idx0:idx1]
             batch_data['length'] = self.data_length[idx0:idx1]
+            batch_data['label'] = self.data_label[idx0:idx1]
             batch_data['scope'] = np.stack([list(range(batch_size)), list(range(1, batch_size + 1))], axis=1)
             if idx1 - idx0 < batch_size:
                 padding = batch_size - (idx1 - idx0)
