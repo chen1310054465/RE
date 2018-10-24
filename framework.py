@@ -104,8 +104,9 @@ class framework:
             batch_data = self.train_data_loader.next_batch(self.train_data_loader.batch_size // len(models))
             result = self._one_step(model, batch_data, run_array, model.get_weights(batch_data['label']))
             batch_label.append(batch_data['label'])
-            merged_summary = self.sess.run(tf.summary.merge_all(), feed_dict=self.feed_dict)
-            self.summary_writer.add_summary(merged_summary, self.step)
+            if '_rl' not in FLAGS.se:
+                merged_summary = self.sess.run(tf.summary.merge_all(), feed_dict=self.feed_dict)
+                self.summary_writer.add_summary(merged_summary, self.step)
 
         batch_label = np.concatenate(batch_label)
         if return_label:
