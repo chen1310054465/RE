@@ -111,7 +111,7 @@ class framework:
             result += [batch_label]
         return result
 
-    def _one_step(self, model, batch_data, run_array, feed_dict=None, weights=None):
+    def _one_step(self, model, batch_data, run_array, weights=None, feed_dict=None):
         if feed_dict is None:
             self.feed_dict = {
                 model.word: batch_data['word'],
