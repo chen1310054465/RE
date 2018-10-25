@@ -17,17 +17,14 @@ def train_loader():
     return dl.json_file_data_loader(os.path.join(FLAGS.dataset_dir, 'train.json'),
                                     os.path.join(FLAGS.dataset_dir, 'word_vec.json'),
                                     os.path.join(FLAGS.dataset_dir, 'rel2id.json'),
-                                    mode=dl.json_file_data_loader.MODE_RELFACT_BAG,
+                                    mode=dl.file_data_loader.MODE_RELFACT_BAG,
                                     shuffle=True)
 
 
 if __name__ == '__main__':
     mb.init()
-    model = mr.model_rl if 'rl' in FLAGS.se else mb.model
+    model = mr.model_rl if '_rl' in FLAGS.se else mb.model
 
     fw = framework(train_loader(), test_loader())
     with tf.variable_scope(FLAGS.model_name, reuse=tf.AUTO_REUSE):
-        fw.train(model,  optimizer=mb.optimizer)
-        if issubclass(model, mr.model_rl):
-            fw.pretrain_policy_agent(model, mode=dl.json_file_data_loader.MODE_INSTANCE, max_epoch=1)
-            fw.train_rl(model, max_epoch=2)
+        fw.train(model, optimizer=mb.optimizer)

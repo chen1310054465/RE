@@ -15,7 +15,7 @@ def test_loader():
     return dl.json_file_data_loader(os.path.join(FLAGS.dataset_dir, 'test.json'),
                                     os.path.join(FLAGS.dataset_dir, 'word_vec.json'),
                                     os.path.join(FLAGS.dataset_dir, 'rel2id.json'),
-                                    mode=dl.json_file_data_loader.MODE_ENTPAIR_BAG,
+                                    mode=dl.file_data_loader.MODE_ENTPAIR_BAG,
                                     shuffle=False)
 
 

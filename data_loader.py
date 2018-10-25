@@ -7,6 +7,10 @@ from six import iteritems
 
 
 class file_data_loader:
+    MODE_INSTANCE = 0  # One batch contains batch_size instances.
+    MODE_ENTPAIR_BAG = 1  # One batch contains batch_size bags, instances in which have the same entity pair (usually for testing).
+    MODE_RELFACT_BAG = 2  # One batch contains batch size bags, instances in which have the same relation fact. (usually for training).
+
     def __next__(self):
         raise NotImplementedError
 
@@ -18,10 +22,6 @@ class file_data_loader:
 
 
 class npy_data_loader(file_data_loader):
-    MODE_INSTANCE = 0  # One batch contains batch_size instances.
-    MODE_ENTPAIR_BAG = 1  # One batch contains batch_size bags, instances in which have the same entity pair (usually for testing).
-    MODE_RELFACT_BAG = 2  # One batch contains batch size bags, instances in which have the same relation fact. (usually for training).
-
     def __iter__(self):
         return self
 
@@ -137,10 +137,6 @@ class npy_data_loader(file_data_loader):
 
 
 class json_file_data_loader(file_data_loader):
-    MODE_INSTANCE = 0  # One batch contains batch_size instances.
-    MODE_ENTPAIR_BAG = 1  # One batch contains batch_size bags, instances in which have the same entity pair (usually for testing).
-    MODE_RELFACT_BAG = 2  # One batch contains batch size bags, instances in which have the same relation fact. (usually for training).
-
     def _load_preprocessed_file(self):
         name_prefix = '.'.join(self.file_name.split(os.sep)[-1].split('.')[:-1])
         word_vec_name_prefix = '.'.join(self.word_vec_file_name.split(os.sep)[-1].split('.')[:-1])

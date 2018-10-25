@@ -6,6 +6,7 @@ import time
 import numpy as np
 import sklearn.metrics
 import tensorflow as tf
+from data_loader import file_data_loader
 
 FLAGS = tf.flags.FLAGS
 
@@ -77,9 +78,6 @@ class accuracy:
 
 
 class framework:
-    MODE_BAG = 0  # Train and test the model at bag level.
-    MODE_INS = 1  # Train and test the model at instance level
-
     def __init__(self, train_data_loader=None, test_data_loader=None):
         self.train_data_loader = train_data_loader
         self.test_data_loader = test_data_loader
@@ -157,6 +155,9 @@ class framework:
 
         grads = average_gradients(tower_grads)
         train_op = optimizer.apply_gradients(grads)
+
+        if not os.path.isdir(FLAGS.ckpt_dir):
+            os.mkdir(FLAGS.ckpt_dir)
         # summary writer
         self.summary_writer = tf.summary.FileWriter(FLAGS.summary_dir, self.sess.graph)
         # saver
@@ -200,6 +201,11 @@ class framework:
                 self.step += 1
             print("\nAverage iteration time: %f" % (time_sum / self.step))
 
+            for m in tower_models:
+                if '_rl' in FLAGS.se:
+                    self.pretrain_policy_agent(m, mode=file_data_loader.MODE_INSTANCE, max_epoch=1)
+                    self.train_rl(m, max_epoch=2)
+
             if (epoch + 1) % FLAGS.test_epoch == 0:
                 metric = self.test(model)
                 if metric > best_metric:
@@ -207,8 +213,7 @@ class framework:
                     best_prec = self.cur_prec
                     best_recall = self.cur_recall
                     print("Best model, storing...")
-                    if not os.path.isdir(FLAGS.ckpt_dir):
-                        os.mkdir(FLAGS.ckpt_dir)
+
                     path = self.saver.save(self.sess, os.path.join(FLAGS.ckpt_dir, FLAGS.model_name))
                     print("Finish storing, saved path: " + path)
                     not_best_count = 0
@@ -227,10 +232,10 @@ class framework:
             np.save(os.path.join(FLAGS.test_result_dir, FLAGS.model_name + "_x.npy"), best_recall)
             np.save(os.path.join(FLAGS.test_result_dir, FLAGS.model_name + "_y.npy"), best_prec)
 
-    def test(self, model, model_name=None, return_result=False, mode=MODE_BAG):
-        if mode == framework.MODE_BAG:
+    def test(self, model, model_name=None, return_result=False, mode=file_data_loader.MODE_ENTPAIR_BAG):
+        if mode == file_data_loader.MODE_ENTPAIR_BAG:
             return self._test_bag(model, model_name, return_result=return_result)
-        elif mode == framework.MODE_INS:
+        elif mode == file_data_loader.MODE_INSTANCE:
             raise NotImplementedError
         else:
             raise NotImplementedError
@@ -311,7 +316,7 @@ class framework:
             if self.acc_total.get() > 0.9:
                 break
 
-    def train_rl(self, model, max_epoch=1, mode=MODE_BAG):
+    def train_rl(self, model, max_epoch=1, mode=file_data_loader.MODE_RELFACT_BAG):
         for epoch in range(max_epoch):
             print(('epoch ' + str(epoch) + ' starts...'))
             self.acc_not_na.clear()
@@ -374,7 +379,7 @@ class framework:
 
             for i, batch_data in enumerate(self.train_data_loader):
                 weights = model.get_weights(batch_data['label'])
-                if mode == framework.MODE_BAG:
+                if mode == file_data_loader.MODE_RELFACT_BAG:
                     # make action
                     action_result, outputs, loss = self._one_step(model, batch_data,
                                                                   [model.policy_agent_output, model.output, model.loss],
