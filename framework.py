@@ -285,7 +285,8 @@ class framework:
             return auc, pred_result
 
     # rl part
-    def pretrain_policy_agent(self, model, max_epoch=1):
+    def pretrain_policy_agent(self, model, mode, max_epoch=1):
+        self.train_data_loader.mode = mode
         for epoch in range(max_epoch):
             print(('[pretrain policy agent] ' + 'epoch ' + str(epoch) + ' starts...'))
             self.acc_total.clear()
