@@ -122,9 +122,9 @@ class framework:
         }
         if model.mask is not None:  # hasattr(model, "mask"):
             self.feed_dict.update({model.mask: batch_data['mask']})
-        if model.instance_label in batch_data:
+        if 'instance_label' in batch_data:
             self.feed_dict.update({model.instance_label: batch_data['instance_label']})
-        if model.scope in batch_data:
+        if 'scope' in batch_data:
             self.feed_dict.update({model.scope: batch_data['scope']})
         if weights is not None:
             self.feed_dict.update({model.weights: weights})
