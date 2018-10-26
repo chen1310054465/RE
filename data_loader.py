@@ -86,7 +86,7 @@ class npy_data_loader(file_data_loader):
             batch_data['mask'] = self.data_mask[idx0:idx1]
             batch_data['length'] = self.data_length[idx0:idx1]
             batch_data['label'] = self.data_label[idx0:idx1]
-            batch_data['scope'] = np.stack([list(range(idx1 - idx0)), list(range(1, idx1 - idx0 + 1))], axis=1)
+            # batch_data['scope'] = np.stack([list(range(idx1 - idx0)), list(range(1, idx1 - idx0 + 1))], axis=1)
         elif self.mode == self.MODE_ENTPAIR_BAG or self.mode == self.MODE_RELFACT_BAG:
             idx0 = self.idx
             idx1 = self.idx + batch_size
@@ -463,7 +463,7 @@ class json_file_data_loader(file_data_loader):
             batch_data['mask'] = self.data_mask[idx0:idx1]
             batch_data['length'] = self.data_length[idx0:idx1]
             batch_data['label'] = self.data_label[idx0:idx1]
-            batch_data['scope'] = np.stack([list(range(batch_size)), list(range(1, batch_size + 1))], axis=1)
+            # batch_data['scope'] = np.stack([list(range(batch_size)), list(range(1, batch_size + 1))], axis=1)
             if idx1 - idx0 < batch_size:
                 padding = batch_size - (idx1 - idx0)
                 batch_data['word'] = np.concatenate(
