@@ -120,11 +120,11 @@ class framework:
             model.length: batch_data['length'],
             model.label: batch_data['label'],
         }
-        if 'mask' in batch_data and model.mask is not None:  # hasattr(model, "mask"):
+        if model.mask is not None:  # hasattr(model, "mask"):
             self.feed_dict.update({model.mask: batch_data['mask']})
-        if 'instance_label' in batch_data:
+        if model.instance_label in batch_data:
             self.feed_dict.update({model.instance_label: batch_data['instance_label']})
-        if 'scope' in batch_data:
+        if model.scope in batch_data:
             self.feed_dict.update({model.scope: batch_data['scope']})
         if weights is not None:
             self.feed_dict.update({model.weights: weights})
@@ -212,7 +212,6 @@ class framework:
                 if '_rl' in FLAGS.se:
                     self.pretrain_policy_agent(m, mode=file_data_loader.MODE_INSTANCE, max_epoch=1)
                     self.train_rl(m, max_epoch=2)
-                    self.train_data_loader.mode = file_data_loader.MODE_RELFACT_BAG
 
             if (epoch + 1) % FLAGS.test_epoch == 0:
                 metric = self.test(model)
