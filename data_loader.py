@@ -474,8 +474,8 @@ class json_file_data_loader(file_data_loader):
                     [batch_data['pos2'], np.zeros((padding, self.data_pos2.shape[-1]), dtype=np.int32)])
                 batch_data['mask'] = np.concatenate(
                     [batch_data['mask'], np.zeros((padding, self.data_mask.shape[-1]), dtype=np.int32)])
-                batch_data['label'] = np.concatenate([batch_data['label'], np.zeros(padding, dtype=np.int32)])
                 batch_data['length'] = np.concatenate([batch_data['length'], np.zeros(padding, dtype=np.int32)])
+                batch_data['label'] = np.concatenate([batch_data['label'], np.zeros(padding, dtype=np.int32)])
         elif self.mode == self.MODE_ENTPAIR_BAG or self.mode == self.MODE_RELFACT_BAG:
             idx0 = self.idx
             idx1 = self.idx + batch_size
@@ -489,9 +489,9 @@ class json_file_data_loader(file_data_loader):
             _length = []
             _label = []
             _instance_label = []
+            _scope = []
             _multi_label = []
             _entpair = []
-            _scope = []
             cur_pos = 0
             for i in range(idx0, idx1):
                 _word.append(self.data_word[self.scope[self.order[i]][0]:self.scope[self.order[i]][1]])

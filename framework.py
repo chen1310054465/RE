@@ -117,14 +117,16 @@ class framework:
             model.word: batch_data['word'],
             model.pos1: batch_data['pos1'],
             model.pos2: batch_data['pos2'],
-            model.length: batch_data['length'],
-            model.label: batch_data['label'],
         }
         if model.mask is not None:  # hasattr(model, "mask"):
             self.feed_dict.update({model.mask: batch_data['mask']})
-        if 'instance_label' in batch_data:
+        if model.length is not None:
+            self.feed_dict.update({model.length: batch_data['length']})
+        if model.label is not None:
+            self.feed_dict.update({model.label: batch_data['label']})
+        if model.instance_label is not None and 'instance_label' in batch_data:
             self.feed_dict.update({model.instance_label: batch_data['instance_label']})
-        if 'scope' in batch_data:
+        if model.scope is not None and 'scope' in batch_data:
             self.feed_dict.update({model.scope: batch_data['scope']})
         if weights is not None:
             self.feed_dict.update({model.weights: weights})
@@ -196,10 +198,7 @@ class framework:
                 t = time_end - time_start
                 time_sum += t
 
-                for i, label in enumerate(iter_label):
-                    self.acc_total.add(iter_output[i] == label)
-                    if label != 0:
-                        self.acc_not_na.add(iter_output[i] == label)
+                self._summary(iter_label, iter_output)
 
                 if self.acc_not_na.total > 0:
                     sys.stdout.write("epoch %d step %d time %.2f | loss: %f, not NA accuracy: %f, accuracy: %f\r" % (
@@ -210,7 +209,7 @@ class framework:
 
             for m in tower_models:
                 if '_rl' in FLAGS.se:
-                    self.pretrain_policy_agent(m, mode=file_data_loader.MODE_INSTANCE, max_epoch=1)
+                    self.pretrain_policy_agent(m, max_epoch=1)
                     self.train_rl(m, max_epoch=2)
 
             if (epoch + 1) % FLAGS.test_epoch == 0:
@@ -297,7 +296,21 @@ class framework:
             return auc, pred_result
 
     # rl part
-    def pretrain_policy_agent(self, model, mode, max_epoch=1):
+    def _policy_agent_one_step(self, model, batch_data, weights, eval_acc=True):
+        iter_output, iter_loss = self._one_step(model, batch_data,
+                                                [model.policy_agent_output, model.policy_agent_loss,
+                                                 model.policy_agent_op, model.policy_agent_global_step],
+                                                weights=weights)[:2]
+        if eval_acc:
+            self._summary(batch_data['label'], iter_output)
+        return iter_output, iter_loss
+
+    def _make_action(self, model, batch_data):
+        fd_updater = lambda fd: {fd.__delitem__(model.label), fd.__delitem__(model.instance_label),
+                                 fd.__delitem__(model.scope)}
+        return self._one_step(model, batch_data, [model.policy_agent_output], fd_updater=fd_updater)
+
+    def pretrain_policy_agent(self, model, mode=file_data_loader.MODE_INSTANCE, max_epoch=1):
         self.train_data_loader.mode = mode
         for epoch in range(max_epoch):
             print(('[pretrain policy agent] ' + 'epoch ' + str(epoch) + ' starts...'))
@@ -308,14 +321,7 @@ class framework:
                 policy_agent_label = batch_data['label'] + 0
                 policy_agent_label[policy_agent_label > 0] = 1
                 weights = np.ones(policy_agent_label.shape, dtype=np.float32)
-                # fd_updater = lambda fd: {fd.__delitem__(model.instance_label), fd.__delitem__(model.scope)}
-
-                iter_output, iter_loss = self._one_step(model, batch_data,
-                                                        [model.policy_agent_output, model.policy_agent_loss,
-                                                         model.policy_agent_op, model.policy_agent_global_step],
-                                                        weights=weights)[:2]
-
-                self._summary(batch_data['label'], iter_output)
+                iter_output, iter_loss = self._policy_agent_one_step(model, batch_data, weights)
 
                 sys.stdout.write(
                     "[pretrain policy agent] epoch %d step %d | loss : %f, not NA accuracy: %f, accuracy of 1: %f" % (
@@ -340,7 +346,7 @@ class framework:
             reward = 0.0
             for i, batch_data in enumerate(self.train_data_loader):
                 # make action
-                action_result, batch_loss = self._one_step(model, batch_data, [model.policy_agent_output, model.loss])
+                action_result = self._make_action(model, batch_data)
                 action_result_his += action_result
 
                 # calculate reward
@@ -348,6 +354,7 @@ class framework:
                 batch_delete = np.sum(np.logical_and(batch_label != 0, action_result == 0))
                 batch_label[action_result == 0] = 0
 
+                batch_loss = self._one_step(model, batch_data, [model.loss])
                 reward += batch_loss
                 tot_delete += batch_delete
                 batch_count += 1
@@ -366,12 +373,7 @@ class framework:
                         weights = np.ones(batch_result.shape, dtype=np.float32)
                         weights *= reward
                         weights *= alpha
-                        # fd_updater = lambda fd: {fd.__delitem__(model.instance_label), fd.__delitem__(model.scope)}
-                        iter_output, iter_loss = self._one_step(model, batch_data,
-                                                                [model.policy_agent_output, model.policy_agent_loss,
-                                                                 model.policy_agent_op, model.policy_agent_global_step],
-                                                                weights=weights)[:2]
-                        self._summary(batch_data['label'], iter_output)
+                        iter_output, iter_loss = self._policy_agent_one_step(model, batch_data, weights)
 
                         sys.stdout.write(
                             "[pretrain policy agent] epoch %d step %d | loss : %f, not NA accuracy: %f, accuracy of 1: "
@@ -388,9 +390,9 @@ class framework:
                 weights = model.get_weights(batch_data['label'])
                 if mode == file_data_loader.MODE_RELFACT_BAG:
                     # make action
-                    action_result, outputs, loss = self._one_step(model, batch_data,
-                                                                  [model.policy_agent_output, model.output, model.loss],
-                                                                  weights)
+                    action_result = self._make_action(model, batch_data)
+                    loss, outputs = self._one_step(model, batch_data, [model.loss, model.output])
+
                     # calculate reward
                     batch_label = batch_data['label']
                     # batch_delete = np.sum(np.logical_and(batch_label != 0, action_result == 0))
@@ -399,7 +401,7 @@ class framework:
                     index = list(range(i * FLAGS.batch_size, (i + 1) * FLAGS.batch_size))
                     for j in index:
                         weights.append(model.get_weights(batch_data['label'])[j])
-                    outputs, loss = self._one_step(model, batch_data, [model.output, model.loss], weights)[0]
+                    loss, outputs = self._one_step(model, batch_data, [model.loss, model.output], weights)
 
                 self._summary(batch_data['label'], outputs)
                 sys.stdout.write(

@@ -12,11 +12,11 @@ def _logit(x, rel_tot, var_scope=None):
     return logit
 
 
-def _attention_train_logit(x, query, rel_tot, var_scope=None):
+def _attention_train_logit(x, instance_label, rel_tot, var_scope=None):
     with tf.variable_scope(var_scope or 'attention_logit', reuse=tf.AUTO_REUSE):
         relation_matrix = tf.get_variable('relation_matrix', shape=[rel_tot, x.shape[1]], dtype=tf.float32,
                                           initializer=tf.contrib.layers.xavier_initializer())
-        current_relation = tf.nn.embedding_lookup(relation_matrix, query)
+        current_relation = tf.nn.embedding_lookup(relation_matrix, instance_label)
         attention_logit = tf.reduce_sum(current_relation * x, -1)  # sum[(n', hidden_size) \dot (n', hidden_size)] = (n)
     return attention_logit
 
@@ -35,13 +35,13 @@ def instance(x, rel_tot, var_scope=None, keep_prob=1.0):
         return _logit(x, rel_tot), x
 
 
-def bag_attention(x, scope, query, rel_tot, is_training, var_scope=None, dropout_before=False, keep_prob=1.0):
+def bag_attention(x, scope, instance_label, rel_tot, is_training, var_scope=None, dropout_before=False, keep_prob=1.0):
     with tf.variable_scope(var_scope or "bag_attention", reuse=tf.AUTO_REUSE):
         if is_training:  # training
             if dropout_before:
                 x = dropout(x, keep_prob)
             bag_repre = []
-            attention_logit = _attention_train_logit(x, query, rel_tot)
+            attention_logit = _attention_train_logit(x, instance_label, rel_tot)
             for i in range(scope.shape[0]):
                 bag_hidden_mat = x[scope[i][0]:scope[i][1]]
                 attention_score = tf.nn.softmax(attention_logit[scope[i][0]:scope[i][1]], -1)
@@ -88,7 +88,7 @@ def bag_average(x, scope, rel_tot, is_training, var_scope=None, dropout_before=F
     return bag_logit, bag_repre
 
 
-def bag_maximum(x, scope, query, rel_tot, is_training, var_scope=None, dropout_before=False,
+def bag_maximum(x, scope, instance_label, rel_tot, is_training, var_scope=None, dropout_before=False,
                 keep_prob=1.0):  # could be improved?
     with tf.variable_scope(var_scope or "maximum", reuse=tf.AUTO_REUSE):
         if is_training:  # training
@@ -99,7 +99,7 @@ def bag_maximum(x, scope, query, rel_tot, is_training, var_scope=None, dropout_b
                 bag_hidden_mat = x[scope[i][0]:scope[i][1]]
                 instance_logit = tf.nn.softmax(_logit(bag_hidden_mat, rel_tot),
                                                -1)  # (n', hidden_size) -> (n', rel_tot)
-                j = tf.argmax(instance_logit[:, query[i]], output_type=tf.int32)
+                j = tf.argmax(instance_logit[:, instance_label[i]], output_type=tf.int32)
                 bag_repre.append(bag_hidden_mat[j])
             bag_repre = tf.stack(bag_repre)
             if not dropout_before:

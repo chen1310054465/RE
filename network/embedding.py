@@ -21,9 +21,9 @@ def pos_embedding(pos1, pos2, var_scope=None, pos_embedding_dim=5, max_length=12
 
         pos1_embedding = tf.get_variable('pos1_embedding', [pos_tot, pos_embedding_dim], dtype=tf.float32,
                                          initializer=tf.contrib.layers.xavier_initializer())
-        # pos1_embedding = tf.concat([tf.zeros((1, pos_embedding_dim), dtype=tf.float32), pos1_embedding], 0)
         pos2_embedding = tf.get_variable('pos2_embedding', [pos_tot, pos_embedding_dim], dtype=tf.float32,
                                          initializer=tf.contrib.layers.xavier_initializer())
+        # pos1_embedding = tf.concat([tf.zeros((1, pos_embedding_dim), dtype=tf.float32), pos1_embedding], 0)
         # pos2_embedding = tf.concat([tf.zeros((1, pos_embedding_dim), dtype=tf.float32), pos2_embedding], 0)
 
         input_pos1 = tf.nn.embedding_lookup(pos1_embedding, pos1)

@@ -78,13 +78,15 @@ class model:
         self.word = tf.placeholder(dtype=tf.int32, shape=[None, self.data_loader.max_length], name='word')
         self.pos1 = tf.placeholder(dtype=tf.int32, shape=[None, self.data_loader.max_length], name='pos1')
         self.pos2 = tf.placeholder(dtype=tf.int32, shape=[None, self.data_loader.max_length], name='pos2')
-        self.mask = tf.placeholder(dtype=tf.int32, shape=[None, self.data_loader.max_length],
-                                   name="mask") if 'pcnn' in FLAGS.en else None
-        self.length = tf.placeholder(dtype=tf.int32, shape=[None], name='length')
-        self.label = tf.placeholder(dtype=tf.int32, shape=[batch_size], name='label')
-        self.instance_label = tf.placeholder(dtype=tf.int32, shape=[None], name='instance_label')
-        self.scope = tf.placeholder(dtype=tf.int32, shape=[batch_size, 2], name='scope')
-        self.weights = tf.placeholder(dtype=tf.float32, shape=[batch_size], name='scope')
+        self.mask = tf.placeholder(dtype=tf.int32, shape=[None, self.data_loader.max_length], name="mask") \
+            if 'pcnn' in FLAGS.en else None
+        self.length = tf.placeholder(dtype=tf.int32, shape=[None], name='length') if 'rnn' in FLAGS.en else None
+        self.label = tf.placeholder(dtype=tf.int32, shape=[batch_size], name='label') if is_training else None
+        self.instance_label = tf.placeholder(dtype=tf.int32, shape=[None], name='instance_label') \
+            if 'att' or 'max' in FLAGS.se else None
+        self.scope = tf.placeholder(dtype=tf.int32, shape=[batch_size, 2], name='scope') \
+            if 'instance' not in FLAGS.se else None
+        self.weights = tf.placeholder(dtype=tf.float32, shape=[batch_size], name='weights') if is_training else None
         if is_training:
             self._set_weights_table()
 
@@ -161,11 +163,11 @@ class model:
     def _classifier(self):
         if self.is_training:
             if FLAGS.cl == "softmax":
-                self.loss = classifier.softmax_cross_entropy(self.logit, self.label, self.data_loader.rel_tot,
-                                                             weights=self.weights)
+                self.loss = classifier.softmax_cross_entropy(self.logit, self.label, self.data_loader.rel_tot
+                                                             , weights=self.weights)
             elif FLAGS.cl == "soft_label":
-                self.loss = classifier.soft_label_softmax_cross_entropy(self.logit, self.label,
-                                                                        self.data_loader.rel_tot, weights=self.weights)
+                self.loss = classifier.soft_label_softmax_cross_entropy(self.logit, self.label, self.data_loader.rel_tot
+                                                                        , weights=self.weights)
             else:
                 raise NotImplementedError
         self.output = classifier.output(self.logit)
