@@ -16,7 +16,7 @@ def test_loader():
                                     os.path.join(FLAGS.dataset_dir, 'word_vec.json'),
                                     os.path.join(FLAGS.dataset_dir, 'rel2id.json'),
                                     mode=dl.file_data_loader.MODE_ENTPAIR_BAG,
-                                    shuffle=False)
+                                    shuffle=False, batch_size=FLAGS.batch_size)
 
 
 if __name__ == '__main__':

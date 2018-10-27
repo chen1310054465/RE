@@ -18,7 +18,7 @@ def train_loader():
                                     os.path.join(FLAGS.dataset_dir, 'word_vec.json'),
                                     os.path.join(FLAGS.dataset_dir, 'rel2id.json'),
                                     mode=dl.file_data_loader.MODE_RELFACT_BAG,
-                                    shuffle=True)
+                                    shuffle=True, batch_size=FLAGS.batch_size)
 
 
 if __name__ == '__main__':

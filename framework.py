@@ -199,7 +199,6 @@ class framework:
                 time_sum += t
 
                 self._summary(iter_label, iter_output)
-
                 if self.acc_not_na.total > 0:
                     sys.stdout.write("epoch %d step %d time %.2f | loss: %f, not NA accuracy: %f, accuracy: %f\r" % (
                         epoch, self.step, t, iter_loss, self.acc_not_na.get(), self.acc_total.get()))
@@ -354,7 +353,7 @@ class framework:
                 batch_delete = np.sum(np.logical_and(batch_label != 0, action_result == 0))
                 batch_label[action_result == 0] = 0
 
-                batch_loss = self._one_step(model, batch_data, [model.loss])
+                batch_loss = self._one_step(model, batch_data, [model.loss], model.get_weights(batch_data['label']))[0]
                 reward += batch_loss
                 tot_delete += batch_delete
                 batch_count += 1
@@ -387,21 +386,15 @@ class framework:
                     tot_delete = 0
 
             for i, batch_data in enumerate(self.train_data_loader):
-                weights = model.get_weights(batch_data['label'])
                 if mode == file_data_loader.MODE_RELFACT_BAG:
                     # make action
                     action_result = self._make_action(model, batch_data)
-                    loss, outputs = self._one_step(model, batch_data, [model.loss, model.output])
-
                     # calculate reward
                     batch_label = batch_data['label']
                     # batch_delete = np.sum(np.logical_and(batch_label != 0, action_result == 0))
                     batch_label[action_result == 0] = 0
-                else:
-                    index = list(range(i * FLAGS.batch_size, (i + 1) * FLAGS.batch_size))
-                    for j in index:
-                        weights.append(model.get_weights(batch_data['label'])[j])
-                    loss, outputs = self._one_step(model, batch_data, [model.loss, model.output], weights)
+                loss, outputs = self._one_step(model, batch_data, [model.loss, model.output],
+                                               model.get_weights(batch_data['label']))
 
                 self._summary(batch_data['label'], outputs)
                 sys.stdout.write(
