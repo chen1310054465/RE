@@ -409,7 +409,7 @@ class framework:
             if (epoch + 1) % FLAGS.save_epoch == 0:
                 print(('epoch ' + str(epoch + 1) + ' has finished'))
                 print('saving model...')
-                path = self.saver.save(self.sess, os.path.join(FLAGS.checkpoint_dir, FLAGS.model_name),
+                path = self.saver.save(self.sess, os.path.join(FLAGS.ckpt_dir, FLAGS.model_name),
                                        global_step=epoch)
                 print(('have saved model to ' + path))
 
