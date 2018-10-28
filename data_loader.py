@@ -536,3 +536,8 @@ class json_file_data_loader(file_data_loader):
                 batch_data['entpair'] = _entpair
 
         return batch_data
+
+    def batch_data(self, index):
+        batch_data = {'word': self.data_word[index], 'pos1': self.data_pos1[index], 'pos2': self.data_pos2[index],
+                      'mask': self.data_mask[index], 'length': self.data_length[index], 'label': self.data_label[index]}
+        return batch_data

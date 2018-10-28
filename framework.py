@@ -210,6 +210,7 @@ class framework:
                 if '_rl' in FLAGS.se:
                     self.pretrain_policy_agent(m, max_epoch=1)
                     self.train_rl(m, max_epoch=2)
+                    self.train_data_loader.mode = file_data_loader.MODE_RELFACT_BAG
 
             if (epoch + 1) % FLAGS.test_epoch == 0:
                 metric = self.test(model)
@@ -295,11 +296,11 @@ class framework:
             return auc, pred_result
 
     # rl part
-    def _policy_agent_one_step(self, model, batch_data, weights, eval_acc=True):
+    def _policy_agent_one_step(self, model, batch_data, weights, fd_updater=None, eval_acc=True):
         iter_output, iter_loss = self._one_step(model, batch_data,
                                                 [model.policy_agent_output, model.policy_agent_loss,
                                                  model.policy_agent_op, model.policy_agent_global_step],
-                                                weights=weights)[:2]
+                                                weights=weights, fd_updater=fd_updater)[:2]
         if eval_acc:
             self._summary(batch_data['label'], iter_output)
         return iter_output, iter_loss
@@ -323,7 +324,7 @@ class framework:
                 iter_output, iter_loss = self._policy_agent_one_step(model, batch_data, weights)
 
                 sys.stdout.write(
-                    "[pretrain policy agent] epoch %d step %d | loss : %f, not NA accuracy: %f, accuracy of 1: %f" % (
+                    "[pretrain policy agent] epoch %d step %d | loss : %f, not NA accuracy: %f, accuracy: %f" % (
                         epoch, i, iter_loss, self.acc_not_na.get(), self.acc_total.get()) + '\n')
                 sys.stdout.flush()
 
@@ -341,15 +342,15 @@ class framework:
             # update policy agent
             tot_delete = 0
             batch_count = 0
-            action_result_his = []
             reward = 0.0
+            action_result_his = []
             for i, batch_data in enumerate(self.train_data_loader):
                 # make action
                 action_result = self._make_action(model, batch_data)
-                action_result_his += action_result
+                action_result_his = np.append(action_result_his, action_result)
 
                 # calculate reward
-                batch_label = batch_data['label']
+                batch_label = batch_data['instance_label']
                 batch_delete = np.sum(np.logical_and(batch_label != 0, action_result == 0))
                 batch_label[action_result == 0] = 0
 
@@ -368,14 +369,17 @@ class framework:
                     sys.stdout.flush()
                     for j in range(i - batch_count + 1, i + 1):
                         index = list(range(j * FLAGS.batch_size, (j + 1) * FLAGS.batch_size))
-                        batch_result = np.take(action_result_his, index)
+                        batch_result = action_result_his[index]
                         weights = np.ones(batch_result.shape, dtype=np.float32)
                         weights *= reward
                         weights *= alpha
-                        iter_output, iter_loss = self._policy_agent_one_step(model, batch_data, weights)
+
+                        batch_data = self.train_data_loader.batch_data(index)
+                        fd_updater = lambda fd: fd.update({model.label: batch_result})
+                        iter_output, iter_loss = self._policy_agent_one_step(model, batch_data, weights, fd_updater)
 
                         sys.stdout.write(
-                            "[pretrain policy agent] epoch %d step %d | loss : %f, not NA accuracy: %f, accuracy of 1: "
+                            "[pretrain policy agent] epoch %d step %d | loss : %f, not NA accuracy: %f, accuracy: "
                             "%f" % (epoch, i, iter_loss, self.acc_not_na.get(), self.acc_total.get()) + '\n')
                         sys.stdout.flush()
                     if self.acc_total.get() > 0.9:
@@ -390,7 +394,7 @@ class framework:
                     # make action
                     action_result = self._make_action(model, batch_data)
                     # calculate reward
-                    batch_label = batch_data['label']
+                    batch_label = batch_data['instance_label']
                     # batch_delete = np.sum(np.logical_and(batch_label != 0, action_result == 0))
                     batch_label[action_result == 0] = 0
                 loss, outputs = self._one_step(model, batch_data, [model.loss, model.output],
