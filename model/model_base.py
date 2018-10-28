@@ -19,7 +19,7 @@ tf.flags.DEFINE_integer('gn', 1, 'gpu_nums')
 tf.flags.DEFINE_string('pm', None, 'pretrain model')
 # define some specified parameter
 tf.flags.DEFINE_integer('max_epoch', 60, 'max epoch')
-tf.flags.DEFINE_integer('test_epoch', 1, 'test epoch')
+tf.flags.DEFINE_integer('save_epoch', 2, 'save epoch')
 tf.flags.DEFINE_integer('hidden_size', 230, 'hidden size')
 tf.flags.DEFINE_integer('batch_size', 160, 'batch size')
 tf.flags.DEFINE_float('learning_rate', 0.5, 'learning rate')
