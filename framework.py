@@ -100,8 +100,8 @@ class framework:
         batch_label = []
         result = None
         for model in models:
-            batch_data = self.train_data_loader.next_batch(self.train_data_loader.batch_size // len(models))
-            result = self._one_step(model, batch_data, run_array, model.get_weights(batch_data['label']))
+            batch_data = self.train_data_loader.next_batch(FLAGS.batch_size // len(models))
+            result = self._one_step(model, batch_data, run_array)
             batch_label.append(batch_data['label'])
             if '_rl' not in FLAGS.se:
                 merged_summary = self.sess.run(tf.summary.merge_all(), feed_dict=self.feed_dict)
@@ -128,7 +128,8 @@ class framework:
             self.feed_dict.update({model.instance_label: batch_data['instance_label']})
         if model.scope is not None and 'scope' in batch_data:
             self.feed_dict.update({model.scope: batch_data['scope']})
-        if weights is not None:
+        if model.is_training:
+            weights = batch_data['weights'] if weights is None else weights
             self.feed_dict.update({model.weights: weights})
 
         if fd_updater is not None:
@@ -137,7 +138,7 @@ class framework:
         return self.sess.run(run_array, self.feed_dict)
 
     def train(self, model, optimizer=tf.train.GradientDescentOptimizer):
-        assert (self.train_data_loader.batch_size % FLAGS.gn == 0)
+        assert (FLAGS.batch_size % FLAGS.gn == 0)
         print("Start training...")
 
         # Init
@@ -354,7 +355,7 @@ class framework:
                 batch_delete = np.sum(np.logical_and(batch_label != 0, action_result == 0))
                 batch_label[action_result == 0] = 0
 
-                batch_loss = self._one_step(model, batch_data, [model.loss], model.get_weights(batch_data['label']))[0]
+                batch_loss = self._one_step(model, batch_data, [model.loss])[0]
                 reward += batch_loss
                 tot_delete += batch_delete
                 batch_count += 1

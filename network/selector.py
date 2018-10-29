@@ -42,9 +42,9 @@ def bag_attention(x, scope, instance_label, rel_tot, is_training, var_scope=None
                 x = dropout(x, keep_prob)
             bag_repre = []
             attention_logit = _attention_train_logit(x, instance_label, rel_tot)
-            for i in range(scope.shape[0]):
-                bag_hidden_mat = x[scope[i][0]:scope[i][1]]
-                attention_score = tf.nn.softmax(attention_logit[scope[i][0]:scope[i][1]], -1)
+            for i in range(scope.shape[0] - 1):
+                bag_hidden_mat = x[scope[i]:scope[i + 1]]
+                attention_score = tf.nn.softmax(attention_logit[scope[i]:scope[i + 1]], -1)
                 bag_repre.append(tf.squeeze(tf.matmul(tf.expand_dims(attention_score, 0),
                                                       bag_hidden_mat)))  # (1, n') x (n', hidden_size) = (1, hidden_size) -> (hidden_size)
             bag_repre = tf.stack(bag_repre)
@@ -55,9 +55,9 @@ def bag_attention(x, scope, instance_label, rel_tot, is_training, var_scope=None
             attention_logit = _attention_test_logit(x, rel_tot)  # (n, rel_tot)
             bag_repre = []
             bag_logit = []
-            for i in range(scope.shape[0]):
-                bag_hidden_mat = x[scope[i][0]:scope[i][1]]
-                attention_score = tf.nn.softmax(tf.transpose(attention_logit[scope[i][0]:scope[i][1], :]),
+            for i in range(scope.shape[0] - 1):
+                bag_hidden_mat = x[scope[i]:scope[i + 1]]
+                attention_score = tf.nn.softmax(tf.transpose(attention_logit[scope[i]:scope[i + 1], :]),
                                                 -1)  # softmax of (rel_tot, n')
                 bag_repre_for_each_rel = tf.matmul(attention_score,
                                                    bag_hidden_mat)  # (rel_tot, n') \dot (n', hidden_size) = (rel_tot, hidden_size)
@@ -75,8 +75,8 @@ def bag_average(x, scope, rel_tot, is_training, var_scope=None, dropout_before=F
         if dropout_before:
             x = dropout(x, keep_prob)
         bag_repre = []
-        for i in range(scope.shape[0]):
-            bag_hidden_mat = x[scope[i][0]:scope[i][1]]
+        for i in range(scope.shape[0] - 1):
+            bag_hidden_mat = x[scope[i]:scope[i + 1]]
             bag_repre.append(tf.reduce_mean(bag_hidden_mat, 0))  # (n', hidden_size) -> (hidden_size)
         bag_repre = tf.stack(bag_repre)
         if not dropout_before:
@@ -95,8 +95,8 @@ def bag_maximum(x, scope, instance_label, rel_tot, is_training, var_scope=None, 
             if dropout_before:
                 x = dropout(x, keep_prob)
             bag_repre = []
-            for i in range(scope.shape[0]):
-                bag_hidden_mat = x[scope[i][0]:scope[i][1]]
+            for i in range(scope.shape[0] - 1):
+                bag_hidden_mat = x[scope[i]:scope[i + 1]]
                 instance_logit = tf.nn.softmax(_logit(bag_hidden_mat, rel_tot),
                                                -1)  # (n', hidden_size) -> (n', rel_tot)
                 j = tf.argmax(instance_logit[:, instance_label[i]], output_type=tf.int32)
@@ -110,8 +110,8 @@ def bag_maximum(x, scope, instance_label, rel_tot, is_training, var_scope=None, 
                 x = dropout(x, keep_prob)
             bag_repre = []
             bag_logit = []
-            for i in range(scope.shape[0]):
-                bag_hidden_mat = x[scope[i][0]:scope[i][1]]
+            for i in range(scope.shape[0] - 1):
+                bag_hidden_mat = x[scope[i]:scope[i + 1]]
                 instance_logit = tf.nn.softmax(_logit(bag_hidden_mat, rel_tot),
                                                -1)  # (n', hidden_size) -> (n', rel_tot)
                 bag_logit.append(tf.reduce_max(instance_logit, 0))

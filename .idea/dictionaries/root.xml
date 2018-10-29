@@ -3,6 +3,7 @@
     <words>
       <w>adadelta</w>
       <w>adagrad</w>
+      <w>preprocess</w>
       <w>relu</w>
       <w>tanh</w>
     </words>

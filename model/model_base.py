@@ -22,10 +22,12 @@ tf.flags.DEFINE_integer('max_epoch', 60, 'max epoch')
 tf.flags.DEFINE_integer('save_epoch', 2, 'save epoch')
 tf.flags.DEFINE_integer('hidden_size', 230, 'hidden size')
 tf.flags.DEFINE_integer('batch_size', 160, 'batch size')
+tf.flags.DEFINE_integer('max_length', 120, 'word max length')
 tf.flags.DEFINE_float('learning_rate', 0.5, 'learning rate')
-tf.flags.DEFINE_string('ckpt_dir', './checkpoint', 'checkpoint dir')
-tf.flags.DEFINE_string('summary_dir', './summary', 'summary dir')
-tf.flags.DEFINE_string('test_result_dir', './test_result', 'test result dir')
+tf.flags.DEFINE_string('ckpt_dir', 'checkpoint', 'checkpoint dir')
+tf.flags.DEFINE_string('summary_dir', 'summary', 'summary dir')
+tf.flags.DEFINE_string('test_result_dir', 'test_result', 'test result dir')
+tf.flags.DEFINE_string('processed_data_dir', 'processed_data', 'processed data dir')
 tf.flags.DEFINE_string('dataset_dir', os.path.join('origin_data', FLAGS.dn), 'origin dataset dir')
 tf.flags.DEFINE_string('model_name', (FLAGS.dn + '_' + FLAGS.en + "_" + FLAGS.se +  # dataset_name encoder selector
                                       (('_' + FLAGS.cl) if FLAGS.cl != 'softmax' else '') +  # classifier
@@ -71,25 +73,24 @@ def init(is_training=True):
 
 class model:
     def __init__(self, data_loader, is_training=True):
-        self.data_loader = data_loader
+        self.rel_tot = data_loader.rel_tot
+        self.word_vec = data_loader.word_vec
         self.is_training = is_training
         self.keep_prob = 0.5 if is_training else 1.0
-        batch_size = data_loader.batch_size // FLAGS.gn if is_training else data_loader.batch_size
+        batch_size = FLAGS.batch_size // FLAGS.gn if is_training else FLAGS.batch_size
 
-        self.word = tf.placeholder(dtype=tf.int32, shape=[None, self.data_loader.max_length], name='word')
-        self.pos1 = tf.placeholder(dtype=tf.int32, shape=[None, self.data_loader.max_length], name='pos1')
-        self.pos2 = tf.placeholder(dtype=tf.int32, shape=[None, self.data_loader.max_length], name='pos2')
-        self.mask = tf.placeholder(dtype=tf.int32, shape=[None, self.data_loader.max_length], name="mask") \
+        self.word = tf.placeholder(dtype=tf.int32, shape=[None, FLAGS.max_length], name='word')
+        self.pos1 = tf.placeholder(dtype=tf.int32, shape=[None, FLAGS.max_length], name='pos1')
+        self.pos2 = tf.placeholder(dtype=tf.int32, shape=[None, FLAGS.max_length], name='pos2')
+        self.mask = tf.placeholder(dtype=tf.int32, shape=[None, FLAGS.max_length], name="mask") \
             if 'pcnn' in FLAGS.en else None
         self.length = tf.placeholder(dtype=tf.int32, shape=[None], name='length') if 'rnn' in FLAGS.en else None
         self.label = tf.placeholder(dtype=tf.int32, shape=[batch_size], name='label') if is_training else None
         self.instance_label = tf.placeholder(dtype=tf.int32, shape=[None], name='instance_label') \
             if 'att' or 'max' in FLAGS.se else None
-        self.scope = tf.placeholder(dtype=tf.int32, shape=[batch_size, 2], name='scope') \
+        self.scope = tf.placeholder(dtype=tf.int32, shape=[batch_size + 1], name='scope') \
             if 'instance' not in FLAGS.se else None
         self.weights = tf.placeholder(dtype=tf.float32, shape=[batch_size], name='weights') if is_training else None
-        if is_training:
-            self._set_weights_table()
 
         self._network()
 
@@ -115,8 +116,7 @@ class model:
 
     def _embedding(self):
         if not hasattr(self, 'embedding'):
-            self.embedding = embedding.word_position_embedding(self.word, self.data_loader.word_vec,
-                                                               self.pos1, self.pos2)
+            self.embedding = embedding.word_position_embedding(self.word, self.word_vec, self.pos1, self.pos2)
 
     def _encoder(self):
         if FLAGS.en == "pcnn":
@@ -146,28 +146,24 @@ class model:
             raise NotImplementedError
         if se == "att":
             self.logit, self.repre = selector.bag_attention(self.encoder, self.scope, self.instance_label,
-                                                            self.data_loader.rel_tot, self.is_training,
-                                                            keep_prob=self.keep_prob)
+                                                            self.rel_tot, self.is_training, keep_prob=self.keep_prob)
         elif se == "ave":
-            self.logit, self.repre = selector.bag_average(self.encoder, self.scope, self.data_loader.rel_tot,
+            self.logit, self.repre = selector.bag_average(self.encoder, self.scope, self.rel_tot,
                                                           self.is_training, keep_prob=self.keep_prob)
         elif se == "max":
             self.logit, self.repre = selector.bag_maximum(self.encoder, self.scope, self.instance_label,
-                                                          self.data_loader.rel_tot, self.is_training,
-                                                          keep_prob=self.keep_prob)
+                                                          self.rel_tot, self.is_training, keep_prob=self.keep_prob)
         elif se == "instance":
-            self.logit, self.repre = selector.instance(self.encoder, self.data_loader.rel_tot,
-                                                       keep_prob=self.keep_prob)
+            self.logit, self.repre = selector.instance(self.encoder, self.rel_tot, keep_prob=self.keep_prob)
         else:
             raise NotImplementedError
 
     def _classifier(self):
         if self.is_training:
             if FLAGS.cl == "softmax":
-                self.loss = classifier.softmax_cross_entropy(self.logit, self.label, self.data_loader.rel_tot
-                                                             , weights=self.weights)
+                self.loss = classifier.softmax_cross_entropy(self.logit, self.label, self.rel_tot, weights=self.weights)
             elif FLAGS.cl == "soft_label":
-                self.loss = classifier.soft_label_softmax_cross_entropy(self.logit, self.label, self.data_loader.rel_tot
+                self.loss = classifier.soft_label_softmax_cross_entropy(self.logit, self.label, self.rel_tot
                                                                         , weights=self.weights)
             else:
                 raise NotImplementedError
@@ -180,25 +176,6 @@ class model:
                                    '_adversarial', reuse=tf.AUTO_REUSE):
                 perturb = tf.gradients(self.loss, self.embedding)
                 perturb = tf.reshape((0.01 * tf.stop_gradient(tf.nn.l2_normalize(perturb, dim=[0, 1, 2]))),
-                                     [-1, self.data_loader.max_length, self.embedding.shape[-1]])
+                                     [-1, FLAGS.max_length, self.embedding.shape[-1]])
                 self.embedding = self.embedding + perturb
                 self._encoder_selector_classifier()
-
-    def _set_weights_table(self):
-        with tf.variable_scope("weights_table", reuse=tf.AUTO_REUSE):
-            print("Calculating weights_table...")
-            self.weights_table = np.zeros(self.data_loader.rel_tot, dtype=np.float32)
-            for i in range(len(self.data_loader.data_label)):
-                self.weights_table[self.data_loader.data_label[i]] += 1.0
-            self.weights_table = [weight if weight == 0 else 1 / (weight ** 0.05) for weight in self.weights_table]
-
-            print("Finish calculating")
-
-    def get_weights(self, labels):
-        if self.weights_table is None:
-            weights = np.ones(len(labels), dtype=np.float32)
-        else:
-            weights = []
-            for label in labels:
-                weights.append(self.weights_table[label])
-        return weights
