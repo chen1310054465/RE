@@ -89,7 +89,7 @@ def bag_average(x, scope, rel_tot, is_training, var_scope=None, dropout_before=F
     return bag_logit, bag_repre
 
 
-def bag_maximum(x, scope, instance_label, rel_tot, is_training, var_scope=None, dropout_before=False,
+def bag_one(x, scope, instance_label, rel_tot, is_training, var_scope=None, dropout_before=False,
                 keep_prob=1.0):  # could be improved?
     with tf.variable_scope(var_scope or "maximum", reuse=tf.AUTO_REUSE):
         if is_training:  # training

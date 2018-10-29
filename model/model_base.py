@@ -50,18 +50,18 @@ def init(is_training=True):
         print('Usage: python3 ' + sys.argv[0] + ' [--dn dataset_name] [--en encoder] [--se selector] '
               + ('[--cl classifier] [--ac activation] [--op optimizer] [--ad adversarial_training] '
                  + '[--gn gpu_nums] [--pm pretrain_model]' if is_training else ''))
-        print('*******************************args details******************************************')
-        print('**  --dn: dataset_name: [nyt(New York Times dataset)]                              **')
-        print('**  --en: encoder: [cnn pcnn rnn birnn rnn_gru birnn_gru]                          **')
-        print('**  --se: selector: [instance att ave max att_rl ave_rl max_rl]                    **')
+        print('*******************************args details***********************************************')
+        print('**  --dn: dataset_name: [nyt(New York Times dataset)]                                   **')
+        print('**  --en: encoder: [cnn pcnn rnn birnn rnn_gru birnn_gru]                               **')
+        print('**  --se: selector: [instance att ave one cross_max one_rl att_rl ave_rl cross_max_rl]  **')
         if is_training:
-            print('**  --cl: classifier: [softmax soft_label]                                         **')
-            print('**  --ac: activation: ' + str([act for act in activations]) + '                    **')
-            print('**  --op: optimizer: ' + str([op for op in optimizers]) + '            **')
-            print('**  --ad: adversarial_training(whether add perturbation while training)            **')
-            print('**  --gn: gpu_nums(denotes num of gpu for training)                                **')
-            print('**  --pm: pretrain_model(denotes the name of model to pretrain, such as:pcnn_att)  **')
-        print('*************************************************************************************')
+            print('**  --cl: classifier: [softmax sigmoid soft_label]                                  **')
+            print('**  --ac: activation: ' + str([act for act in activations]) + '                         **')
+            print('**  --op: optimizer: ' + str([op for op in optimizers]) + '                 **')
+            print('**  --ad: adversarial_training(whether add perturbation while training)             **')
+            print('**  --gn: gpu_nums(denotes num of gpu for training)                                 **')
+            print('**  --pm: pretrain_model(denotes the name of model to pretrain, such as:pcnn_att)   **')
+        print('******************************************************************************************')
         exit()
 
     if FLAGS.ac in activations:
@@ -150,9 +150,12 @@ class model:
         elif se == "ave":
             self.logit, self.repre = selector.bag_average(self.encoder, self.scope, self.rel_tot,
                                                           self.is_training, keep_prob=self.keep_prob)
-        elif se == "max":
-            self.logit, self.repre = selector.bag_maximum(self.encoder, self.scope, self.instance_label,
-                                                          self.rel_tot, self.is_training, keep_prob=self.keep_prob)
+        elif se == "one":
+            self.logit, self.repre = selector.bag_one(self.encoder, self.scope, self.instance_label,
+                                                      self.rel_tot, self.is_training, keep_prob=self.keep_prob)
+        elif se == "cross_max":
+            self.logit, self.repre = selector.bag_cross_max(self.encoder, self.scope, self.rel_tot,
+                                                            keep_prob=self.keep_prob)
         elif se == "instance":
             self.logit, self.repre = selector.instance(self.encoder, self.rel_tot, keep_prob=self.keep_prob)
         else:
@@ -162,6 +165,8 @@ class model:
         if self.is_training:
             if FLAGS.cl == "softmax":
                 self.loss = classifier.softmax_cross_entropy(self.logit, self.label, self.rel_tot, weights=self.weights)
+            if FLAGS.cl == "sigmoid":
+                self.loss = classifier.sigmoid_cross_entropy(self.logit, self.label, self.rel_tot, weights=self.weights)
             elif FLAGS.cl == "soft_label":
                 self.loss = classifier.soft_label_softmax_cross_entropy(self.logit, self.label, self.rel_tot
                                                                         , weights=self.weights)
