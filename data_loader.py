@@ -332,6 +332,18 @@ class file_data_loader:
             batch_data.update({'multi_label': multi_label})
         return batch_data
 
+    def add2batch_data(self, batch_data, b, e):
+        batch_data['word'] = np.concatenate([batch_data['word'], self.data_word[b:e]]) \
+            if batch_data.__contains__('word') else self.data_word[b:e]
+        batch_data['pos1'] = np.concatenate([batch_data['pos1'], self.data_pos1[b:e]]) \
+            if batch_data.__contains__('pos1') else self.data_pos1[b:e]
+        batch_data['pos2'] = np.concatenate([batch_data['pos2'], self.data_pos2[b:e]]) \
+            if batch_data.__contains__('pos2') else self.data_pos2[b:e]
+        batch_data['mask'] = np.concatenate([batch_data['mask'], self.data_mask[b:e]]) \
+            if batch_data.__contains__('mask') else self.data_mask[b:e]
+        batch_data['length'] = np.concatenate([batch_data['length'], self.data_length[b:e]]) \
+            if batch_data.__contains__('length') else self.data_length[b:e]
+
     def next_batch(self, batch_size):
         if self.begin >= len(self.order):
             self.begin = 0
@@ -339,7 +351,6 @@ class file_data_loader:
                 random.shuffle(self.order)
             raise StopIteration
 
-        index = []
         i = self.begin
         j = self.begin + batch_size
         if i > len(self.order):
@@ -348,26 +359,37 @@ class file_data_loader:
                 random.shuffle(self.order)
             raise StopIteration
         self.begin = j
-        scope = None
-        multi_label = None
+
+        batch_data = {}
         if self.mode == self.MODE_INSTANCE:
-            index = list(range(i, j))
+            self.add2batch_data(batch_data, i, j)
+            batch_data['label'] = self.data_label[i:j]
         elif self.mode == self.MODE_ENTPAIR_BAG or self.mode == self.MODE_RELFACT_BAG:
             scope = np.zeros(batch_size + 1, dtype=np.int32)
             multi_label = [] if self.mode == self.MODE_ENTPAIR_BAG else None
             for p, k in enumerate(range(i, j)):
-                index += range(self.scope[self.order[k]][0], self.scope[self.order[k]][1])
-                scope[p + 1] = scope[p] + self.scope[self.order[k]][1] - self.scope[self.order[k]][0]
-
+                b, e = self.scope[self.order[k]][0], self.scope[self.order[k]][1]
+                scope[p + 1] = scope[p] + e - b
                 if multi_label is not None:
                     _one_multi_rel = np.zeros(self.rel_tot, dtype=np.int32)
                     for n in range(self.scope[self.order[k]][0], self.scope[self.order[k]][1]):
                         _one_multi_rel[self.data_label[n]] = 1
                     multi_label.append(_one_multi_rel)
-            if multi_label is not None:
-                multi_label = np.array(multi_label)
+                    batch_data['multi_label'] = np.concatenate([batch_data['multi_label'], multi_label]) \
+                        if batch_data.__contains__('multi_label') else multi_label
 
-        return self.batch_data(index, scope, multi_label)
+                self.add2batch_data(batch_data, b, e)
+                batch_data['label'] = np.concatenate([batch_data['label'], [self.data_label[b]]]) \
+                    if batch_data.__contains__('label') else [self.data_label[b]]
+                batch_data['instance_label'] = np.concatenate([batch_data['instance_label'], self.data_label[b:e]]) \
+                    if batch_data.__contains__('instance_label') else self.data_label[b:e]
+
+            batch_data['scope'] = scope
+
+        if hasattr(self, 'weights_table'):
+            batch_data.update({'weights': [self.weights_table[label] for label in batch_data['label']]})
+
+        return batch_data
 
 
 class npy_data_loader(file_data_loader):
