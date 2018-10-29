@@ -25,7 +25,8 @@ def _attention_test_logit(x, rel_tot, var_scope=None):
     with tf.variable_scope(var_scope or 'attention_logit', reuse=tf.AUTO_REUSE):
         relation_matrix = tf.get_variable('relation_matrix', shape=[rel_tot, x.shape[1]], dtype=tf.float32,
                                           initializer=tf.contrib.layers.xavier_initializer())
-        attention_logit = tf.matmul(x, tf.transpose(relation_matrix))  # (n', hidden_size) x (hidden_size, rel_tot) = (n', rel_tot)
+        attention_logit = tf.matmul(x, tf.transpose(
+            relation_matrix))  # (n', hidden_size) x (hidden_size, rel_tot) = (n', rel_tot)
     return attention_logit
 
 
@@ -97,8 +98,7 @@ def bag_maximum(x, scope, instance_label, rel_tot, is_training, var_scope=None, 
             bag_repre = []
             for i in range(scope.shape[0] - 1):
                 bag_hidden_mat = x[scope[i]:scope[i + 1]]
-                instance_logit = tf.nn.softmax(_logit(bag_hidden_mat, rel_tot),
-                                               -1)  # (n', hidden_size) -> (n', rel_tot)
+                instance_logit = tf.nn.softmax(_logit(bag_hidden_mat, rel_tot), -1)  # (n', hidden_size)->(n', rel_tot)
                 j = tf.argmax(instance_logit[:, instance_label[i]], output_type=tf.int32)
                 bag_repre.append(bag_hidden_mat[j])
             bag_repre = tf.stack(bag_repre)
@@ -112,11 +112,29 @@ def bag_maximum(x, scope, instance_label, rel_tot, is_training, var_scope=None, 
             bag_logit = []
             for i in range(scope.shape[0] - 1):
                 bag_hidden_mat = x[scope[i]:scope[i + 1]]
-                instance_logit = tf.nn.softmax(_logit(bag_hidden_mat, rel_tot),
-                                               -1)  # (n', hidden_size) -> (n', rel_tot)
+                instance_logit = tf.nn.softmax(_logit(bag_hidden_mat, rel_tot), -1)  # (n', hidden_size)->(n', rel_tot)
                 bag_logit.append(tf.reduce_max(instance_logit, 0))
                 bag_repre.append(bag_hidden_mat[0])  # fake max repre
             bag_logit = tf.stack(bag_logit)
             bag_repre = tf.stack(bag_repre)
 
             return tf.nn.softmax(bag_logit), bag_repre
+
+
+def bag_cross_max(x, scope, rel_tot, var_scope=None, dropout_before=False, keep_prob=1.0):
+    """
+    Cross-sentence Max-pooling proposed by (Jiang et al. 2016.)
+    "Relation Extraction with Multi-instance Multi-label Convolutional Neural Networks"
+    https://pdfs.semanticscholar.org/8731/369a707046f3f8dd463d1fd107de31d40a24.pdf
+    """
+    with tf.variable_scope(var_scope or "cross_max", reuse=tf.AUTO_REUSE):
+        if dropout_before:
+            x = dropout(x, keep_prob)
+        bag_repre = []
+        for i in range(scope.shape[0] - 1):
+            bag_hidden_mat = x[scope[i]:scope[i + 1]]
+            bag_repre.append(tf.reduce_max(bag_hidden_mat, 0))  # (n', hidden_size) -> (hidden_size)
+        bag_repre = tf.stack(bag_repre)
+        if not dropout_before:
+            bag_repre = dropout(bag_repre, keep_prob)
+    return _logit(bag_repre, rel_tot), bag_repre

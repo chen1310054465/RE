@@ -2,9 +2,17 @@ import tensorflow as tf
 
 
 def softmax_cross_entropy(x, label, rel_tot, weights, var_scope=None):
-    with tf.variable_scope(var_scope or "cross_entropy_loss", reuse=tf.AUTO_REUSE):
+    with tf.variable_scope(var_scope or "softmax_cross_entropy_loss", reuse=tf.AUTO_REUSE):
         label_onehot = tf.one_hot(indices=label, depth=rel_tot, dtype=tf.int32)
         loss = tf.losses.softmax_cross_entropy(onehot_labels=label_onehot, logits=x, weights=weights)
+        tf.summary.scalar('loss', loss)
+        return loss
+
+
+def sigmoid_cross_entropy(x, label, rel_tot, weights, var_scope=None):
+    with tf.variable_scope(var_scope or "sigmoid_cross_entropy_loss", reuse=tf.AUTO_REUSE):
+        label_onehot = tf.one_hot(indices=label, depth=rel_tot, dtype=tf.int32)
+        loss = tf.losses.sigmoid_cross_entropy(label_onehot, logits=x, weights=weights)
         tf.summary.scalar('loss', loss)
         return loss
 

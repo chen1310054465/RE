@@ -3,6 +3,8 @@
     <words>
       <w>adadelta</w>
       <w>adagrad</w>
+      <w>convolutional</w>
+      <w>jiang</w>
       <w>preprocess</w>
       <w>relu</w>
       <w>tanh</w>
