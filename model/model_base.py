@@ -51,9 +51,9 @@ def init(is_training=True):
               + ('[--cl classifier] [--ac activation] [--op optimizer] [--ad adversarial_training] '
                  + '[--gn gpu_nums] [--pm pretrain_model]' if is_training else ''))
         print('*******************************args details***********************************************')
-        print('**  --dn: dataset_name: [nyt(New York Times dataset)]                                   **')
+        print('**  --dn: dataset_name: [nyt(New York Times dataset)...], put it in origin_data dir     **')
         print('**  --en: encoder: [cnn pcnn rnn birnn rnn_lstm birnn_lstm rnn_gru birnn_gru]           **')
-        print('**  --se: selector: [instance att ave one cross_max one_rl att_rl ave_rl cross_max_rl]  **')
+        print('**  --se: selector: [instance att one ave cross_max att_rl one_rl ave_rl cross_max_rl]  **')
         if is_training:
             print('**  --cl: classifier: [softmax sigmoid soft_label]                                  **')
             print('**  --ac: activation: ' + str([act for act in activations]) + '                         **')
@@ -85,9 +85,10 @@ class model:
         self.mask = tf.placeholder(dtype=tf.int32, shape=[None, FLAGS.max_length], name="mask") \
             if 'pcnn' in FLAGS.en else None
         self.length = tf.placeholder(dtype=tf.int32, shape=[None], name='length') if 'rnn' in FLAGS.en else None
-        self.label = tf.placeholder(dtype=tf.int32, shape=[batch_size], name='label') if is_training else None
+        self.label = tf.placeholder(dtype=tf.int32, shape=[batch_size], name='label') \
+            if is_training or 'one' in FLAGS.se else None
         self.instance_label = tf.placeholder(dtype=tf.int32, shape=[None], name='instance_label') \
-            if 'att' or 'max' in FLAGS.se else None
+            if 'att' in FLAGS.se else None
         self.scope = tf.placeholder(dtype=tf.int32, shape=[batch_size + 1], name='scope') \
             if 'instance' not in FLAGS.se else None
         self.weights = tf.placeholder(dtype=tf.float32, shape=[batch_size], name='weights') if is_training else None
