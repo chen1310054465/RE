@@ -52,7 +52,7 @@ def init(is_training=True):
                  + '[--gn gpu_nums] [--pm pretrain_model]' if is_training else ''))
         print('*******************************args details***********************************************')
         print('**  --dn: dataset_name: [nyt(New York Times dataset)]                                   **')
-        print('**  --en: encoder: [cnn pcnn rnn birnn rnn_gru birnn_gru]                               **')
+        print('**  --en: encoder: [cnn pcnn rnn birnn rnn_lstm birnn_lstm rnn_gru birnn_gru]           **')
         print('**  --se: selector: [instance att ave one cross_max one_rl att_rl ave_rl cross_max_rl]  **')
         if is_training:
             print('**  --cl: classifier: [softmax sigmoid soft_label]                                  **')
@@ -97,10 +97,11 @@ class model:
     def _network(self):
         # embedding
         self._embedding()
-        with tf.variable_scope("re_" + FLAGS.en + "_" + FLAGS.se +
+        with tf.variable_scope(FLAGS.en + "_" + FLAGS.se +
                                (('_' + FLAGS.cl) if FLAGS.cl != 'softmax' else '') +  # classifier
                                (('_' + FLAGS.ac) if FLAGS.ac != 'relu' else '') +  # activation
-                               (('_' + FLAGS.op) if FLAGS.op != 'sgd' else ''),  # optimizer
+                               (('_' + FLAGS.op) if FLAGS.op != 'sgd' else '') +  # optimizer
+                               '_ad_' + ('y' if FLAGS.ad != 0 else 'n'),  # adversarial
                                reuse=tf.AUTO_REUSE):
             # encoder_selector_classifier
             self._encoder_selector_classifier(reuse=False if FLAGS.ad else True)
@@ -127,7 +128,7 @@ class model:
                                        keep_prob=self.keep_prob)
         elif "rnn" in FLAGS.en:
             ens = FLAGS.en.split('_')
-            cell_name = ens[1] if len(ens) > 1 else "lstm"
+            cell_name = ens[1] if len(ens) > 1 else ""
             if ens[0] == "rnn":
                 self.encoder = encoder.rnn(self.embedding, self.length, FLAGS.hidden_size, cell_name=cell_name,
                                            keep_prob=self.keep_prob)
@@ -147,15 +148,15 @@ class model:
         if se == "att":
             self.logit, self.repre = selector.bag_attention(self.encoder, self.scope, self.instance_label,
                                                             self.rel_tot, self.is_training, keep_prob=self.keep_prob)
+        elif se == "one":
+            self.logit, self.repre = selector.bag_one(self.encoder, self.scope, self.label,
+                                                      self.rel_tot, self.is_training, keep_prob=self.keep_prob)
         elif se == "ave":
             self.logit, self.repre = selector.bag_average(self.encoder, self.scope, self.rel_tot,
                                                           self.is_training, keep_prob=self.keep_prob)
-        elif se == "one":
-            self.logit, self.repre = selector.bag_one(self.encoder, self.scope, self.instance_label,
-                                                      self.rel_tot, self.is_training, keep_prob=self.keep_prob)
         elif se == "cross_max":
             self.logit, self.repre = selector.bag_cross_max(self.encoder, self.scope, self.rel_tot,
-                                                            keep_prob=self.keep_prob)
+                                                            self.is_training, keep_prob=self.keep_prob)
         elif se == "instance":
             self.logit, self.repre = selector.instance(self.encoder, self.rel_tot, keep_prob=self.keep_prob)
         else:

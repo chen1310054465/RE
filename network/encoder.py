@@ -46,21 +46,23 @@ def pcnn(x, mask, hidden_size=230, kernel_size=3, stride_size=1, activation=tf.n
         return x
 
 
-def _rnn_cell(hidden_size, cell_name='lstm'):
+def _rnn_cell(hidden_size, cell_name=''):
     with tf.variable_scope(cell_name, reuse=tf.AUTO_REUSE):
         if isinstance(cell_name, list) or isinstance(cell_name, tuple):
             if len(cell_name) == 1:
                 return _rnn_cell(hidden_size, cell_name[0])
             cells = [_rnn_cell(hidden_size, c) for c in cell_name]
             return tf.nn.rnn_cell.MultiRNNCell(cells, state_is_tuple=True)
-        if cell_name.lower() == 'lstm':
+        if cell_name.strip() == '':
+            return tf.nn.rnn_cell.BasicRNNCell(hidden_size)
+        elif cell_name.lower() == 'lstm':
             return tf.nn.rnn_cell.LSTMCell(hidden_size, state_is_tuple=True)
         elif cell_name.lower() == 'gru':
             return tf.nn.rnn_cell.GRUCell(hidden_size)
         raise NotImplementedError
 
 
-def rnn(x, length, hidden_size=230, cell_name='lstm', var_scope=None, keep_prob=1.0):
+def rnn(x, length, hidden_size=230, cell_name='', var_scope=None, keep_prob=1.0):
     with tf.variable_scope(var_scope or "rnn", reuse=tf.AUTO_REUSE):
         x = dropout(x, keep_prob)
         cell = _rnn_cell(hidden_size, cell_name)
@@ -70,7 +72,7 @@ def rnn(x, length, hidden_size=230, cell_name='lstm', var_scope=None, keep_prob=
         return states
 
 
-def birnn(x, length, hidden_size=230, cell_name='lstm', var_scope=None, keep_prob=1.0):
+def birnn(x, length, hidden_size=230, cell_name='', var_scope=None, keep_prob=1.0):
     with tf.variable_scope(var_scope or "birnn", reuse=tf.AUTO_REUSE):
         x = dropout(x, keep_prob)
         fw_cell = _rnn_cell(hidden_size, cell_name)

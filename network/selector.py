@@ -71,26 +71,8 @@ def bag_attention(x, scope, instance_label, rel_tot, is_training, var_scope=None
             return bag_logit, bag_repre
 
 
-def bag_average(x, scope, rel_tot, is_training, var_scope=None, dropout_before=False, keep_prob=1.0):
-    with tf.variable_scope(var_scope or "average", reuse=tf.AUTO_REUSE):
-        if dropout_before:
-            x = dropout(x, keep_prob)
-        bag_repre = []
-        for i in range(scope.shape[0] - 1):
-            bag_hidden_mat = x[scope[i]:scope[i + 1]]
-            bag_repre.append(tf.reduce_mean(bag_hidden_mat, 0))  # (n', hidden_size) -> (hidden_size)
-        bag_repre = tf.stack(bag_repre)
-        if not dropout_before:
-            bag_repre = dropout(bag_repre, keep_prob)
-
-        bag_logit = _logit(bag_repre, rel_tot)
-        if not is_training:
-            bag_logit = tf.nn.softmax(bag_logit)
-    return bag_logit, bag_repre
-
-
-def bag_one(x, scope, instance_label, rel_tot, is_training, var_scope=None, dropout_before=False,
-                keep_prob=1.0):  # could be improved?
+# could be improved?
+def bag_one(x, scope, label, rel_tot, is_training, var_scope=None, dropout_before=False, keep_prob=1.0):
     with tf.variable_scope(var_scope or "maximum", reuse=tf.AUTO_REUSE):
         if is_training:  # training
             if dropout_before:
@@ -99,7 +81,7 @@ def bag_one(x, scope, instance_label, rel_tot, is_training, var_scope=None, drop
             for i in range(scope.shape[0] - 1):
                 bag_hidden_mat = x[scope[i]:scope[i + 1]]
                 instance_logit = tf.nn.softmax(_logit(bag_hidden_mat, rel_tot), -1)  # (n', hidden_size)->(n', rel_tot)
-                j = tf.argmax(instance_logit[:, instance_label[i]], output_type=tf.int32)
+                j = tf.argmax(instance_logit[:, label[i]], output_type=tf.int32)
                 bag_repre.append(bag_hidden_mat[j])
             bag_repre = tf.stack(bag_repre)
             if not dropout_before:
@@ -121,7 +103,25 @@ def bag_one(x, scope, instance_label, rel_tot, is_training, var_scope=None, drop
             return tf.nn.softmax(bag_logit), bag_repre
 
 
-def bag_cross_max(x, scope, rel_tot, var_scope=None, dropout_before=False, keep_prob=1.0):
+def bag_average(x, scope, rel_tot, is_training, var_scope=None, dropout_before=False, keep_prob=1.0):
+    with tf.variable_scope(var_scope or "average", reuse=tf.AUTO_REUSE):
+        if dropout_before:
+            x = dropout(x, keep_prob)
+        bag_repre = []
+        for i in range(scope.shape[0] - 1):
+            bag_hidden_mat = x[scope[i]:scope[i + 1]]
+            bag_repre.append(tf.reduce_mean(bag_hidden_mat, 0))  # (n', hidden_size) -> (hidden_size)
+        bag_repre = tf.stack(bag_repre)
+        if not dropout_before:
+            bag_repre = dropout(bag_repre, keep_prob)
+
+        bag_logit = _logit(bag_repre, rel_tot)
+        if not is_training:
+            bag_logit = tf.nn.softmax(bag_logit)
+    return bag_logit, bag_repre
+
+
+def bag_cross_max(x, scope, rel_tot, is_training, var_scope=None, dropout_before=False, keep_prob=1.0):
     """
     Cross-sentence Max-pooling proposed by (Jiang et al. 2016.)
     "Relation Extraction with Multi-instance Multi-label Convolutional Neural Networks"
@@ -137,4 +137,7 @@ def bag_cross_max(x, scope, rel_tot, var_scope=None, dropout_before=False, keep_
         bag_repre = tf.stack(bag_repre)
         if not dropout_before:
             bag_repre = dropout(bag_repre, keep_prob)
-    return _logit(bag_repre, rel_tot), bag_repre
+        bag_logit = _logit(bag_repre, rel_tot)
+        if not is_training:
+            bag_logit = tf.nn.softmax(bag_logit)
+    return bag_logit, bag_repre
