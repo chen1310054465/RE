@@ -56,12 +56,9 @@ class file_data_loader:
             if order_item is None:
                 raise Exception("[ERROR] Invalid mode")
             self.order = list(range(len(order_item)))
-            self.scope_name = []
-            self.scope = []
             for k, v in iteritems(order_item):
                 self.scope_name.append(k)
                 self.scope.append(v)
-            self.scope = np.array(self.scope)
         if self.shuffle:
             random.shuffle(self.order)
 
@@ -375,29 +372,36 @@ class file_data_loader:
         elif self.mode == self.MODE_ENTPAIR_BAG or self.mode == self.MODE_RELFACT_BAG:
             scope = np.zeros(batch_size + 1, dtype=np.int32)
             multi_label = [] if self.mode == self.MODE_ENTPAIR_BAG else None
+            entpair = [] if self.mode == self.MODE_ENTPAIR_BAG and self.shuffle else None
             cur_pos = 0
             for k in range(i, j):
                 b, e = self.scope[self.order[k]][0], self.scope[self.order[k]][1]
                 scope[cur_pos + 1] = scope[cur_pos] + e - b
                 cur_pos += 1
-                if multi_label is not None:
+                if self.mode == self.MODE_ENTPAIR_BAG:
                     _one_multi_rel = np.zeros(self.rel_tot, dtype=np.int32)
-                    for n in range(self.scope[self.order[k]][0], self.scope[self.order[k]][1]):
+                    for n in range(b, e):
                         _one_multi_rel[self.data_label[n]] = 1
                     multi_label.append(_one_multi_rel)
                     batch_data['multi_label'] = np.concatenate([batch_data['multi_label'], multi_label]) \
                         if batch_data.__contains__('multi_label') else multi_label
+                    if entpair is not None:
+                        entpair.append(self.scope_name[self.order[k]])
 
                 self.add2batch_data(batch_data, b, e)
                 batch_data['label'] = np.concatenate([batch_data['label'], [self.data_label[b]]]) \
                     if batch_data.__contains__('label') else [self.data_label[b]]
                 batch_data['instance_label'] = np.concatenate([batch_data['instance_label'], self.data_label[b:e]]) \
                     if batch_data.__contains__('instance_label') else self.data_label[b:e]
+            if self.mode == self.MODE_ENTPAIR_BAG:
+                batch_data['entpair'] = self.scope_name[i:j] if entpair is None else entpair
             if cur_pos < batch_size:
                 padding = batch_size - cur_pos
                 batch_data['instance_label'] = np.concatenate([batch_data['instance_label'],
                                                                np.zeros(padding, dtype=np.int32)])
                 scope[cur_pos + 1:batch_size + 1] = range(scope[cur_pos] + 1, scope[cur_pos] + 1 + padding)
+                if self.mode == self.MODE_ENTPAIR_BAG:
+                    batch_data['entpair'] = np.concatenate([batch_data['entpair'], ['None#None'] * padding])
             batch_data['scope'] = scope
         self.batch_padding(batch_data, i, j, batch_size)
 
