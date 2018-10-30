@@ -409,8 +409,8 @@ class file_data_loader:
                 padding = batch_size - cur_pos
                 batch_data['instance_label'] = np.concatenate([batch_data['instance_label'],
                                                                np.zeros(padding, dtype=np.int32)])
-                batch_data['scope'][cur_pos + 1:batch_size + 1] = range(batch_data['scope'][cur_pos] + 1,
-                                                                        batch_data['scope'][cur_pos] + 1 + padding)
+                batch_data['scope'] = np.append(batch_data['scope'], range(batch_data['scope'][cur_pos] + 1,
+                                                                           batch_data['scope'][cur_pos] + 1 + padding))
                 if self.mode == self.MODE_ENTPAIR_BAG:
                     batch_data['multi_label'] = np.concatenate([batch_data['multi_label'],
                                                                 [[0] * self.rel_tot] * padding])
