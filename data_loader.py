@@ -421,6 +421,7 @@ class file_data_loader:
         self.begin = end
 
         return batch_data
+
     # def next_batch(self, batch_size):
     #     if self.begin >= len(self.order):
     #         self.begin = 0
