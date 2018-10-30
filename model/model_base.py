@@ -165,7 +165,7 @@ class model:
         if self.is_training:
             if FLAGS.cl == "softmax":
                 self.loss = classifier.softmax_cross_entropy(self.logit, self.label, self.rel_tot, weights=self.weights)
-            if FLAGS.cl == "sigmoid":
+            elif FLAGS.cl == "sigmoid":
                 self.loss = classifier.sigmoid_cross_entropy(self.logit, self.label, self.rel_tot, weights=self.weights)
             elif FLAGS.cl == "soft_label":
                 self.loss = classifier.soft_label_softmax_cross_entropy(self.logit, self.label, self.rel_tot
