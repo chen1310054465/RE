@@ -103,9 +103,6 @@ class framework:
             batch_data = self.train_data_loader.next_batch(FLAGS.batch_size // len(models))
             result = self._one_step(model, batch_data, run_array)
             batch_label.append(batch_data['label'])
-            if '_rl' not in FLAGS.se:
-                merged_summary = self.sess.run(tf.summary.merge_all(), feed_dict=self.feed_dict)
-                self.summary_writer.add_summary(merged_summary, self.step)
 
         batch_label = np.concatenate(batch_label)
         if return_label:
@@ -205,6 +202,9 @@ class framework:
                         epoch, self.step, t, iter_loss, self.acc_not_na.get(), self.acc_total.get()))
                     sys.stdout.flush()
                 self.step += 1
+            if '_rl' not in FLAGS.se:
+                merged_summary = self.sess.run(tf.summary.merge_all(), feed_dict=self.feed_dict)
+                self.summary_writer.add_summary(merged_summary, self.step)
             print("\nAverage iteration time: %f" % (time_sum / self.step))
 
             for m in tower_models:
@@ -325,8 +325,8 @@ class framework:
                 iter_output, iter_loss = self._policy_agent_one_step(model, batch_data, weights)
 
                 sys.stdout.write(
-                    "[pretrain policy agent] epoch %d step %d | loss : %f, not NA accuracy: %f, accuracy: %f" % (
-                        epoch, i, iter_loss, self.acc_not_na.get(), self.acc_total.get()) + '\n')
+                    "[pretrain policy agent] epoch %d step %d | loss : %f, not NA accuracy: %f, accuracy: %f\r" % (
+                        epoch, i, iter_loss, self.acc_not_na.get(), self.acc_total.get()))
                 sys.stdout.flush()
 
             if self.acc_total.get() > 0.9:
@@ -381,7 +381,7 @@ class framework:
 
                         sys.stdout.write(
                             "[pretrain policy agent] epoch %d step %d | loss : %f, not NA accuracy: %f, accuracy: "
-                            "%f" % (epoch, i, iter_loss, self.acc_not_na.get(), self.acc_total.get()) + '\n')
+                            "%f\r" % (epoch, i, iter_loss, self.acc_not_na.get(), self.acc_total.get()))
                         sys.stdout.flush()
                     if self.acc_total.get() > 0.9:
                         break
@@ -403,8 +403,8 @@ class framework:
 
                 self._summary(batch_data['label'], outputs)
                 sys.stdout.write(
-                    "epoch %d step %d | loss : %f, not NA accuracy: %f, total accuracy %f" % (
-                        epoch, i, loss, self.acc_not_na.get(), self.acc_total.get()) + '\r')
+                    "epoch %d step %d | loss : %f, not NA accuracy: %f, total accuracy %f\r" % (
+                        epoch, i, loss, self.acc_not_na.get(), self.acc_total.get()))
                 sys.stdout.flush()
 
             if (epoch + 1) % FLAGS.save_epoch == 0:
