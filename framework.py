@@ -2,7 +2,7 @@ import math
 import os
 import sys
 import time
-from typing import Any, Callable, Tuple
+import gc
 
 import numpy as np
 import sklearn.metrics
@@ -187,9 +187,8 @@ class framework:
             while True:
                 time_start = time.time()
                 try:
-                    iter_loss, iter_output, _train_op, iter_label = self._one_step_multi_models(tower_models,
-                                                                                                [loss, output,
-                                                                                                 train_op])
+                    iter_loss, iter_output, iter_label = self._one_step_multi_models(tower_models, [train_op, loss,
+                                                                                                    output])[1:]
                 except StopIteration:
                     break
                 time_end = time.time()
@@ -205,6 +204,7 @@ class framework:
             if '_rl' not in FLAGS.se:
                 merged_summary = self.sess.run(tf.summary.merge_all(), feed_dict=self.feed_dict)
                 self.summary_writer.add_summary(merged_summary, self.step)
+            gc.collect()
             print("\nAverage iteration time: %f" % (time_sum / self.step))
 
             for m in tower_models:
@@ -263,12 +263,15 @@ class framework:
         pred_result = []
 
         for i, batch_data in enumerate(self.test_data_loader):
+            time_start = time.time()
             iter_logit, iter_output = self._one_step(model, batch_data, [model.logit, model.output])
+            time_end = time.time()
+            t = time_end - time_start
             self._summary(batch_data['label'], iter_output)
 
             if self.acc_not_na.total > 0:
-                sys.stdout.write("[TEST] step %d | not NA accuracy: %f, accuracy: %f\r" % (
-                    i, self.acc_not_na.get(), self.acc_total.get()))
+                sys.stdout.write("[TEST] step %d time %.2f | not NA accuracy: %f, accuracy: %f\r" % (
+                    i, t, self.acc_not_na.get(), self.acc_total.get()))
                 sys.stdout.flush()
             for idx in range(len(iter_logit)):
                 for rel in range(1, self.test_data_loader.rel_tot):
@@ -277,6 +280,7 @@ class framework:
                         pred_result.append({'score': float(iter_logit[idx][rel]),
                                             'entpair': batch_data['entpair'][idx], 'relation': rel})
                 entpair_tot += 1
+
         sorted_test_result = sorted(test_result, key=lambda x: x['score'])
         prec = []
         recall = []
