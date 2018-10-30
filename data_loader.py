@@ -394,16 +394,6 @@ class file_data_loader:
                     batch_data['entpair'].append(self.scope_name[self.order[k]])
                 cur_pos += 1
 
-            if cur_pos < batch_size:
-                padding = batch_size - cur_pos
-                batch_data['instance_label'] = np.concatenate([batch_data['instance_label'],
-                                                               np.zeros(padding, dtype=np.int32)])
-                batch_data['scope'][cur_pos + 1:batch_size + 1] = range(batch_data['scope'][cur_pos] + 1,
-                                                                        batch_data['scope'][cur_pos] + 1 + padding)
-                if self.mode == self.MODE_ENTPAIR_BAG:
-                    batch_data['multi_label'] = np.concatenate([batch_data['multi_label'],
-                                                                [[0] * self.rel_tot] * padding])
-                    batch_data['entpair'] = np.concatenate([batch_data['entpair'], ['None#None'] * padding])
             batch_data['word'] = np.concatenate(batch_data['word'])
             batch_data['pos1'] = np.concatenate(batch_data['pos1'])
             batch_data['pos2'] = np.concatenate(batch_data['pos2'])
@@ -415,6 +405,17 @@ class file_data_loader:
             if self.mode == self.MODE_ENTPAIR_BAG:
                 batch_data['multi_label'] = np.stack(batch_data['multi_label'])
                 batch_data['entpair'] = np.stack(batch_data['entpair'])
+            if cur_pos < batch_size:
+                padding = batch_size - cur_pos
+                batch_data['instance_label'] = np.concatenate([batch_data['instance_label'],
+                                                               np.zeros(padding, dtype=np.int32)])
+                batch_data['scope'][cur_pos + 1:batch_size + 1] = range(batch_data['scope'][cur_pos] + 1,
+                                                                        batch_data['scope'][cur_pos] + 1 + padding)
+                if self.mode == self.MODE_ENTPAIR_BAG:
+                    batch_data['multi_label'] = np.concatenate([batch_data['multi_label'],
+                                                                [[0] * self.rel_tot] * padding])
+                    batch_data['entpair'] = np.concatenate([batch_data['entpair'], ['None#None'] * padding])
+
         self.batch_padding(batch_data, self.begin, end, batch_size)
         if hasattr(self, 'weights_table'):
             batch_data.update({'weights': [self.weights_table[label] for label in batch_data['label']]})
