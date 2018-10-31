@@ -226,6 +226,7 @@ class framework:
                     not_best_count = 0
                 else:
                     not_best_count += 1
+                gc.collect()
 
             if not_best_count >= 20:
                 break
