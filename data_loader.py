@@ -63,6 +63,8 @@ class file_data_loader:
             random.shuffle(self.order)
 
     def _load_preprocessed_file(self):
+        if not os.path.exists(FLAGS.processed_data_dir):
+            os.makedirs(FLAGS.processed_data_dir)
         word_file_name = os.path.join(FLAGS.processed_data_dir, self.prefix + '_word.npy')
         pos1_file_name = os.path.join(FLAGS.processed_data_dir, self.prefix + '_pos1.npy')
         pos2_file_name = os.path.join(FLAGS.processed_data_dir, self.prefix + '_pos2.npy')

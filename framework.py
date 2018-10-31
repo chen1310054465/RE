@@ -167,8 +167,10 @@ class framework:
         grads = average_gradients(tower_grads)
         train_op = optimizer.apply_gradients(grads)
 
-        if not os.path.isdir(FLAGS.ckpt_dir):
-            os.mkdir(FLAGS.ckpt_dir)
+        if not os.path.exists(FLAGS.ckpt_dir):
+            os.makedirs(FLAGS.ckpt_dir)
+        if not os.path.exists(FLAGS.summary_dir):
+            os.makedirs(FLAGS.summary_dir)
         # summary writer
         self.summary_writer = tf.summary.FileWriter(FLAGS.summary_dir, self.sess.graph)
         # saver
@@ -236,8 +238,8 @@ class framework:
         print("Finish training " + FLAGS.model_name)
         print("Best epoch auc = %f" % best_metric)
         if (not best_prec is None) and (not best_recall is None):
-            if not os.path.isdir(FLAGS.test_result_dir):
-                os.mkdir(FLAGS.test_result_dir)
+            if not os.path.exists(FLAGS.test_result_dir):
+                os.makedirs(FLAGS.test_result_dir)
             np.save(os.path.join(FLAGS.test_result_dir, FLAGS.model_name + "_x.npy"), best_recall)
             np.save(os.path.join(FLAGS.test_result_dir, FLAGS.model_name + "_y.npy"), best_prec)
 

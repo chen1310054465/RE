@@ -24,11 +24,11 @@ tf.flags.DEFINE_integer('hidden_size', 230, 'hidden size')
 tf.flags.DEFINE_integer('batch_size', 160, 'batch size')
 tf.flags.DEFINE_integer('max_length', 120, 'word max length')
 tf.flags.DEFINE_float('learning_rate', 0.5, 'learning rate')
-tf.flags.DEFINE_string('ckpt_dir', 'checkpoint', 'checkpoint dir')
-tf.flags.DEFINE_string('summary_dir', 'summary', 'summary dir')
-tf.flags.DEFINE_string('test_result_dir', 'test_result', 'test result dir')
-tf.flags.DEFINE_string('processed_data_dir', 'processed_data', 'processed data dir')
+tf.flags.DEFINE_string('ckpt_dir', os.path.join('checkpoint', FLAGS.dn), 'checkpoint dir')
+tf.flags.DEFINE_string('summary_dir', os.path.join('summary', FLAGS.dn), 'summary dir')
+tf.flags.DEFINE_string('test_result_dir', os.path.join('test_result', FLAGS.dn), 'test result dir')
 tf.flags.DEFINE_string('dataset_dir', os.path.join('origin_data', FLAGS.dn), 'origin dataset dir')
+tf.flags.DEFINE_string('processed_data_dir', os.path.join('processed_data', FLAGS.dn), 'processed data dir')
 tf.flags.DEFINE_string('model_name', (FLAGS.dn + '_' + FLAGS.en + "_" + FLAGS.se +  # dataset_name encoder selector
                                       (('_' + FLAGS.cl) if FLAGS.cl != 'softmax' else '') +  # classifier
                                       (('_' + FLAGS.ac) if FLAGS.ac != 'relu' else '') +  # activation
