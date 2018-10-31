@@ -46,8 +46,8 @@ def bag_attention(x, scope, instance_label, rel_tot, is_training, var_scope=None
             for i in range(scope.shape[0] - 1):
                 bag_hidden_mat = x[scope[i]:scope[i + 1]]
                 attention_score = tf.nn.softmax(attention_logit[scope[i]:scope[i + 1]], -1)
-                bag_repre.append(tf.squeeze(tf.matmul(tf.expand_dims(attention_score, 0),
-                                                      bag_hidden_mat)))  # (1, n') x (n', hidden_size) = (1, hidden_size) -> (hidden_size)
+                # (1, n') x (n', hidden_size) = (1, hidden_size) -> (hidden_size)
+                bag_repre.append(tf.squeeze(tf.matmul(tf.expand_dims(attention_score, 0), bag_hidden_mat)))
             bag_repre = tf.stack(bag_repre)
             if not dropout_before:
                 bag_repre = dropout(bag_repre, keep_prob)
