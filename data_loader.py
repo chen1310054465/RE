@@ -199,6 +199,10 @@ class file_data_loader:
             #                     tail = {}".format(i, sentence, head, tail))
 
             words = sentence.split()
+            self.data_length[i] = len(words)
+            if len(words) > FLAGS.max_length:
+                self.data_length[i] = FLAGS.max_length
+
             cur_pos = 0
             pos1 = -1
             pos2 = -1
@@ -239,10 +243,6 @@ class file_data_loader:
                     self.data_mask[i][j] = 2
                 else:
                     self.data_mask[i][j] = 3
-
-            self.data_length[i] = len(words)
-            if len(words) > FLAGS.max_length:
-                self.data_length[i] = FLAGS.max_length
 
             if instance['relation'] in self.rel2id:
                 self.data_label[i] = self.rel2id[instance['relation']]

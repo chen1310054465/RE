@@ -131,9 +131,9 @@ class framework:
 
         if fd_updater is not None:
             fd_updater(feed_dict)
-        # if '_rl' not in FLAGS.se:
-        #     merged_summary = self.sess.run(tf.summary.merge_all(), feed_dict=feed_dict)
-        #     self.summary_writer.add_summary(merged_summary, self.step)
+        if self.step % 50 == 0:
+            merged_summary = self.sess.run(tf.summary.merge_all(), feed_dict=feed_dict)
+            self.summary_writer.add_summary(merged_summary, self.step)
 
         return self.sess.run(run_array, feed_dict)
 

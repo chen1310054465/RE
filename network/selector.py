@@ -13,7 +13,7 @@ def _logit(x, rel_tot, var_scope=None):
 
 
 def _attention_train_logit(x, instance_label, rel_tot, var_scope=None):
-    with tf.variable_scope(var_scope or 'attention_logit', reuse=tf.AUTO_REUSE):
+    with tf.variable_scope(var_scope or 'logit', reuse=tf.AUTO_REUSE):
         relation_matrix = tf.get_variable('relation_matrix', shape=[rel_tot, x.shape[1]], dtype=tf.float32,
                                           initializer=tf.contrib.layers.xavier_initializer())
         current_relation = tf.nn.embedding_lookup(relation_matrix, instance_label)
@@ -22,7 +22,7 @@ def _attention_train_logit(x, instance_label, rel_tot, var_scope=None):
 
 
 def _attention_test_logit(x, rel_tot, var_scope=None):
-    with tf.variable_scope(var_scope or 'attention_logit', reuse=tf.AUTO_REUSE):
+    with tf.variable_scope(var_scope or 'logit', reuse=tf.AUTO_REUSE):
         relation_matrix = tf.get_variable('relation_matrix', shape=[rel_tot, x.shape[1]], dtype=tf.float32,
                                           initializer=tf.contrib.layers.xavier_initializer())
         attention_logit = tf.matmul(x, tf.transpose(
