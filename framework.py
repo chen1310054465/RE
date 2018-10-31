@@ -134,6 +134,7 @@ class framework:
         if self.step % 50 == 0:
             merged_summary = self.sess.run(tf.summary.merge_all(), feed_dict=feed_dict)
             self.summary_writer.add_summary(merged_summary, self.step)
+            gc.collect()
 
         return self.sess.run(run_array, feed_dict)
 
