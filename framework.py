@@ -110,29 +110,32 @@ class framework:
         return result
 
     def _one_step(self, model, batch_data, run_array, weights=None, fd_updater=None):
-        self.feed_dict = {
+        feed_dict = {
             model.word: batch_data['word'],
             model.pos1: batch_data['pos1'],
             model.pos2: batch_data['pos2'],
         }
         if model.mask is not None:  # hasattr(model, "mask"):
-            self.feed_dict.update({model.mask: batch_data['mask']})
+            feed_dict.update({model.mask: batch_data['mask']})
         if model.length is not None:
-            self.feed_dict.update({model.length: batch_data['length']})
+            feed_dict.update({model.length: batch_data['length']})
         if model.label is not None:
-            self.feed_dict.update({model.label: batch_data['label']})
+            feed_dict.update({model.label: batch_data['label']})
         if model.instance_label is not None and 'instance_label' in batch_data:
-            self.feed_dict.update({model.instance_label: batch_data['instance_label']})
+            feed_dict.update({model.instance_label: batch_data['instance_label']})
         if model.scope is not None and 'scope' in batch_data:
-            self.feed_dict.update({model.scope: batch_data['scope']})
+            feed_dict.update({model.scope: batch_data['scope']})
         if model.is_training:
             weights = batch_data['weights'] if weights is None else weights
-            self.feed_dict.update({model.weights: weights})
+            feed_dict.update({model.weights: weights})
 
         if fd_updater is not None:
-            fd_updater(self.feed_dict)
+            fd_updater(feed_dict)
+        # if '_rl' not in FLAGS.se:
+        #     merged_summary = self.sess.run(tf.summary.merge_all(), feed_dict=feed_dict)
+        #     self.summary_writer.add_summary(merged_summary, self.step)
 
-        return self.sess.run(run_array, self.feed_dict)
+        return self.sess.run(run_array, feed_dict)
 
     def train(self, model, optimizer=tf.train.GradientDescentOptimizer):
         assert (FLAGS.batch_size % FLAGS.gn == 0)
@@ -201,9 +204,6 @@ class framework:
                         epoch, self.step, t, iter_loss, self.acc_not_na.get(), self.acc_total.get()))
                     sys.stdout.flush()
                 self.step += 1
-            if '_rl' not in FLAGS.se:
-                merged_summary = self.sess.run(tf.summary.merge_all(), feed_dict=self.feed_dict)
-                self.summary_writer.add_summary(merged_summary, self.step)
             gc.collect()
             print("\nAverage iteration time: %f" % (time_sum / self.step))
 

@@ -38,8 +38,8 @@ class file_data_loader:
         self.scope_name = []
         self.scope = []
         self.set_order()
-        self.begin = 0
 
+        self.begin = 0
         print("Total relation fact: %d" % self.relfact_tot)
         if self.prefix == self.TRAIN_PREFIX:
             self._set_weights_table()
@@ -63,8 +63,6 @@ class file_data_loader:
             random.shuffle(self.order)
 
     def _load_preprocessed_file(self):
-        if not os.path.isdir(FLAGS.processed_data_dir):
-            return False
         word_file_name = os.path.join(FLAGS.processed_data_dir, self.prefix + '_word.npy')
         pos1_file_name = os.path.join(FLAGS.processed_data_dir, self.prefix + '_pos1.npy')
         pos2_file_name = os.path.join(FLAGS.processed_data_dir, self.prefix + '_pos2.npy')
@@ -307,6 +305,9 @@ class file_data_loader:
 
             print("Finish calculating")
 
+    def get_weights(self, labels):
+        return [self.weights_table[label] for label in labels]
+
     def __iter__(self):
         return self
 
@@ -324,7 +325,7 @@ class file_data_loader:
         if hasattr(self, 'scope') and scope is not None:
             batch_data.update({'scope': scope})
         if hasattr(self, 'weights_table'):
-            batch_data.update({'weights': [self.weights_table[label] for label in batch_data['label']]})
+            batch_data.update({'weights': self.get_weights(batch_data['label'])})
         if multi_label is not None:
             batch_data.update({'multi_label': multi_label})
         return batch_data
@@ -418,7 +419,7 @@ class file_data_loader:
 
         self.batch_padding(batch_data, self.begin, end, batch_size)
         if hasattr(self, 'weights_table'):
-            batch_data.update({'weights': [self.weights_table[label] for label in batch_data['label']]})
+            batch_data.update({'weights': self.get_weights(batch_data['label'])})
         self.begin = end
 
         return batch_data
