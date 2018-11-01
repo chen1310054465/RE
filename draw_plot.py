@@ -1,14 +1,19 @@
-import sklearn.metrics
-import numpy as np
-import sys
 import os
+import sys
+
 import matplotlib
+import numpy as np
+import sklearn.metrics
+import tensorflow as tf
 
 # Use 'Agg' so this program could run on a remote server
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-result_dir = './test_result'
+FLAGS = tf.flags.FLAGS
+# define some configurable parameter
+tf.flags.DEFINE_string('dn', 'nyt', 'dataset name')
+result_dir = os.path.join('test_result', FLAGS.dn)
 
 
 def main():
