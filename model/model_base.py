@@ -54,12 +54,12 @@ def init(is_training=True):
         print('**  --en: encoder: [cnn pcnn rnn birnn rnn_lstm birnn_lstm rnn_gru birnn_gru]           **')
         print('**  --se: selector: [instance att one ave cross_max att_rl one_rl ave_rl cross_max_rl]  **')
         if is_training:
-            print('**  --cl: classifier: [softmax sigmoid soft_label]                                  **')
+            print('**  --cl: classifier: [softmax sigmoid soft_label]                                      **')
             print('**  --ac: activation: ' + str([act for act in activations]) + '                         **')
             print('**  --op: optimizer: ' + str([op for op in optimizers]) + '                 **')
-            print('**  --ad: adversarial_training(whether add perturbation while training)             **')
-            print('**  --gn: gpu_nums(denotes num of gpu for training)                                 **')
-            print('**  --pm: pretrain_model(denotes the name of model to pretrain, such as:pcnn_att)   **')
+            print('**  --ad: adversarial_training(whether add perturbation while training)                 **')
+            print('**  --gn: gpu_nums(denotes num of gpu for training)                                     **')
+            print('**  --pm: pretrain_model(denotes the name of model to pretrain, such as:pcnn_att)       **')
         print('******************************************************************************************')
         exit()
 
