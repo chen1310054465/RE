@@ -48,26 +48,26 @@ def init(is_training=True):
     if 'help' in sys.argv:
         print('Usage: python3 ' + sys.argv[0] + ' [--dn dataset_name] [--en encoder] [--se selector] '
               + ('[--cl classifier] [--ac activation] [--op optimizer] [--ad adversarial_training] '
-                 + '[--gn gpu_nums] [--pm pretrain_model] [--max_epoch max epoch] [--save_epoch save epoch]'
+                 + '[--gn gpu_nums]\n       [--pm pretrain_model] [--max_epoch max epoch] [--save_epoch save epoch]'
                  + ' [--hidden_size hidden size] [--batch_size batch size]'
                  + ' [--learning_rate learning rate]' if is_training else ''))
-        print('*******************************args details***********************************************')
-        print('**  --dn: dataset_name: [nyt(New York Times dataset)...], put it in origin_data dir     **')
-        print('**  --en: encoder: [cnn pcnn rnn birnn rnn_lstm birnn_lstm rnn_gru birnn_gru]           **')
-        print('**  --se: selector: [instance att one ave cross_max att_rl one_rl ave_rl cross_max_rl]  **')
+        print('       *******************************args details**********************************************')
+        print('       ** --dn: dataset_name: [nyt(New York Times dataset)...], put it in origin_data dir     **')
+        print('       ** --en: encoder: [cnn pcnn rnn birnn rnn_lstm birnn_lstm rnn_gru birnn_gru]           **')
+        print('       ** --se: selector: [instance att one ave cross_max att_rl one_rl ave_rl cross_max_rl]  **')
         if is_training:
-            print('**  --cl: classifier: [softmax sigmoid soft_label]                                      **')
-            print('**  --ac: activation: ' + str([act for act in activations]) + '                         **')
-            print('**  --op: optimizer: ' + str([op for op in optimizers]) + '                 **')
-            print('**  --ad: adversarial_training(whether add perturbation while training), 0(no), 1(yes)  **')
-            print('**  --gn: gpu_nums(denotes num of gpu for training)                                     **')
-            print('**  --pm: pretrain_model(denotes the name of model to pretrain, such as:nyt_pcnn_att)   **')
-            print('**  --max_epoch: max epoch util stopping training(default 60)                           **')
-            print('**  --save_epoch: how many epoch to save result while training(default 2)               **')
-            print('**  --hidden_size: hidden size of encoder(default 230)                                  **')
-            print('**  --batch_size: batch size of corpus for each step of training(default 160)           **')
-            print('**  --learning_rate: learning rate(default 0.5 when training, whereas 1 when testing)   **')
-        print('******************************************************************************************')
+            print('       ** --cl: classifier: [softmax sigmoid soft_label]                                      **')
+            print('       ** --ac: activation: ' + str([act for act in activations]) + '                         **')
+            print('       ** --op: optimizer: ' + str([op for op in optimizers]) + '                 **')
+            print('       ** --ad: adversarial_training(whether add perturbation while training), 0(no), 1(yes)  **')
+            print('       ** --gn: gpu_nums(denotes num of gpu for training)                                     **')
+            print('       ** --pm: pretrain_model(denotes the name of model to pretrain, such as:nyt_pcnn_att)   **')
+            print('       ** --hidden_size: hidden size of encoder(default 230)                                  **')
+            print('       ** --max_epoch: max epoch util stopping training(default 60)                           **')
+            print('       ** --save_epoch: how many epoch to save result while training(default 2)               **')
+            print('       ** --batch_size: batch size of corpus for each step of training(default 160)           **')
+            print('       ** --learning_rate: learning rate(default 0.5 when training, whereas 1 when testing)   **')
+        print('       *****************************************************************************************')
         exit()
 
     if FLAGS.ac in activations:
