@@ -176,7 +176,7 @@ class framework:
         # saver
         self.saver = tf.train.Saver(max_to_keep=None)
         if FLAGS.pm is not None:
-            self.saver.restore(self.sess, FLAGS.pm)
+            self.saver.restore(self.sess, os.path.join(FLAGS.ckpt_dir, FLAGS.pm))
         else:
             self.sess.run(tf.global_variables_initializer())
         # Training
