@@ -40,3 +40,27 @@ def word_position_embedding(word, word_vec, pos1, pos2, var_scope=None, word_emb
         p_embedding = pos_embedding(pos1, pos2, var_scope=var_scope, pos_embedding_dim=pos_embedding_dim,
                                     max_length=max_length)
         return tf.concat([w_embedding, p_embedding], -1)
+
+
+def ent_type_embedding(head_enttype, tail_enttype, enttype_tot, var_scope=None, et_embedding_dim=10,
+                       add_unk_and_blank=True):
+    with tf.variable_scope(var_scope or 'ent_type_embedding', reuse=tf.AUTO_REUSE):
+        head_et_embedding = tf.get_variable('head_et_embedding', [enttype_tot, et_embedding_dim], dtype=tf.float32,
+                                            initializer=tf.contrib.layers.xavier_initializer())
+        tail_et_embedding = tf.get_variable('tail_et_embedding', [enttype_tot, et_embedding_dim], dtype=tf.float32,
+                                            initializer=tf.contrib.layers.xavier_initializer())
+        if add_unk_and_blank:
+            head_et_embedding = tf.concat([head_et_embedding,
+                                           tf.get_variable("unk_het_embedding", [1, et_embedding_dim], dtype=tf.float32,
+                                                           initializer=tf.contrib.layers.xavier_initializer()),
+                                           tf.constant(np.zeros((1, et_embedding_dim), dtype=np.float32),
+                                                       name='blank_het_embedding')], 0)
+            tail_et_embedding = tf.concat([tail_et_embedding,
+                                           tf.get_variable("unk_tet_embedding", [1, et_embedding_dim], dtype=tf.float32,
+                                                           initializer=tf.contrib.layers.xavier_initializer()),
+                                           tf.constant(np.zeros((1, et_embedding_dim), dtype=np.float32),
+                                                       name='blank_tet_embedding')], 0)
+        input_head_enttype = tf.nn.embedding_lookup(head_et_embedding, head_enttype)
+        input_tail_enttype = tf.nn.embedding_lookup(tail_et_embedding, tail_enttype)
+        x = tf.concat([input_head_enttype, input_tail_enttype], -1)
+        return x

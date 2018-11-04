@@ -128,6 +128,10 @@ class framework:
         if model.is_training:
             weights = batch_data['weights'] if weights is None else weights
             feed_dict.update({model.weights: weights})
+        if model.head_enttype is not None and 'head_enttype' in batch_data:
+            feed_dict.update({model.head_enttype: batch_data['head_enttype']})
+        if model.tail_enttype is not None and 'tail_enttype' in batch_data:
+            feed_dict.update({model.tail_enttype: batch_data['tail_enttype']})
 
         if fd_updater is not None:
             fd_updater(feed_dict)

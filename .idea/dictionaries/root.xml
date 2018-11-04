@@ -4,6 +4,8 @@
       <w>adadelta</w>
       <w>adagrad</w>
       <w>convolutional</w>
+      <w>enttype</w>
+      <w>enttypes</w>
       <w>jiang</w>
       <w>preprocess</w>
       <w>relu</w>

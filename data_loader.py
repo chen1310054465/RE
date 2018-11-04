@@ -29,6 +29,7 @@ class file_data_loader:
         self.entpair_tot = len(self.entpair2scope)
         self.relfact_tot = 0
         self.rel_tot = len(self.rel2id)
+        self.enttype_tot = len(self.enttype2id)
 
         for k in self.relfact2scope:
             if k[-2:] != 'NA':
@@ -72,16 +73,21 @@ class file_data_loader:
         length_file_name = os.path.join(FLAGS.processed_data_dir, self.prefix + '_length.npy')
         label_file_name = os.path.join(FLAGS.processed_data_dir, self.prefix + '_label.npy')
         word_vec_file_name = os.path.join(FLAGS.processed_data_dir, 'word_vec.npy')
+        head_enttype_file_name = os.path.join(FLAGS.processed_data_dir, 'head_enttype.npy')
+        tail_enttype_file_name = os.path.join(FLAGS.processed_data_dir, 'tail_enttype.npy')
         entpair2scope_file_name = os.path.join(FLAGS.processed_data_dir, self.prefix + '_entpair2scope' + self.ext)
         relfact2scope_file_name = os.path.join(FLAGS.processed_data_dir, self.prefix + '_relfact2scope' + self.ext)
         rel2id_file_name = os.path.join(FLAGS.processed_data_dir, 'rel2id' + self.ext)
         word2id_file_name = os.path.join(FLAGS.processed_data_dir, 'word2id' + self.ext)
+        enttype2id_file_name = os.path.join(FLAGS.processed_data_dir, 'enttype2id' + self.ext)
         if not os.path.exists(word_file_name) or not os.path.exists(pos1_file_name) or \
                 not os.path.exists(pos2_file_name) or not os.path.exists(mask_file_name) or \
                 not os.path.exists(length_file_name) or not os.path.exists(label_file_name) or \
                 not os.path.exists(word_vec_file_name) or \
+                not os.path.exists(head_enttype_file_name) or not os.path.exists(tail_enttype_file_name) or \
                 not os.path.exists(entpair2scope_file_name) or not os.path.exists(relfact2scope_file_name) or \
-                not os.path.exists(rel2id_file_name) or not os.path.exists(word2id_file_name):
+                not os.path.exists(rel2id_file_name) or not os.path.exists(word2id_file_name) or \
+                not os.path.exists(enttype2id_file_name):
             return False
         print("Pre-processed files exist. Loading them...")
         self.data_word = np.load(word_file_name)
@@ -91,10 +97,13 @@ class file_data_loader:
         self.data_length = np.load(length_file_name)
         self.data_label = np.load(label_file_name)
         self.word_vec = np.load(word_vec_file_name)
+        self.head_enttype = np.load(head_enttype_file_name)
+        self.tail_enttype = np.load(tail_enttype_file_name)
         self.entpair2scope = self.load_file(entpair2scope_file_name)
         self.relfact2scope = self.load_file(relfact2scope_file_name)
         self.rel2id = self.load_file(rel2id_file_name)
         self.word2id = self.load_file(word2id_file_name)
+        self.enttype2id = self.load_file(enttype2id_file_name)
         if self.data_word.shape[1] != FLAGS.max_length:
             print("Pre-processed files don't match current settings. Reprocessing...")
             return False
@@ -105,11 +114,16 @@ class file_data_loader:
         origin_data_file_name = os.path.join(FLAGS.dataset_dir, self.prefix + self.ext)
         word_vec_file_name = os.path.join(FLAGS.dataset_dir, 'word_vec' + self.ext)
         rel2id_file_name = os.path.join(FLAGS.dataset_dir, 'rel2id' + self.ext)
+        enttype2id_file_name = os.path.join(FLAGS.dataset_dir, 'enttype2id' + self.ext)
         # Check files
         if origin_data_file_name is None or not os.path.isfile(origin_data_file_name):
-            raise Exception("[ERROR] Data file doesn't exist")
+            raise Exception("[ERROR] data file doesn't exist")
         if word_vec_file_name is None or not os.path.isfile(word_vec_file_name):
-            raise Exception("[ERROR] Word vector file doesn't exist")
+            raise Exception("[ERROR] word vector file doesn't exist")
+        if rel2id_file_name is None or not os.path.isfile(rel2id_file_name):
+            raise Exception("[ERROR] rel2id file doesn't exist")
+        if enttype2id_file_name is None or not os.path.isfile(enttype2id_file_name):
+            raise Exception("[ERROR] enttype2id file doesn't exist")
 
         # Load files
         print("Loading origin_data file...")
@@ -121,6 +135,9 @@ class file_data_loader:
         print("Loading rel2id file...")
         self.rel2id = self.load_file(rel2id_file_name)
         print("Finish rel2id loading")
+        print("Loading enttype2id file...")
+        self.enttype2id = self.load_file(rel2id_file_name)
+        print("Finish enttype2id loading")
 
         # Eliminate case sensitive
         if not case_sensitive:
@@ -164,6 +181,8 @@ class file_data_loader:
         self.data_mask = np.zeros((self.instance_tot, FLAGS.max_length), dtype=np.int32)
         self.data_length = np.zeros(self.instance_tot, dtype=np.int32)
         self.data_label = np.zeros(self.instance_tot, dtype=np.int32)
+        self.head_enttype = np.zeros((self.instance_tot, FLAGS.enttype_max_length), dtype=np.int32)
+        self.tail_enttype = np.zeros((self.instance_tot, FLAGS.enttype_max_length), dtype=np.int32)
         self.entpair2scope = {}  # (head, tail) -> scope
         self.relfact2scope = {}  # (head, tail, relation) -> scope
         last_entpair = ''
@@ -251,6 +270,23 @@ class file_data_loader:
             else:
                 self.data_label[i] = self.rel2id['NA']
 
+            types = instance['head']['type'].split(',')
+            for j, t in enumerate(types):
+                if t in self.enttype2id:
+                    self.head_enttype[i][j] = self.enttype2id[t]
+                else:
+                    self.head_enttype[i][j] = len(self.enttype2id)
+            for j in range(len(types), FLAGS.enttype_max_length):
+                self.head_enttype[i][j] = len(self.enttype2id) + 1
+            types = instance['tail']['type'].split(',')
+            for j, t in enumerate(types):
+                if t in self.enttype2id:
+                    self.tail_enttype[i][j] = self.enttype2id[t]
+                else:
+                    self.tail_enttype[i][j] = len(self.enttype2id)
+            for j in range(len(types), FLAGS.enttype_max_length):
+                self.tail_enttype[i][j] = len(self.enttype2id) + 1
+
             cur_entpair = instance['head']['id'] + '#' + instance['tail']['id']
             cur_relfact = instance['head']['id'] + '#' + instance['tail']['id'] + '#' + instance['relation']
             if cur_entpair != last_entpair:
@@ -263,6 +299,7 @@ class file_data_loader:
                     self.relfact2scope[last_relfact] = [last_relfact_pos, i]
                 last_relfact = cur_relfact
                 last_relfact_pos = i
+
         if last_entpair != '':
             self.entpair2scope[last_entpair] = [last_entpair_pos, self.instance_tot]  # left closed right open
         if last_relfact != '':
@@ -291,10 +328,13 @@ class file_data_loader:
         np.save(os.path.join(FLAGS.processed_data_dir, self.prefix + '_length.npy'), self.data_length)
         np.save(os.path.join(FLAGS.processed_data_dir, self.prefix + '_label.npy'), self.data_label)
         np.save(os.path.join(FLAGS.processed_data_dir, 'word_vec.npy'), self.word_vec)
+        np.save(os.path.join(FLAGS.processed_data_dir, 'head_enttype.npy'), self.head_enttype)
+        np.save(os.path.join(FLAGS.processed_data_dir, 'tail_enttype.npy'), self.tail_enttype)
         self.save_file(self.entpair2scope, self.prefix + '_entpair2scope' + self.ext)
         self.save_file(self.relfact2scope, self.prefix + '_relfact2scope' + self.ext)
         self.save_file(self.rel2id, 'rel2id' + self.ext)
         self.save_file(self.word2id, 'word2id' + self.ext)
+        self.save_file(self.enttype2id, 'enttype2id' + self.ext)
         print("Finish storing")
 
     def _set_weights_table(self):
@@ -318,7 +358,9 @@ class file_data_loader:
 
     def batch_data(self, index, scope=None, multi_label=None):
         batch_data = {'word': self.data_word[index], 'pos1': self.data_pos1[index], 'pos2': self.data_pos2[index],
-                      'mask': self.data_mask[index], 'length': self.data_length[index]}
+                      'mask': self.data_mask[index], 'length': self.data_length[index],
+                      'head_enttype': self.head_enttype[index], 'tail_enttype': self.tail_enttype[index]
+                      }
         if self.mode == self.MODE_INSTANCE:
             batch_data.update({'label': self.data_label[index]})
         elif self.mode == self.MODE_ENTPAIR_BAG or self.mode == self.MODE_RELFACT_BAG:
@@ -343,6 +385,10 @@ class file_data_loader:
             if batch_data.__contains__('mask') else self.data_mask[b:e]
         batch_data['length'] = np.concatenate([batch_data['length'], self.data_length[b:e]]) \
             if batch_data.__contains__('length') else self.data_length[b:e]
+        batch_data['head_enttype'] = np.concatenate([batch_data['head_enttype'], self.head_enttype[b:e]]) \
+            if batch_data.__contains__('head_enttype') else self.head_enttype[b:e]
+        batch_data['tail_enttype'] = np.concatenate([batch_data['tail_enttype'], self.tail_enttype[b:e]]) \
+            if batch_data.__contains__('tail_enttype') else self.tail_enttype[b:e]
 
     @staticmethod
     def batch_padding(batch_data, b, e, batch_size):
@@ -354,6 +400,10 @@ class file_data_loader:
             batch_data['mask'] = np.concatenate([batch_data['mask'], np.zeros((padding, FLAGS.max_length), np.int32)])
             batch_data['length'] = np.concatenate([batch_data['length'], np.zeros(padding, dtype=np.int32)])
             batch_data['label'] = np.concatenate([batch_data['label'], np.zeros(padding, dtype=np.int32)])
+            batch_data['head_enttype'] = np.concatenate([batch_data['head_enttype'],
+                                                         np.zeros((padding, FLAGS.enttype_max_length), np.int32)])
+            batch_data['tail_enttype'] = np.concatenate([batch_data['tail_enttype'],
+                                                         np.zeros((padding, FLAGS.enttype_max_length), np.int32)])
 
     def next_batch(self, batch_size):
         if self.begin >= len(self.order):
@@ -365,7 +415,8 @@ class file_data_loader:
         if end > len(self.order):
             end = len(self.order)
 
-        batch_data = {'word': [], 'pos1': [], 'pos2': [], 'mask': [], 'length': [], 'label': []}
+        batch_data = {'word': [], 'pos1': [], 'pos2': [], 'mask': [], 'length': [], 'label': [],
+                      'head_enttype': [], 'tail_enttype': []}
         if self.mode == self.MODE_INSTANCE:
             batch_data['word'] = self.data_word[self.begin:end]
             batch_data['pos1'] = self.data_pos1[self.begin:end]
@@ -373,6 +424,8 @@ class file_data_loader:
             batch_data['mask'] = self.data_mask[self.begin:end]
             batch_data['length'] = self.data_length[self.begin:end]
             batch_data['label'] = self.data_label[self.begin:end]
+            batch_data['head_enttype'] = self.head_enttype[self.begin:end]
+            batch_data['tail_enttype'] = self.tail_enttype[self.begin:end]
         elif self.mode == self.MODE_ENTPAIR_BAG or self.mode == self.MODE_RELFACT_BAG:
             batch_data['instance_label'] = []
             batch_data['scope'] = [0]
@@ -389,6 +442,8 @@ class file_data_loader:
                 batch_data['label'].append(self.data_label[b])
                 batch_data['instance_label'].append(self.data_label[b:e])
                 batch_data['scope'].append(batch_data['scope'][cur_pos] + e - b)
+                batch_data['head_enttype'].append(self.head_enttype[b:e])
+                batch_data['tail_enttype'].append(self.tail_enttype[b:e])
                 if self.mode == self.MODE_ENTPAIR_BAG:
                     _one_multi_label = np.zeros(self.rel_tot, dtype=np.int32)
                     _one_multi_label[self.data_label[b:e]] = 1
@@ -405,6 +460,8 @@ class file_data_loader:
             batch_data['label'] = np.stack(batch_data['label'])
             batch_data['instance_label'] = np.concatenate(batch_data['instance_label'])
             batch_data['scope'] = np.stack(batch_data['scope'])
+            batch_data['head_enttype'] = np.concatenate(batch_data['head_enttype'])
+            batch_data['tail_enttype'] = np.concatenate(batch_data['tail_enttype'])
             if self.mode == self.MODE_ENTPAIR_BAG:
                 batch_data['multi_label'] = np.stack(batch_data['multi_label'])
                 batch_data['entpair'] = np.stack(batch_data['entpair'])

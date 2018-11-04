@@ -13,6 +13,7 @@ tf.flags.DEFINE_string('se', 'att', 'selector')
 tf.flags.DEFINE_string('cl', 'softmax', 'classifier')
 tf.flags.DEFINE_string('ac', 'relu', 'activation')
 tf.flags.DEFINE_string('op', 'sgd', 'optimizer')
+tf.flags.DEFINE_integer('et', 0, 'whether to add entity type info')
 tf.flags.DEFINE_integer('ad', 0, 'adversarial training')
 tf.flags.DEFINE_integer('gn', 1, 'gpu_nums')
 tf.flags.DEFINE_string('pm', None, 'pretrain model')
@@ -22,13 +23,15 @@ tf.flags.DEFINE_integer('save_epoch', 1, 'save epoch')
 tf.flags.DEFINE_integer('hidden_size', 230, 'hidden size')
 tf.flags.DEFINE_integer('batch_size', 160, 'batch size')
 tf.flags.DEFINE_integer('max_length', 120, 'word max length')
+tf.flags.DEFINE_integer('enttype_max_length', 100, 'enttype max length')
 tf.flags.DEFINE_float('learning_rate', 0.5, 'learning rate')
 tf.flags.DEFINE_string('ckpt_dir', os.path.join('checkpoint', FLAGS.dn), 'checkpoint dir')
 tf.flags.DEFINE_string('summary_dir', os.path.join('summary', FLAGS.dn), 'summary dir')
 tf.flags.DEFINE_string('test_result_dir', os.path.join('test_result', FLAGS.dn), 'test result dir')
 tf.flags.DEFINE_string('dataset_dir', os.path.join('origin_data', FLAGS.dn), 'origin dataset dir')
 tf.flags.DEFINE_string('processed_data_dir', os.path.join('processed_data', FLAGS.dn), 'processed data dir')
-tf.flags.DEFINE_string('model_name', (FLAGS.dn + '_' + FLAGS.en + "_" + FLAGS.se +  # dataset_name encoder selector
+tf.flags.DEFINE_string('model_name', (FLAGS.dn + '_' + ('et_' if FLAGS.et else '') +  # dataset_name entity_type
+                                      FLAGS.en + "_" + FLAGS.se +  # encoder selector
                                       (('_' + FLAGS.cl) if FLAGS.cl != 'softmax' else '') +  # classifier
                                       (('_' + FLAGS.ac) if FLAGS.ac != 'relu' else '') +  # activation
                                       (('_' + FLAGS.op) if FLAGS.op != 'sgd' else '') +  # optimizer
@@ -46,13 +49,14 @@ def init(is_training=True):
                   'adagrad': tf.train.AdagradOptimizer, 'adadelta': tf.train.AdadeltaOptimizer,
                   'adam': tf.train.AdamOptimizer}
     if 'help' in sys.argv:
-        print('Usage: python3 ' + sys.argv[0] + ' [--dn dataset_name] [--en encoder] [--se selector] '
-              + ('[--cl classifier] [--ac activation] [--op optimizer] [--ad adversarial_training] '
-                 + '[--gn gpu_nums]\n       [--pm pretrain_model] [--max_epoch max epoch] [--save_epoch save epoch]'
+        print('Usage: python3 ' + sys.argv[0] + ' [--dn dataset_name] [--et: ent_type] [--en encoder] [--se selector]'
+              + ('[--cl classifier] [--ac activation] [--op optimizer] [--ad adversarial_training]\n       '
+                 + '[--gn gpu_nums] [--pm pretrain_model] [--max_epoch max epoch] [--save_epoch save epoch]'
                  + ' [--hidden_size hidden size] [--batch_size batch size]'
-                 + ' [--learning_rate learning rate]' if is_training else ''))
+                 + '\n       [--learning_rate learning rate]' if is_training else ''))
         print('**************************************args details**********************************************')
         print('**  --dn: dataset_name: [nyt(New York Times dataset)...], put it in origin_data dir           **')
+        print('**  --et: ent_type: whether to add entity type info                                           **')
         print('**  --en: encoder: [cnn pcnn rnn birnn rnn_lstm birnn_lstm rnn_gru birnn_gru]                 **')
         print('**  --se: selector: [instance att one ave cross_max att_rl one_rl ave_rl cross_max_rl]        **')
         if is_training:
@@ -80,6 +84,7 @@ def init(is_training=True):
 class model:
     def __init__(self, data_loader, is_training=True):
         self.rel_tot = data_loader.rel_tot
+        self.enttype_tot = data_loader.enttype_tot
         self.word_vec = data_loader.word_vec
         self.is_training = is_training
         self.keep_prob = 0.5 if is_training else 1.0
@@ -98,13 +103,18 @@ class model:
         self.scope = tf.placeholder(dtype=tf.int32, shape=[batch_size + 1], name='scope') \
             if 'instance' not in FLAGS.se else None
         self.weights = tf.placeholder(dtype=tf.float32, shape=[batch_size], name='weights') if is_training else None
+        self.head_enttype = tf.placeholder(dtype=tf.int32, shape=[None, FLAGS.enttype_max_length], name="head_enttype") \
+            if FLAGS.et else None
+        self.tail_enttype = tf.placeholder(dtype=tf.int32, shape=[None, FLAGS.enttype_max_length], name="tail_enttype") \
+            if FLAGS.et else None
 
         self._network()
 
     def _network(self):
         # embedding
         self._embedding()
-        with tf.variable_scope(FLAGS.en + "_" + FLAGS.se +
+        with tf.variable_scope(('et_' if FLAGS.et else '') +  # entity_type
+                               FLAGS.en + "_" + FLAGS.se +
                                (('_' + FLAGS.cl) if FLAGS.cl != 'softmax' else '') +  # classifier
                                (('_' + FLAGS.ac) if FLAGS.ac != 'relu' else '') +  # activation
                                (('_' + FLAGS.op) if FLAGS.op != 'sgd' else '') +  # optimizer
@@ -125,6 +135,8 @@ class model:
     def _embedding(self):
         if not hasattr(self, 'embedding'):
             self.embedding = embedding.word_position_embedding(self.word, self.word_vec, self.pos1, self.pos2)
+        if FLAGS.et and not hasattr(self, 'et_embedding'):
+            self.et_embedding = embedding.ent_type_embedding(self.head_enttype, self.tail_enttype, self.enttype_tot)
 
     def _encoder(self):
         if FLAGS.en == "pcnn":
@@ -146,6 +158,10 @@ class model:
                 raise NotImplementedError
         else:
             raise NotImplementedError
+        if FLAGS.et:
+            self.et_encoder = encoder.cnn(self.et_embedding, FLAGS.hidden_size, activation=activation,
+                                          keep_prob=self.keep_prob)
+            self.encoder = tf.concat([self.encoder, self.et_encoder], -1)
 
     def _selector(self):
         ses = FLAGS.se.split('_')
