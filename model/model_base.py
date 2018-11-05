@@ -25,6 +25,7 @@ tf.flags.DEFINE_integer('et_hidden_size', 80, 'entity type hidden size')
 tf.flags.DEFINE_integer('batch_size', 160, 'batch size')
 tf.flags.DEFINE_integer('max_length', 120, 'word max length')
 tf.flags.DEFINE_integer('enttype_max_length', 100, 'entity type max length')
+tf.flags.DEFINE_integer('et_dim', 10, 'entity type embedding dimensionality')
 tf.flags.DEFINE_float('learning_rate', 0.5, 'learning rate')
 tf.flags.DEFINE_string('ckpt_dir', os.path.join('checkpoint', FLAGS.dn), 'checkpoint dir')
 tf.flags.DEFINE_string('summary_dir', os.path.join('summary', FLAGS.dn), 'summary dir')
@@ -138,7 +139,8 @@ class model:
         if not hasattr(self, 'embedding'):
             self.embedding = embedding.word_position_embedding(self.word, self.word_vec, self.pos1, self.pos2)
         if FLAGS.et and not hasattr(self, 'et_embedding'):
-            self.et_embedding = embedding.ent_type_embedding(self.head_enttype, self.tail_enttype, self.enttype_tot)
+            self.et_embedding = embedding.ent_type_embedding(self.head_enttype, self.tail_enttype, self.enttype_tot,
+                                                             et_embedding_dim=FLAGS.et_dim)
 
     def _encoder(self):
         if FLAGS.en == "pcnn":
