@@ -21,9 +21,10 @@ tf.flags.DEFINE_string('pm', None, 'pretrain model')
 tf.flags.DEFINE_integer('max_epoch', 60, 'max epoch')
 tf.flags.DEFINE_integer('save_epoch', 1, 'save epoch')
 tf.flags.DEFINE_integer('hidden_size', 230, 'hidden size')
+tf.flags.DEFINE_integer('et_hidden_size', 80, 'entity type hidden size')
 tf.flags.DEFINE_integer('batch_size', 160, 'batch size')
 tf.flags.DEFINE_integer('max_length', 120, 'word max length')
-tf.flags.DEFINE_integer('enttype_max_length', 100, 'enttype max length')
+tf.flags.DEFINE_integer('enttype_max_length', 100, 'entity type max length')
 tf.flags.DEFINE_float('learning_rate', 0.5, 'learning rate')
 tf.flags.DEFINE_string('ckpt_dir', os.path.join('checkpoint', FLAGS.dn), 'checkpoint dir')
 tf.flags.DEFINE_string('summary_dir', os.path.join('summary', FLAGS.dn), 'summary dir')
@@ -52,8 +53,8 @@ def init(is_training=True):
         print('Usage: python3 ' + sys.argv[0] + ' [--dn dataset_name] [--et: ent_type] [--en encoder] [--se selector]'
               + ('[--cl classifier] [--ac activation] [--op optimizer] [--ad adversarial_training]\n       '
                  + '[--gn gpu_nums] [--pm pretrain_model] [--max_epoch max epoch] [--save_epoch save epoch]'
-                 + ' [--hidden_size hidden size] [--batch_size batch size]'
-                 + '\n       [--learning_rate learning rate]' if is_training else ''))
+                 + ' [--hidden_size hidden size] [--et_hidden_size hidden size of entity type]'
+                 + '\n       [--batch_size batch size] [--learning_rate learning rate]' if is_training else ''))
         print('**************************************args details**********************************************')
         print('**  --dn: dataset_name: [nyt(New York Times dataset)...], put it in origin_data dir           **')
         print('**  --et: ent_type: whether to add entity type info                                           **')
@@ -67,6 +68,7 @@ def init(is_training=True):
             print('**  --gn: gpu_nums(denotes num of gpu for training)                                           **')
             print('**  --pm: pretrain_model(denotes the name of model to pretrain, such as:nyt_pcnn_att)         **')
             print('**  --hidden_size: hidden size of encoder(default 230)                                        **')
+            print('**  --et_hidden_size: hidden size of entity type encoder(default 80)                          **')
             print('**  --max_epoch: max epoch util stopping training(default 60)                                 **')
             print('**  --save_epoch: how many epoch to save result while training(default 2)                     **')
             print('**  --batch_size: batch size of corpus for each step of training(default 160)                 **')
@@ -159,7 +161,7 @@ class model:
         else:
             raise NotImplementedError
         if FLAGS.et:
-            self.et_encoder = encoder.cnn(self.et_embedding, FLAGS.hidden_size, activation=activation,
+            self.et_encoder = encoder.cnn(self.et_embedding, FLAGS.et_hidden_size, activation=activation,
                                           keep_prob=self.keep_prob)
             self.encoder = tf.concat([self.encoder, self.et_encoder], -1)
 
