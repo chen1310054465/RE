@@ -72,9 +72,9 @@ class file_data_loader:
         mask_file_name = os.path.join(FLAGS.processed_data_dir, self.prefix + '_mask.npy')
         length_file_name = os.path.join(FLAGS.processed_data_dir, self.prefix + '_length.npy')
         label_file_name = os.path.join(FLAGS.processed_data_dir, self.prefix + '_label.npy')
+        head_enttype_file_name = os.path.join(FLAGS.processed_data_dir, self.prefix + '_head_enttype.npy')
+        tail_enttype_file_name = os.path.join(FLAGS.processed_data_dir, self.prefix + '_tail_enttype.npy')
         word_vec_file_name = os.path.join(FLAGS.processed_data_dir, 'word_vec.npy')
-        head_enttype_file_name = os.path.join(FLAGS.processed_data_dir, 'head_enttype.npy')
-        tail_enttype_file_name = os.path.join(FLAGS.processed_data_dir, 'tail_enttype.npy')
         entpair2scope_file_name = os.path.join(FLAGS.processed_data_dir, self.prefix + '_entpair2scope' + self.ext)
         relfact2scope_file_name = os.path.join(FLAGS.processed_data_dir, self.prefix + '_relfact2scope' + self.ext)
         rel2id_file_name = os.path.join(FLAGS.processed_data_dir, 'rel2id' + self.ext)
@@ -83,8 +83,8 @@ class file_data_loader:
         if not os.path.exists(word_file_name) or not os.path.exists(pos1_file_name) or \
                 not os.path.exists(pos2_file_name) or not os.path.exists(mask_file_name) or \
                 not os.path.exists(length_file_name) or not os.path.exists(label_file_name) or \
-                not os.path.exists(word_vec_file_name) or \
                 not os.path.exists(head_enttype_file_name) or not os.path.exists(tail_enttype_file_name) or \
+                not os.path.exists(word_vec_file_name) or \
                 not os.path.exists(entpair2scope_file_name) or not os.path.exists(relfact2scope_file_name) or \
                 not os.path.exists(rel2id_file_name) or not os.path.exists(word2id_file_name) or \
                 not os.path.exists(enttype2id_file_name):
@@ -96,9 +96,9 @@ class file_data_loader:
         self.data_mask = np.load(mask_file_name)
         self.data_length = np.load(length_file_name)
         self.data_label = np.load(label_file_name)
-        self.word_vec = np.load(word_vec_file_name)
         self.head_enttype = np.load(head_enttype_file_name)
         self.tail_enttype = np.load(tail_enttype_file_name)
+        self.word_vec = np.load(word_vec_file_name)
         self.entpair2scope = self.load_file(entpair2scope_file_name)
         self.relfact2scope = self.load_file(relfact2scope_file_name)
         self.rel2id = self.load_file(rel2id_file_name)
@@ -327,9 +327,9 @@ class file_data_loader:
         np.save(os.path.join(FLAGS.processed_data_dir, self.prefix + '_mask.npy'), self.data_mask)
         np.save(os.path.join(FLAGS.processed_data_dir, self.prefix + '_length.npy'), self.data_length)
         np.save(os.path.join(FLAGS.processed_data_dir, self.prefix + '_label.npy'), self.data_label)
+        np.save(os.path.join(FLAGS.processed_data_dir, self.prefix + '_head_enttype.npy'), self.head_enttype)
+        np.save(os.path.join(FLAGS.processed_data_dir, self.prefix + '_tail_enttype.npy'), self.tail_enttype)
         np.save(os.path.join(FLAGS.processed_data_dir, 'word_vec.npy'), self.word_vec)
-        np.save(os.path.join(FLAGS.processed_data_dir, 'head_enttype.npy'), self.head_enttype)
-        np.save(os.path.join(FLAGS.processed_data_dir, 'tail_enttype.npy'), self.tail_enttype)
         self.save_file(self.entpair2scope, self.prefix + '_entpair2scope' + self.ext)
         self.save_file(self.relfact2scope, self.prefix + '_relfact2scope' + self.ext)
         self.save_file(self.rel2id, 'rel2id' + self.ext)
