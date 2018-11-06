@@ -136,7 +136,7 @@ class file_data_loader:
         self.rel2id = self.load_file(rel2id_file_name)
         print("Finish rel2id loading")
         print("Loading enttype2id file...")
-        self.enttype2id = self.load_file(rel2id_file_name)
+        self.enttype2id = self.load_file(enttype2id_file_name)
         print("Finish enttype2id loading")
 
         # Eliminate case sensitive
