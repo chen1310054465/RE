@@ -173,10 +173,11 @@ class framework:
 
         if not os.path.exists(FLAGS.ckpt_dir):
             os.makedirs(FLAGS.ckpt_dir)
-        if not os.path.exists(FLAGS.summary_dir):
-            os.makedirs(FLAGS.summary_dir)
+        summary_dir = os.path.join(FLAGS.summary_dir, FLAGS.model_name)
+        if not os.path.exists(summary_dir):
+            os.makedirs(summary_dir)
         # summary writer
-        self.summary_writer = tf.summary.FileWriter(FLAGS.summary_dir, self.sess.graph)
+        self.summary_writer = tf.summary.FileWriter(summary_dir, self.sess.graph)
         # saver
         self.saver = tf.train.Saver(max_to_keep=None)
         if FLAGS.pm is not None:
