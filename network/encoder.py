@@ -78,9 +78,21 @@ def birnn(x, length, hidden_size=230, cell_name='', var_scope=None, keep_prob=1.
         fw_cell = _rnn_cell(hidden_size, cell_name)
         bw_cell = _rnn_cell(hidden_size, cell_name)
         _, states = tf.nn.bidirectional_dynamic_rnn(fw_cell, bw_cell, x, sequence_length=length, dtype=tf.float32,
-                                                         scope='dynamic_bi_rnn')
+                                                    scope='dynamic_bi_rnn')
         fw_states, bw_states = states
         if isinstance(fw_states, tuple):
             fw_states = fw_states[0]
             bw_states = bw_states[0]
         return tf.concat([fw_states, bw_states], axis=1)
+
+
+def rcnn(x, length, seq_hidden_size=230, cell_name='', bidirectional=False, mask=None, con_hidden_size=230,
+         kernel_size=3, stride_size=1, activation=tf.nn.relu, var_scope=None, keep_prob=1.0):
+    with tf.variable_scope(var_scope or "rcnn", reuse=tf.AUTO_REUSE):
+        seq = birnn(x, length, seq_hidden_size, cell_name, keep_prob=keep_prob) if bidirectional else \
+            rnn(x, length, seq_hidden_size, cell_name, keep_prob=keep_prob)
+        seq = tf.expand_dims(seq, 2)
+        con = pcnn(seq, mask, con_hidden_size, kernel_size, stride_size, activation, keep_prob=keep_prob) if mask else \
+            cnn(seq, con_hidden_size, kernel_size, stride_size, activation, keep_prob=keep_prob)
+
+        return con

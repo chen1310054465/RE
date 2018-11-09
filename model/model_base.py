@@ -98,7 +98,7 @@ class model:
         self.pos2 = tf.placeholder(dtype=tf.int32, shape=[None, FLAGS.max_length], name='pos2')
         self.mask = tf.placeholder(dtype=tf.int32, shape=[None, FLAGS.max_length], name="mask") \
             if 'pcnn' in FLAGS.en else None
-        self.length = tf.placeholder(dtype=tf.int32, shape=[None], name='length') if 'rnn' in FLAGS.en else None
+        self.length = tf.placeholder(dtype=tf.int32, shape=[None], name='length') if 'r' in FLAGS.en else None
         self.label = tf.placeholder(dtype=tf.int32, shape=[batch_size], name='label') \
             if is_training or 'one' in FLAGS.se else None
         self.instance_label = tf.placeholder(dtype=tf.int32, shape=[None], name='instance_label') \
@@ -149,7 +149,7 @@ class model:
         elif FLAGS.en == "cnn":
             self.encoder = encoder.cnn(self.embedding, FLAGS.hidden_size, activation=activation,
                                        keep_prob=self.keep_prob)
-        elif "rnn" in FLAGS.en:
+        elif "r" in FLAGS.en:
             ens = FLAGS.en.split('_')
             cell_name = ens[1] if len(ens) > 1 else ""
             if ens[0] == "rnn":
@@ -158,6 +158,11 @@ class model:
             elif ens[0] == "birnn":
                 self.encoder = encoder.birnn(self.embedding, self.length, FLAGS.hidden_size, cell_name=cell_name,
                                              keep_prob=self.keep_prob)
+            elif ens[0] == "rcnn" or ens[0] == "bircnn":
+                self.encoder = encoder.rcnn(self.embedding, self.length, seq_hidden_size=FLAGS.hidden_size,
+                                            cell_name=cell_name, bidirectional='bi' in ens[0],
+                                            mask=self.mask, con_hidden_size=FLAGS.hidden_size, activation=activation,
+                                            keep_prob=self.keep_prob)
             else:
                 raise NotImplementedError
         else:

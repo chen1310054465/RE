@@ -3,11 +3,13 @@
     <words>
       <w>adadelta</w>
       <w>adagrad</w>
+      <w>bircnn</w>
       <w>convolutional</w>
       <w>enttype</w>
       <w>enttypes</w>
       <w>jiang</w>
       <w>preprocess</w>
+      <w>rcnn</w>
       <w>relu</w>
       <w>tanh</w>
     </words>
