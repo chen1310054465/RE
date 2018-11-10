@@ -181,8 +181,8 @@ class file_data_loader:
         self.data_mask = np.zeros((self.instance_tot, FLAGS.max_length), dtype=np.int32)
         self.data_length = np.zeros(self.instance_tot, dtype=np.int32)
         self.data_label = np.zeros(self.instance_tot, dtype=np.int32)
-        self.head_enttype = np.zeros((self.instance_tot, FLAGS.enttype_max_length), dtype=np.int32)
-        self.tail_enttype = np.zeros((self.instance_tot, FLAGS.enttype_max_length), dtype=np.int32)
+        self.head_enttype = np.zeros((self.instance_tot, FLAGS.et_max_length), dtype=np.int32)
+        self.tail_enttype = np.zeros((self.instance_tot, FLAGS.et_max_length), dtype=np.int32)
         self.entpair2scope = {}  # (head, tail) -> scope
         self.relfact2scope = {}  # (head, tail, relation) -> scope
         last_entpair = ''
@@ -276,7 +276,7 @@ class file_data_loader:
                     self.head_enttype[i][j] = self.enttype2id[t]
                 else:
                     self.head_enttype[i][j] = len(self.enttype2id)
-            for j in range(len(types), FLAGS.enttype_max_length):
+            for j in range(len(types), FLAGS.et_max_length):
                 self.head_enttype[i][j] = len(self.enttype2id) + 1
             types = instance['tail']['type'].split(',')
             for j, t in enumerate(types):
@@ -284,7 +284,7 @@ class file_data_loader:
                     self.tail_enttype[i][j] = self.enttype2id[t]
                 else:
                     self.tail_enttype[i][j] = len(self.enttype2id)
-            for j in range(len(types), FLAGS.enttype_max_length):
+            for j in range(len(types), FLAGS.et_max_length):
                 self.tail_enttype[i][j] = len(self.enttype2id) + 1
 
             cur_entpair = instance['head']['id'] + '#' + instance['tail']['id']
@@ -401,9 +401,9 @@ class file_data_loader:
             batch_data['length'] = np.concatenate([batch_data['length'], np.zeros(padding, dtype=np.int32)])
             batch_data['label'] = np.concatenate([batch_data['label'], np.zeros(padding, dtype=np.int32)])
             batch_data['head_enttype'] = np.concatenate([batch_data['head_enttype'],
-                                                         np.zeros((padding, FLAGS.enttype_max_length), np.int32)])
+                                                         np.zeros((padding, FLAGS.et_max_length), np.int32)])
             batch_data['tail_enttype'] = np.concatenate([batch_data['tail_enttype'],
-                                                         np.zeros((padding, FLAGS.enttype_max_length), np.int32)])
+                                                         np.zeros((padding, FLAGS.et_max_length), np.int32)])
 
     def next_batch(self, batch_size):
         if self.begin >= len(self.order):

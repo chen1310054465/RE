@@ -4,6 +4,7 @@
       <w>adadelta</w>
       <w>adagrad</w>
       <w>bircnn</w>
+      <w>birpcnn</w>
       <w>convolutional</w>
       <w>enttype</w>
       <w>enttypes</w>
@@ -11,6 +12,7 @@
       <w>preprocess</w>
       <w>rcnn</w>
       <w>relu</w>
+      <w>rpcnn</w>
       <w>tanh</w>
     </words>
   </dictionary>

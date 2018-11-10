@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 
 import tensorflow as tf
@@ -24,7 +25,7 @@ tf.flags.DEFINE_integer('hidden_size', 230, 'hidden size')
 tf.flags.DEFINE_integer('et_hidden_size', 80, 'entity type hidden size')
 tf.flags.DEFINE_integer('batch_size', 160, 'batch size')
 tf.flags.DEFINE_integer('max_length', 120, 'word max length')
-tf.flags.DEFINE_integer('enttype_max_length', 100, 'entity type max length')
+tf.flags.DEFINE_integer('et_max_length', 100, 'entity type max length')
 tf.flags.DEFINE_integer('et_dim', 12, 'entity type embedding dimensionality')
 tf.flags.DEFINE_float('learning_rate', 0.5, 'learning rate')
 tf.flags.DEFINE_string('ckpt_dir', os.path.join('checkpoint', FLAGS.dn), 'checkpoint dir')
@@ -98,7 +99,8 @@ class model:
         self.pos2 = tf.placeholder(dtype=tf.int32, shape=[None, FLAGS.max_length], name='pos2')
         self.mask = tf.placeholder(dtype=tf.int32, shape=[None, FLAGS.max_length], name="mask") \
             if 'pcnn' in FLAGS.en else None
-        self.length = tf.placeholder(dtype=tf.int32, shape=[None], name='length') if 'r' in FLAGS.en else None
+        self.length = tf.placeholder(dtype=tf.int32, shape=[None], name='length') \
+            if re.search("r.*nn", FLAGS.en) else None
         self.label = tf.placeholder(dtype=tf.int32, shape=[batch_size], name='label') \
             if is_training or 'one' in FLAGS.se else None
         self.instance_label = tf.placeholder(dtype=tf.int32, shape=[None], name='instance_label') \
@@ -106,9 +108,9 @@ class model:
         self.scope = tf.placeholder(dtype=tf.int32, shape=[batch_size + 1], name='scope') \
             if 'instance' not in FLAGS.se else None
         self.weights = tf.placeholder(dtype=tf.float32, shape=[batch_size], name='weights') if is_training else None
-        self.head_enttype = tf.placeholder(dtype=tf.int32, shape=[None, FLAGS.enttype_max_length], name="head_enttype") \
+        self.head_enttype = tf.placeholder(dtype=tf.int32, shape=[None, FLAGS.et_max_length], name="head_enttype") \
             if FLAGS.et else None
-        self.tail_enttype = tf.placeholder(dtype=tf.int32, shape=[None, FLAGS.enttype_max_length], name="tail_enttype") \
+        self.tail_enttype = tf.placeholder(dtype=tf.int32, shape=[None, FLAGS.et_max_length], name="tail_enttype") \
             if FLAGS.et else None
 
         self._network()
@@ -154,7 +156,7 @@ class model:
         elif FLAGS.en == "cnn":
             self.encoder = encoder.cnn(self.wp_embedding, FLAGS.hidden_size, activation=activation,
                                        keep_prob=self.keep_prob)
-        elif "r" in FLAGS.en:
+        elif re.search("r.*nn", FLAGS.en):
             ens = FLAGS.en.split('_')
             cell_name = ens[1] if len(ens) > 1 else ""
             if ens[0] == "rnn":
@@ -163,7 +165,7 @@ class model:
             elif ens[0] == "birnn":
                 self.encoder = encoder.birnn(self.wp_embedding, self.length, FLAGS.hidden_size, cell_name=cell_name,
                                              keep_prob=self.keep_prob)
-            elif ens[0] == "rcnn" or ens[0] == "bircnn":
+            elif ens[0] == "rcnn" or ens[0] == "bircnn" or ens[0] == "rpcnn" or ens[0] == "birpcnn":
                 self.encoder = encoder.rcnn(self.wp_embedding, self.length, seq_hidden_size=FLAGS.hidden_size,
                                             cell_name=cell_name, bidirectional='bi' in ens[0],
                                             mask=self.mask, con_hidden_size=FLAGS.hidden_size, activation=activation,
