@@ -136,30 +136,35 @@ class model:
             self._classifier()  # classifier
 
     def _embedding(self):
-        if not hasattr(self, 'embedding'):
-            self.embedding = embedding.word_position_embedding(self.word, self.word_vec, self.pos1, self.pos2)
+        if not hasattr(self, 'wp_embedding'):
+            self.w_embedding, self.p_embedding = embedding.word_position_embedding(self.word, self.word_vec,
+                                                                                   self.pos1, self.pos2)
+            self.wp_embedding = embedding.concat(self.w_embedding, self.p_embedding)
         if FLAGS.et and not hasattr(self, 'et_embedding'):
-            self.et_embedding = embedding.ent_type_embedding(self.head_enttype, self.tail_enttype, self.enttype_tot,
-                                                             et_embedding_dim=FLAGS.et_dim)
+            self.head_et_embedding, self.tail_et_embedding = embedding.ent_type_embedding(self.head_enttype,
+                                                                                          self.tail_enttype,
+                                                                                          self.enttype_tot,
+                                                                                          et_embedding_dim=FLAGS.et_dim)
+            self.et_embedding = embedding.concat(self.head_et_embedding, self.tail_et_embedding)
 
     def _encoder(self):
         if FLAGS.en == "pcnn":
-            self.encoder = encoder.pcnn(self.embedding, self.mask, FLAGS.hidden_size, activation=activation,
+            self.encoder = encoder.pcnn(self.wp_embedding, self.mask, FLAGS.hidden_size, activation=activation,
                                         keep_prob=self.keep_prob)
         elif FLAGS.en == "cnn":
-            self.encoder = encoder.cnn(self.embedding, FLAGS.hidden_size, activation=activation,
+            self.encoder = encoder.cnn(self.wp_embedding, FLAGS.hidden_size, activation=activation,
                                        keep_prob=self.keep_prob)
         elif "r" in FLAGS.en:
             ens = FLAGS.en.split('_')
             cell_name = ens[1] if len(ens) > 1 else ""
             if ens[0] == "rnn":
-                self.encoder = encoder.rnn(self.embedding, self.length, FLAGS.hidden_size, cell_name=cell_name,
+                self.encoder = encoder.rnn(self.wp_embedding, self.length, FLAGS.hidden_size, cell_name=cell_name,
                                            keep_prob=self.keep_prob)
             elif ens[0] == "birnn":
-                self.encoder = encoder.birnn(self.embedding, self.length, FLAGS.hidden_size, cell_name=cell_name,
+                self.encoder = encoder.birnn(self.wp_embedding, self.length, FLAGS.hidden_size, cell_name=cell_name,
                                              keep_prob=self.keep_prob)
             elif ens[0] == "rcnn" or ens[0] == "bircnn":
-                self.encoder = encoder.rcnn(self.embedding, self.length, seq_hidden_size=FLAGS.hidden_size,
+                self.encoder = encoder.rcnn(self.wp_embedding, self.length, seq_hidden_size=FLAGS.hidden_size,
                                             cell_name=cell_name, bidirectional='bi' in ens[0],
                                             mask=self.mask, con_hidden_size=FLAGS.hidden_size, activation=activation,
                                             keep_prob=self.keep_prob)
@@ -212,8 +217,9 @@ class model:
             with tf.variable_scope(FLAGS.en + '_' + FLAGS.se +
                                    (('_' + FLAGS.cl) if FLAGS.cl != 'softmax' else '') +
                                    '_adversarial', reuse=tf.AUTO_REUSE):
-                perturb = tf.gradients(self.loss, self.embedding)
+                perturb = tf.gradients(self.loss, self.w_embedding)
                 perturb = tf.reshape((0.01 * tf.stop_gradient(tf.nn.l2_normalize(perturb, dim=[0, 1, 2]))),
-                                     [-1, FLAGS.max_length, self.embedding.shape[-1]])
-                self.embedding = self.embedding + perturb
-                self._encoder_selector_classifier()
+                                     [-1, FLAGS.max_length, self.w_embedding.shape[-1]])
+                self.w_embedding = self.w_embedding + perturb
+                self.wp_embedding = embedding.concat(self.w_embedding, self.p_embedding)
+            self._encoder_selector_classifier()

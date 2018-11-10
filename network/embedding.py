@@ -2,6 +2,10 @@ import numpy as np
 import tensorflow as tf
 
 
+def concat(w_embedding, p_embedding):
+    return tf.concat([w_embedding, p_embedding], -1)
+
+
 def word_embedding(word, word_vec, var_scope=None, word_embedding_dim=50, add_unk_and_blank=True):
     with tf.variable_scope(var_scope or 'word_embedding', reuse=tf.AUTO_REUSE):
         w_embedding = tf.get_variable('word_embedding', initializer=word_vec, dtype=tf.float32)
@@ -39,7 +43,7 @@ def word_position_embedding(word, word_vec, pos1, pos2, var_scope=None, word_emb
                                      add_unk_and_blank=add_unk_and_blank)
         p_embedding = pos_embedding(pos1, pos2, var_scope=var_scope, pos_embedding_dim=pos_embedding_dim,
                                     max_length=max_length)
-        return tf.concat([w_embedding, p_embedding], -1)
+        return w_embedding, p_embedding
 
 
 def ent_type_embedding(head_enttype, tail_enttype, enttype_tot, var_scope=None, et_embedding_dim=10,
@@ -62,5 +66,4 @@ def ent_type_embedding(head_enttype, tail_enttype, enttype_tot, var_scope=None, 
                                                        name='blank_tet_embedding')], 0)
         input_head_enttype = tf.nn.embedding_lookup(head_et_embedding, head_enttype)
         input_tail_enttype = tf.nn.embedding_lookup(tail_et_embedding, tail_enttype)
-        x = tf.concat([input_head_enttype, input_tail_enttype], -1)
-        return x
+        return input_head_enttype, input_tail_enttype
