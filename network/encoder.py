@@ -20,34 +20,21 @@ def _piecewise_pooling(x, mask):
 
 def _cnn_cell(x, hidden_size=230, kernel_size=3, stride_size=1):
     with tf.variable_scope("cnn_cell", reuse=tf.AUTO_REUSE):
-        return tf.layers.conv1d(inputs=x,
-                                filters=hidden_size,
-                                kernel_size=kernel_size,
-                                strides=stride_size,
-                                padding='same',
-                                kernel_initializer=tf.contrib.layers.xavier_initializer())
+        return tf.layers.conv1d(inputs=x, filters=hidden_size, kernel_size=kernel_size, strides=stride_size,
+                                padding='same', kernel_initializer=tf.contrib.layers.xavier_initializer())
 
 
-def cnn(x, hidden_size=230, kernel_size=3, stride_size=1, activation=tf.nn.relu, var_scope=None, keep_prob=1.0):
-    with tf.variable_scope(var_scope or "cnn", reuse=tf.AUTO_REUSE):
-        x = _cnn_cell(x, hidden_size, kernel_size, stride_size)
-        x = _pooling(x)
-        x = activation(x)
-        x = dropout(x, keep_prob)
-        return x
+def cnn(x, mask=None, hidden_size=230, kernel_size=3, stride_size=1, activation=tf.nn.relu,
+        var_scope=None, keep_prob=1.0):
+    with tf.variable_scope(var_scope or ('pcnn' if mask else 'cnn'), reuse=tf.AUTO_REUSE):
+        cnn_cell = _cnn_cell(x, hidden_size, kernel_size, stride_size)
+        pool = _piecewise_pooling(cnn_cell, mask) if mask else _pooling(cnn_cell)
 
-
-def pcnn(x, mask, hidden_size=230, kernel_size=3, stride_size=1, activation=tf.nn.relu, var_scope=None, keep_prob=1.0):
-    with tf.variable_scope(var_scope or "pcnn", reuse=tf.AUTO_REUSE):
-        x = _cnn_cell(x, hidden_size, kernel_size, stride_size)
-        x = _piecewise_pooling(x, mask)
-        x = activation(x)
-        x = dropout(x, keep_prob)
-        return x
+        return dropout(activation(pool), keep_prob)
 
 
 def _rnn_cell(hidden_size, cell_name=''):
-    with tf.variable_scope(cell_name, reuse=tf.AUTO_REUSE):
+    with tf.variable_scope('BasicRNNCell' if cell_name.strip() == '' else cell_name, reuse=tf.AUTO_REUSE):
         if isinstance(cell_name, list) or isinstance(cell_name, tuple):
             if len(cell_name) == 1:
                 return _rnn_cell(hidden_size, cell_name[0])
@@ -62,37 +49,46 @@ def _rnn_cell(hidden_size, cell_name=''):
         raise NotImplementedError
 
 
-def rnn(x, length, hidden_size=230, cell_name='', var_scope=None, keep_prob=1.0):
-    with tf.variable_scope(var_scope or "rnn", reuse=tf.AUTO_REUSE):
+def birnn_states(x, length, hidden_size, cell_name):
+    fw_cell = _rnn_cell(hidden_size, cell_name)
+    bw_cell = _rnn_cell(hidden_size, cell_name)
+    _, states = tf.nn.bidirectional_dynamic_rnn(fw_cell, bw_cell, x, sequence_length=length, dtype=tf.float32,
+                                                scope='dynamic_birnn')
+    fw_states, bw_states = states
+    if isinstance(fw_states, tuple):
+        fw_states = fw_states[0]
+        bw_states = bw_states[0]
+    return fw_states, bw_states
+
+
+def rnn(x, length, hidden_size=230, cell_name='', bidirectional=False, var_scope=None, keep_prob=1.0):
+    with tf.variable_scope(var_scope or ('birnn' if bidirectional else 'rnn'), reuse=tf.AUTO_REUSE):
         x = dropout(x, keep_prob)
-        cell = _rnn_cell(hidden_size, cell_name)
-        _, states = tf.nn.dynamic_rnn(cell, x, sequence_length=length, dtype=tf.float32, scope='dynamic_rnn')
-        if isinstance(states, tuple):
-            states = states[0]
-        return states
+        if bidirectional:
+            bw_states, fw_states = birnn_states(cell_name, hidden_size, length, x)
+            return tf.concat([fw_states, bw_states], axis=1)
+        else:
+            cell = _rnn_cell(hidden_size, cell_name)
+            _, states = tf.nn.dynamic_rnn(cell, x, sequence_length=length, dtype=tf.float32, scope='dynamic_rnn')
+            if isinstance(states, tuple):
+                states = states[0]
+            return states
 
 
-def birnn(x, length, hidden_size=230, cell_name='', var_scope=None, keep_prob=1.0):
-    with tf.variable_scope(var_scope or "birnn", reuse=tf.AUTO_REUSE):
-        x = dropout(x, keep_prob)
-        fw_cell = _rnn_cell(hidden_size, cell_name)
-        bw_cell = _rnn_cell(hidden_size, cell_name)
-        _, states = tf.nn.bidirectional_dynamic_rnn(fw_cell, bw_cell, x, sequence_length=length, dtype=tf.float32,
-                                                    scope='dynamic_bi_rnn')
-        fw_states, bw_states = states
-        if isinstance(fw_states, tuple):
-            fw_states = fw_states[0]
-            bw_states = bw_states[0]
-        return tf.concat([fw_states, bw_states], axis=1)
-
-
-def rcnn(x, length, seq_hidden_size=230, cell_name='', bidirectional=False, mask=None, con_hidden_size=230,
+def rcnn(x, length, rnn_hidden_size=230, cell_name='', bidirectional=False, mask=None, cnn_hidden_size=230,
          kernel_size=3, stride_size=1, activation=tf.nn.relu, var_scope=None, keep_prob=1.0):
     with tf.variable_scope(var_scope or "rcnn", reuse=tf.AUTO_REUSE):
-        seq = birnn(x, length, seq_hidden_size, cell_name, keep_prob=keep_prob) if bidirectional else \
-            rnn(x, length, seq_hidden_size, cell_name, keep_prob=keep_prob)
-        seq = tf.expand_dims(seq, 2)
-        con = pcnn(seq, mask, con_hidden_size, kernel_size, stride_size, activation, keep_prob=keep_prob) if mask else \
-            cnn(seq, con_hidden_size, kernel_size, stride_size, activation, keep_prob=keep_prob)
-
-        return con
+        if bidirectional:
+            fw_states, bw_states = birnn_states(x, length, rnn_hidden_size, cell_name)
+            conv1 = _cnn_cell(tf.expand_dims(fw_states, 2), cnn_hidden_size)
+            conv2 = _cnn_cell(tf.expand_dims(bw_states, 2), cnn_hidden_size)
+            pool1 = _piecewise_pooling(conv1, mask) if mask else _pooling(conv1)
+            pool2 = _piecewise_pooling(conv2, mask) if mask else _pooling(conv1)
+            con1 = dropout(activation(pool1), keep_prob)
+            con2 = dropout(activation(pool2), keep_prob)
+            return tf.concat([con1, con2], -1)
+        else:
+            seq = rnn(x, length, rnn_hidden_size, cell_name, bidirectional, keep_prob=keep_prob)
+            seq = tf.expand_dims(seq, 2)
+            con = cnn(seq, mask, cnn_hidden_size, kernel_size, stride_size, activation, keep_prob=keep_prob)
+            return con

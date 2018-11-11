@@ -27,10 +27,7 @@ class model_rl(mb.model):
             self.policy_agent_output = self.output
             self.policy_agent_loss = self.loss
             self.policy_agent_global_step = tf.Variable(0, name='policy_agent_global_step', trainable=False)
-            policy_agent_optimizer = mb.optimizer(FLAGS.learning_rate)
-            policy_agent_grads_vars = policy_agent_optimizer.compute_gradients(self.policy_agent_loss)
-            self.policy_agent_op = policy_agent_optimizer.apply_gradients(policy_agent_grads_vars,
-                                                                          global_step=self.policy_agent_global_step)
+            self.policy_agent_op = None
 
             _set_params(*ovs)
         super()._network()
