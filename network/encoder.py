@@ -26,9 +26,9 @@ def _cnn_cell(x, hidden_size=230, kernel_size=3, stride_size=1):
 
 def cnn(x, mask=None, hidden_size=230, kernel_size=3, stride_size=1, activation=tf.nn.relu,
         var_scope=None, keep_prob=1.0):
-    with tf.variable_scope(var_scope or ('pcnn' if mask else 'cnn'), reuse=tf.AUTO_REUSE):
+    with tf.variable_scope(var_scope or ('cnn' if mask is None else 'pcnn'), reuse=tf.AUTO_REUSE):
         cnn_cell = _cnn_cell(x, hidden_size, kernel_size, stride_size)
-        pool = _piecewise_pooling(cnn_cell, mask) if mask else _pooling(cnn_cell)
+        pool = _pooling(cnn_cell) if mask is None else _piecewise_pooling(cnn_cell, mask)
 
         return dropout(activation(pool), keep_prob)
 
@@ -82,8 +82,8 @@ def rcnn(x, length, rnn_hidden_size=230, cell_name='', bidirectional=False, mask
             fw_states, bw_states = birnn_states(x, length, rnn_hidden_size, cell_name)
             conv1 = _cnn_cell(tf.expand_dims(fw_states, 2), cnn_hidden_size)
             conv2 = _cnn_cell(tf.expand_dims(bw_states, 2), cnn_hidden_size)
-            pool1 = _piecewise_pooling(conv1, mask) if mask else _pooling(conv1)
-            pool2 = _piecewise_pooling(conv2, mask) if mask else _pooling(conv1)
+            pool1 = _pooling(conv1) if mask is None else _piecewise_pooling(conv1, mask)
+            pool2 = _pooling(conv2) if mask is None else _piecewise_pooling(conv2, mask)
             con1 = dropout(activation(pool1), keep_prob)
             con2 = dropout(activation(pool2), keep_prob)
             return tf.concat([con1, con2], -1)

@@ -92,8 +92,8 @@ class model:
         else:
             raise NotImplementedError
         if FLAGS.et:
-            self.et_encoder = encoder.cnn(self.et_embedding, FLAGS.et_hidden_size, activation=self.activation,
-                                          keep_prob=self.keep_prob)
+            self.et_encoder = encoder.cnn(self.et_embedding, hidden_size=FLAGS.et_hidden_size,
+                                          activation=self.activation, keep_prob=self.keep_prob)
             self.encoder = tf.concat([self.encoder, self.et_encoder], -1)
 
     def _selector(self):
