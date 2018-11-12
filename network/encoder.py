@@ -78,17 +78,17 @@ def rnn(x, length, hidden_size=230, cell_name='', bidirectional=False, var_scope
 def rcnn(x, length, rnn_hidden_size=230, cell_name='', bidirectional=False, mask=None, cnn_hidden_size=230,
          kernel_size=3, stride_size=1, activation=tf.nn.relu, var_scope=None, keep_prob=1.0):
     with tf.variable_scope(var_scope or "rcnn", reuse=tf.AUTO_REUSE):
-        if bidirectional:
-            fw_states, bw_states = birnn_states(x, length, rnn_hidden_size, cell_name)
-            conv1 = _cnn_cell(tf.expand_dims(fw_states, 2), cnn_hidden_size)
-            conv2 = _cnn_cell(tf.expand_dims(bw_states, 2), cnn_hidden_size)
-            pool1 = _pooling(conv1) if mask is None else _piecewise_pooling(conv1, mask)
-            pool2 = _pooling(conv2) if mask is None else _piecewise_pooling(conv2, mask)
-            con1 = dropout(activation(pool1), keep_prob)
-            con2 = dropout(activation(pool2), keep_prob)
-            return tf.concat([con1, con2], -1)
-        else:
-            seq = rnn(x, length, rnn_hidden_size, cell_name, bidirectional, keep_prob=keep_prob)
-            seq = tf.expand_dims(seq, 2)
-            con = cnn(seq, mask, cnn_hidden_size, kernel_size, stride_size, activation, keep_prob=keep_prob)
-            return con
+        # if bidirectional:
+        #     fw_states, bw_states = birnn_states(x, length, rnn_hidden_size, cell_name)
+        #     conv1 = _cnn_cell(tf.expand_dims(fw_states, 2), cnn_hidden_size)
+        #     conv2 = _cnn_cell(tf.expand_dims(bw_states, 2), cnn_hidden_size)
+        #     pool1 = _pooling(conv1) if mask is None else _piecewise_pooling(conv1, mask)
+        #     pool2 = _pooling(conv2) if mask is None else _piecewise_pooling(conv2, mask)
+        #     con1 = dropout(activation(pool1), keep_prob)
+        #     con2 = dropout(activation(pool2), keep_prob)
+        #     return tf.concat([con1, con2], -1)
+        # else:
+        seq = rnn(x, length, rnn_hidden_size, cell_name, bidirectional, keep_prob=keep_prob)
+        seq = tf.expand_dims(seq, 2)
+        con = cnn(seq, mask, cnn_hidden_size, kernel_size, stride_size, activation, keep_prob=keep_prob)
+        return con
