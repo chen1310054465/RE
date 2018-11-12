@@ -65,7 +65,7 @@ def rnn(x, length, hidden_size=230, cell_name='', bidirectional=False, var_scope
     with tf.variable_scope(var_scope or ('birnn' if bidirectional else 'rnn'), reuse=tf.AUTO_REUSE):
         x = dropout(x, keep_prob)
         if bidirectional:
-            bw_states, fw_states = birnn_states(cell_name, hidden_size, length, x)
+            bw_states, fw_states = birnn_states(x, length, hidden_size, cell_name)
             return tf.concat([fw_states, bw_states], axis=1)
         else:
             cell = _rnn_cell(hidden_size, cell_name)
