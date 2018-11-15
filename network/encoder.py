@@ -88,7 +88,9 @@ def rcnn(x, length, rnn_hidden_size=230, cell_name='', bidirectional=False, mask
         #     con2 = dropout(activation(pool2), keep_prob)
         #     return tf.concat([con1, con2], -1)
         # else:
+        #     seq = rnn(x, length, rnn_hidden_size, cell_name, bidirectional, keep_prob=keep_prob)
+        #     seq = tf.expand_dims(seq, 2)
+        #     con = cnn(seq, mask, cnn_hidden_size, kernel_size, stride_size, activation, keep_prob=keep_prob)
         seq = rnn(x, length, rnn_hidden_size, cell_name, bidirectional, keep_prob=keep_prob)
-        seq = tf.expand_dims(seq, 2)
-        con = cnn(seq, mask, cnn_hidden_size, kernel_size, stride_size, activation, keep_prob=keep_prob)
-        return con
+        con = cnn(x, mask, cnn_hidden_size, kernel_size, stride_size, activation, keep_prob=keep_prob)
+        return tf.concat([seq, con], axis=1)
