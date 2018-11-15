@@ -1,5 +1,6 @@
 import math
 import os
+import re
 import sys
 import time
 import gc
@@ -32,6 +33,7 @@ tf.flags.DEFINE_integer('batch_size', 160, 'batch size')
 tf.flags.DEFINE_integer('max_length', 120, 'word max length')
 tf.flags.DEFINE_integer('et_max_length', 100, 'entity type max length')
 tf.flags.DEFINE_integer('et_dim', 12, 'entity type embedding dimensionality')
+tf.flags.DEFINE_integer('li_encoder_mode', 0, 'organize encoder mode')
 tf.flags.DEFINE_float('learning_rate', 0.5, 'learning rate')
 tf.flags.DEFINE_string('ckpt_dir', os.path.join('checkpoint', FLAGS.dn), 'checkpoint dir')
 tf.flags.DEFINE_string('summary_dir', os.path.join('summary', FLAGS.dn), 'summary dir')
@@ -39,7 +41,8 @@ tf.flags.DEFINE_string('test_result_dir', os.path.join('test_result', FLAGS.dn),
 tf.flags.DEFINE_string('dataset_dir', os.path.join('origin_data', FLAGS.dn), 'origin dataset dir')
 tf.flags.DEFINE_string('processed_data_dir', os.path.join('processed_data', FLAGS.dn), 'processed data dir')
 tf.flags.DEFINE_string('model_name', (FLAGS.dn + '_' + ('et_' if FLAGS.et else '') +  # dataset_name entity_type
-                                      FLAGS.en + "_" + FLAGS.se +  # encoder selector
+                                      ('li_' if FLAGS.li_encoder_mode and (FLAGS.et or re.search("r.*cnn", FLAGS.en))
+                                       else '') + FLAGS.en + "_" + FLAGS.se +  # encoder selector
                                       (('_' + FLAGS.cl) if FLAGS.cl != 'softmax' else '') +  # classifier
                                       (('_' + FLAGS.ac) if FLAGS.ac != 'relu' else '') +  # activation
                                       (('_' + FLAGS.op) if FLAGS.op != 'sgd' else '') +  # optimizer
@@ -58,7 +61,8 @@ def init(is_training=True):
               + ('[--cl classifier] [--ac activation] [--op optimizer] [--ad adversarial_training]\n       '
                  + '[--gn gpu_nums] [--pm pretrain_model] [--max_epoch max epoch] [--save_epoch save epoch]'
                  + ' [--hidden_size hidden size] [--et_hidden_size hidden size of entity type]'
-                 + '\n       [--batch_size batch size] [--learning_rate learning rate]' if is_training else ''))
+                 + '\n       [--batch_size batch size] [--learning_rate learning rate] '
+                 + '[--li_encoder_mode organize encoder mode]' if is_training else ''))
         print('**************************************args details**********************************************')
         print('**  --dn: (dataset_name)[nyt(New York Times dataset)...], put it in origin_data dir           **')
         print('**  --et: (ent_type)whether to add entity type info(default 0), 0(no), 1(yes)                 **')
@@ -81,6 +85,7 @@ def init(is_training=True):
             print('**  --save_epoch: how many epoch to save result while training(default 2)                     **')
             print('**  --batch_size: batch size of corpus for each step of training(default 160)                 **')
             print('**  --learning_rate: learning rate(default 0.5 when training, whereas 1 when testing)         **')
+            print('**  --li_encoder_mode: organize encoder mode(0 denotes concat, 1 denotes linear transform)    **')
         print('************************************************************************************************')
         exit()
 

@@ -86,15 +86,20 @@ class model:
                 self.encoder = encoder.rcnn(self.wp_embedding, self.length, rnn_hidden_size=FLAGS.rnn_hidden_size,
                                             cell_name=cell_name, bidirectional='bi' in ens[0],
                                             mask=self.mask, cnn_hidden_size=FLAGS.cnn_hidden_size,
-                                            activation=self.activation, keep_prob=self.keep_prob)
+                                            activation=self.activation, keep_prob=self.keep_prob,
+                                            li_encoder_mode=FLAGS.li_encoder_mode)
             else:
                 raise NotImplementedError
         else:
             raise NotImplementedError
         if FLAGS.et:
-            self.et_encoder = encoder.cnn(self.et_embedding, hidden_size=FLAGS.et_hidden_size,
-                                          activation=self.activation, keep_prob=self.keep_prob)
-            self.encoder = tf.concat([self.encoder, self.et_encoder], -1)
+            et_encoder = encoder.cnn(self.et_embedding, hidden_size=FLAGS.et_hidden_size,
+                                     activation=self.activation, keep_prob=self.keep_prob)
+            if FLAGS.li_encoder_mode:
+                self.encoder = encoder.linear_transform(self.encoder, tf.expand_dims(tf.reduce_sum(et_encoder,
+                                                                                                   axis=-1), 1))
+            else:
+                self.encoder = tf.concat([self.encoder, et_encoder], -1)
 
     def _selector(self):
         ses = FLAGS.se.split('_')

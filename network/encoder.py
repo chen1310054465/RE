@@ -4,6 +4,11 @@ import tensorflow as tf
 from framework import dropout
 
 
+def linear_transform(x, b):
+    W = tf.Variable(np.zeros(shape=[x.shape[-1], x.shape[-1]], dtype=np.float32), name='W')
+    return tf.matmul(x, W) + b
+
+
 def _pooling(x):
     with tf.variable_scope("pooling", reuse=tf.AUTO_REUSE):
         return tf.reduce_max(x, axis=-2)
@@ -76,7 +81,7 @@ def rnn(x, length, hidden_size=230, cell_name='', bidirectional=False, var_scope
 
 
 def rcnn(x, length, rnn_hidden_size=230, cell_name='', bidirectional=False, mask=None, cnn_hidden_size=230,
-         kernel_size=3, stride_size=1, activation=tf.nn.relu, var_scope=None, keep_prob=1.0):
+         kernel_size=3, stride_size=1, activation=tf.nn.relu, var_scope=None, keep_prob=1.0, li_encoder_mode=0):
     with tf.variable_scope(var_scope or "rcnn", reuse=tf.AUTO_REUSE):
         # if bidirectional:
         #     fw_states, bw_states = birnn_states(x, length, rnn_hidden_size, cell_name)
@@ -93,4 +98,7 @@ def rcnn(x, length, rnn_hidden_size=230, cell_name='', bidirectional=False, mask
         #     con = cnn(seq, mask, cnn_hidden_size, kernel_size, stride_size, activation, keep_prob=keep_prob)
         seq = rnn(x, length, rnn_hidden_size, cell_name, bidirectional, keep_prob=keep_prob)
         con = cnn(x, mask, cnn_hidden_size, kernel_size, stride_size, activation, keep_prob=keep_prob)
-        return tf.concat([seq, con], axis=1)
+        if li_encoder_mode:
+            return linear_transform(seq, tf.expand_dims(tf.reduce_sum(con, axis=-1), 1))
+        else:
+            return tf.concat([seq, con], axis=1)
