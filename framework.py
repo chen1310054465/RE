@@ -19,9 +19,9 @@ tf.flags.DEFINE_string('cl', 'softmax', 'classifier')
 tf.flags.DEFINE_string('ac', 'relu', 'activation')
 tf.flags.DEFINE_string('op', 'sgd', 'optimizer')
 tf.flags.DEFINE_integer('et', 0, 'whether to add entity type info')
-tf.flags.DEFINE_integer('ad', 0, 'adversarial training')
+tf.flags.DEFINE_integer('ad', 0, 'whether to add adversarial training')
 tf.flags.DEFINE_integer('gn', 1, 'gpu_nums')
-tf.flags.DEFINE_string('pm', None, 'pretrain model')
+tf.flags.DEFINE_integer('pm', 0, 'whether to pretrain model')
 # define some specified parameter
 tf.flags.DEFINE_integer('max_epoch', 60, 'max epoch')
 tf.flags.DEFINE_integer('save_epoch', 1, 'save epoch')
@@ -76,7 +76,7 @@ def init(is_training=True):
             print('**  --op: (optimizer)' + str([op for op in optimizers]) + '                       **')
             print('**  --ad: (adversarial_training)whether to perturb while training(default 0), 0(no), 1(yes)   **')
             print('**  --gn: (gpu_nums)denotes num of gpu for training(default 1)                                **')
-            print('**  --pm: (pretrain_model)denotes the name of model to pretrain, such as:nyt_pcnn_att         **')
+            print('**  --pm: (pretrain_model)whether to pretrain model(default 0), 0(no), 1(yes)                 **')
             print('**  --hidden_size: hidden size of encoder(default 230)                                        **')
             print('**  --rnn_hidden_size: hidden size of rnn encoder for rcnn model(default 230)                 **')
             print('**  --cnn_hidden_size: hidden size of cnn encoder for rcnn model(default 230)                 **')
@@ -265,12 +265,15 @@ class framework:
         self.summary_writer = tf.summary.FileWriter(summary_dir, self.sess.graph)
         # saver
         self.saver = tf.train.Saver(max_to_keep=None)
-        if FLAGS.pm is not None:
-            self.saver.restore(self.sess, os.path.join(FLAGS.ckpt_dir, FLAGS.pm))
-        else:
-            self.sess.run(tf.global_variables_initializer())
         # Training
         best_metric = 0
+        if FLAGS.pm:
+            self.saver.restore(self.sess, os.path.join(FLAGS.ckpt_dir, FLAGS.model_name))
+            x = np.load(os.path.join(FLAGS.test_result_dir, FLAGS.model_name + "_x.npy"))
+            y = np.load(os.path.join(FLAGS.test_result_dir, FLAGS.model_name + "_y.npy"))
+            best_metric = sklearn.metrics.auc(x=x, y=y)
+        else:
+            self.sess.run(tf.global_variables_initializer())
         best_prec = None
         best_recall = None
         not_best_count = 0  # Stop training after several epochs without improvement.
