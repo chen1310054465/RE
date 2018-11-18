@@ -23,7 +23,7 @@ tf.flags.DEFINE_integer('ad', 0, 'whether to add adversarial training')
 tf.flags.DEFINE_integer('gn', 1, 'gpu_nums')
 tf.flags.DEFINE_integer('pm', 0, 'whether to pretrain model')
 # define some specified parameter
-tf.flags.DEFINE_integer('max_epoch', 60, 'max epoch')
+tf.flags.DEFINE_integer('max_epoch', 120, 'max epoch')
 tf.flags.DEFINE_integer('save_epoch', 1, 'save epoch')
 tf.flags.DEFINE_integer('hidden_size', 230, 'hidden size')
 tf.flags.DEFINE_integer('rnn_hidden_size', 230, 'rnn hidden size for rcnn model')
