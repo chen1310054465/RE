@@ -66,11 +66,9 @@ class model:
                                                                                    self.pos1, self.pos2)
             self.wp_embedding = embedding.concat(self.w_embedding, self.p_embedding)
         if FLAGS.et and not hasattr(self, 'et_embedding'):
-            self.head_et_embedding, self.tail_et_embedding = embedding.ent_type_embedding(self.head_enttype,
-                                                                                          self.tail_enttype,
-                                                                                          self.enttype_tot,
-                                                                                          et_embedding_dim=FLAGS.et_dim)
-            self.et_embedding = embedding.concat(self.head_et_embedding, self.tail_et_embedding)
+            self.het_embedding, self.tet_embedding = embedding.ent_type_embedding(self.head_enttype, self.tail_enttype,
+                                                                                  self.enttype_tot, FLAGS.et_dim)
+            self.et_embedding = embedding.concat(self.het_embedding, self.tet_embedding, axis=1)
 
     def _encoder(self):
         if FLAGS.en == "cnn" or FLAGS.en == "pcnn":
@@ -93,13 +91,17 @@ class model:
         else:
             raise NotImplementedError
         if FLAGS.et:
-            et_encoder = encoder.cnn(self.et_embedding, hidden_size=FLAGS.et_hidden_size,
-                                     activation=self.activation, keep_prob=self.keep_prob)
+            if FLAGS.et_encoder_mode:
+                self.et_encoder = encoder.dense(tf.reduce_sum(self.et_embedding, axis=-1), FLAGS.et_hidden_size,
+                                                activation=self.activation)
+            else:
+                self.et_encoder = encoder.cnn(self.et_embedding, hidden_size=FLAGS.et_hidden_size,
+                                              activation=self.activation, keep_prob=self.keep_prob)
             if FLAGS.li_encoder_mode:
-                self.encoder = encoder.linear_transform(self.encoder, tf.expand_dims(tf.reduce_sum(et_encoder,
+                self.encoder = encoder.linear_transform(self.encoder, tf.expand_dims(tf.reduce_sum(self.et_encoder,
                                                                                                    axis=-1), 1))
             else:
-                self.encoder = tf.concat([self.encoder, et_encoder], -1)
+                self.encoder = tf.concat([self.encoder, self.et_encoder], -1)
 
     def _selector(self):
         ses = FLAGS.se.split('_')

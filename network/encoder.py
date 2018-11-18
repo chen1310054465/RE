@@ -5,8 +5,25 @@ from framework import dropout
 
 
 def linear_transform(x, b):
-    W = tf.Variable(np.zeros(shape=[x.shape[-1], x.shape[-1]], dtype=np.float32), name='W')
-    return tf.matmul(x, W) + b
+    # w = tf.Variable(np.zeros(shape=[1, x.shape[-1]], dtype=np.float32), name='w')
+    w = tf.get_variable('w', [1, x.shape[-1]], initializer=tf.contrib.layers.xavier_initializer(), dtype=tf.float32)
+    return w * x + b
+
+
+def dense(inputs, units, activation=None, use_bias=True, kernel_initializer=None,
+          bias_initializer=tf.zeros_initializer(), kernel_regularizer=None, bias_regularizer=None,
+          activity_regularizer=None, kernel_constraint=None, bias_constraint=None, trainable=True,
+          name=None, reuse=None):
+    return tf.layers.dense(inputs, units, activation, use_bias, kernel_initializer, bias_initializer,
+                           kernel_regularizer, bias_regularizer, activity_regularizer, kernel_constraint,
+                           bias_constraint, trainable, name, reuse)
+
+
+def mask_embedding(num_piece):
+    me = np.zeros([num_piece + 1, num_piece], dtype=np.float32)
+    for i in range(num_piece):
+        me[i + 1][i] = 1
+    return tf.constant(me)
 
 
 def _pooling(x):
@@ -16,8 +33,8 @@ def _pooling(x):
 
 def _piecewise_pooling(x, mask):
     with tf.variable_scope("piecewise_pooling", reuse=tf.AUTO_REUSE):
-        mask_embedding = tf.constant([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype=np.float32)
-        mask = tf.nn.embedding_lookup(mask_embedding, mask)
+        # mask_embedding = tf.constant([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype=np.float32)
+        mask = tf.nn.embedding_lookup(mask_embedding(num_piece=3), mask)
         hidden_size = x.shape[-1]
         x = tf.reduce_max(tf.expand_dims(mask * 100, 2) + tf.expand_dims(x, 3), axis=1) - 100
         return tf.reshape(x, [-1, hidden_size * 3])
