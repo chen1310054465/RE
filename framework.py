@@ -81,7 +81,7 @@ def init(is_training=True):
             print('**  --rnn_hidden_size: hidden size of rnn encoder for rcnn model(default 230)                 **')
             print('**  --cnn_hidden_size: hidden size of cnn encoder for rcnn model(default 230)                 **')
             print('**  --et_hidden_size: hidden size of entity type encoder(default 80)                          **')
-            print('**  --max_epoch: max epoch util stopping training(default 60)                                 **')
+            print('**  --max_epoch: max epoch util stopping training(default 120)                                **')
             print('**  --save_epoch: how many epoch to save result while training(default 2)                     **')
             print('**  --batch_size: batch size of corpus for each step of training(default 160)                 **')
             print('**  --learning_rate: learning rate(default 0.5 when training, whereas 1 when testing)         **')
