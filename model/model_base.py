@@ -16,25 +16,34 @@ class model:
         self.is_training = is_training
         self.keep_prob = 0.5 if is_training else 1.0
         batch_size = FLAGS.batch_size // FLAGS.gn if is_training else FLAGS.batch_size
-
+        # 'entity_pos': 'pcnn' in FLAGS.en      'enttype_length': FLAGS.et
+        data_loader.data_require = {'mask': 'pcnn' in FLAGS.en, 'length': re.search("r.*nn", FLAGS.en),
+                                    'label': is_training or 'one' in FLAGS.se, 'instance_label': 'att' in FLAGS.se,
+                                    'entity_pos': False, 'scope': 'instance' not in FLAGS.se,
+                                    'weights': is_training, 'head_enttype': FLAGS.et, 'tail_enttype': FLAGS.et,
+                                    'enttype_length': False}
         self.word = tf.placeholder(dtype=tf.int32, shape=[None, FLAGS.max_length], name='word')
         self.pos1 = tf.placeholder(dtype=tf.int32, shape=[None, FLAGS.max_length], name='pos1')
         self.pos2 = tf.placeholder(dtype=tf.int32, shape=[None, FLAGS.max_length], name='pos2')
-        self.mask = tf.placeholder(dtype=tf.int32, shape=[None, FLAGS.max_length], name="mask") \
-            if 'pcnn' in FLAGS.en else None
-        self.length = tf.placeholder(dtype=tf.int32, shape=[None], name='length') \
-            if re.search("r.*nn", FLAGS.en) else None
-        self.label = tf.placeholder(dtype=tf.int32, shape=[batch_size], name='label') \
-            if is_training or 'one' in FLAGS.se else None
-        self.instance_label = tf.placeholder(dtype=tf.int32, shape=[None], name='instance_label') \
-            if 'att' in FLAGS.se else None
-        self.scope = tf.placeholder(dtype=tf.int32, shape=[batch_size + 1], name='scope') \
-            if 'instance' not in FLAGS.se else None
+        if data_loader.data_require['mask']:
+            self.mask = tf.placeholder(dtype=tf.int32, shape=[None, FLAGS.max_length], name="mask")
+        if data_loader.data_require['length']:
+            self.length = tf.placeholder(dtype=tf.int32, shape=[None], name='length')
+        if data_loader.data_require['label']:
+            self.label = tf.placeholder(dtype=tf.int32, shape=[batch_size], name='label')
+        if data_loader.data_require['instance_label']:
+            self.instance_label = tf.placeholder(dtype=tf.int32, shape=[None], name='instance_label')
+        if data_loader.data_require['entity_pos']:
+            self.entity_pos = tf.placeholder(dtype=tf.int32, shape=[None, 2], name='entity_pos')
+        if data_loader.data_require['scope']:
+            self.scope = tf.placeholder(dtype=tf.int32, shape=[batch_size + 1], name='scope')
         self.weights = tf.placeholder(dtype=tf.float32, shape=[batch_size], name='weights') if is_training else None
-        self.head_enttype = tf.placeholder(dtype=tf.int32, shape=[None, FLAGS.et_max_length], name="head_enttype") \
-            if FLAGS.et else None
-        self.tail_enttype = tf.placeholder(dtype=tf.int32, shape=[None, FLAGS.et_max_length], name="tail_enttype") \
-            if FLAGS.et else None
+        if data_loader.data_require['head_enttype']:
+            self.head_enttype = tf.placeholder(dtype=tf.int32, shape=[None, FLAGS.et_max_length], name="head_enttype")
+        if data_loader.data_require['tail_enttype']:
+            self.tail_enttype = tf.placeholder(dtype=tf.int32, shape=[None, FLAGS.et_max_length], name="tail_enttype")
+        if data_loader.data_require['enttype_length']:
+            self.enttype_length = tf.placeholder(dtype=tf.int32, shape=[None, 2], name="enttype_length")
 
         self._network()
 

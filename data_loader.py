@@ -6,6 +6,8 @@ import numpy as np
 import tensorflow as tf
 from six import iteritems
 
+import util
+
 FLAGS = tf.flags.FLAGS
 
 
@@ -15,12 +17,25 @@ class file_data_loader:
     MODE_RELFACT_BAG = 2  # One batch contains batch size bags, instances in which have the same relation fact. (usually for training).
     TRAIN_PREFIX = 'train'
     TEST_PREFIX = 'test'
+    case_sensitive = False
+    word_vec_tot = 0
+    word_vec_dim = 0
+    UNK = 0
+    BLANK = 0
+    origin_word_vec = None
+    word_vec = None
+    word2id = {}
+    rel2id = {}
+    enttype2id = {}
+    rel_tot = 0
+    enttype_tot = 0
 
     def __init__(self, ext, prefix=TRAIN_PREFIX, mode=MODE_RELFACT_BAG, reprocess=False, shuffle=True):
         self.ext = ext
         self.prefix = prefix
         self.mode = mode
         self.shuffle = shuffle
+        self.data_require = {}
 
         if reprocess or not self._load_preprocessed_file():
             self._preprocess()
@@ -28,8 +43,8 @@ class file_data_loader:
         self.instance_tot = self.data_word.shape[0]
         self.entpair_tot = len(self.entpair2scope)
         self.relfact_tot = 0
-        self.rel_tot = len(self.rel2id)
-        self.enttype_tot = len(self.enttype2id)
+        file_data_loader.rel_tot = len(file_data_loader.rel2id)
+        file_data_loader.enttype_tot = len(file_data_loader.enttype2id)
 
         for k in self.relfact2scope:
             if k[-2:] != 'NA':
@@ -42,7 +57,7 @@ class file_data_loader:
 
         self.begin = 0
         print("Total relation fact: %d" % self.relfact_tot)
-        if self.prefix == self.TRAIN_PREFIX:
+        if self.prefix == file_data_loader.TRAIN_PREFIX:
             self._set_weights_table()
 
     def set_order(self):
@@ -66,81 +81,117 @@ class file_data_loader:
     def _load_preprocessed_file(self):
         if not os.path.exists(FLAGS.processed_data_dir):
             os.makedirs(FLAGS.processed_data_dir)
-        word_file_name = os.path.join(FLAGS.processed_data_dir, self.prefix + '_word.npy')
-        pos1_file_name = os.path.join(FLAGS.processed_data_dir, self.prefix + '_pos1.npy')
-        pos2_file_name = os.path.join(FLAGS.processed_data_dir, self.prefix + '_pos2.npy')
-        mask_file_name = os.path.join(FLAGS.processed_data_dir, self.prefix + '_mask.npy')
-        length_file_name = os.path.join(FLAGS.processed_data_dir, self.prefix + '_length.npy')
-        label_file_name = os.path.join(FLAGS.processed_data_dir, self.prefix + '_label.npy')
-        head_enttype_file_name = os.path.join(FLAGS.processed_data_dir, self.prefix + '_head_enttype.npy')
-        tail_enttype_file_name = os.path.join(FLAGS.processed_data_dir, self.prefix + '_tail_enttype.npy')
-        word_vec_file_name = os.path.join(FLAGS.processed_data_dir, 'word_vec.npy')
-        entpair2scope_file_name = os.path.join(FLAGS.processed_data_dir, self.prefix + '_entpair2scope' + self.ext)
-        relfact2scope_file_name = os.path.join(FLAGS.processed_data_dir, self.prefix + '_relfact2scope' + self.ext)
-        rel2id_file_name = os.path.join(FLAGS.processed_data_dir, 'rel2id' + self.ext)
-        word2id_file_name = os.path.join(FLAGS.processed_data_dir, 'word2id' + self.ext)
-        enttype2id_file_name = os.path.join(FLAGS.processed_data_dir, 'enttype2id' + self.ext)
-        if not os.path.exists(word_file_name) or not os.path.exists(pos1_file_name) or \
-                not os.path.exists(pos2_file_name) or not os.path.exists(mask_file_name) or \
-                not os.path.exists(length_file_name) or not os.path.exists(label_file_name) or \
-                not os.path.exists(head_enttype_file_name) or not os.path.exists(tail_enttype_file_name) or \
-                not os.path.exists(word_vec_file_name) or \
-                not os.path.exists(entpair2scope_file_name) or not os.path.exists(relfact2scope_file_name) or \
-                not os.path.exists(rel2id_file_name) or not os.path.exists(word2id_file_name) or \
-                not os.path.exists(enttype2id_file_name):
+        word = os.path.join(FLAGS.processed_data_dir, self.prefix + '_word.npy')
+        pos1 = os.path.join(FLAGS.processed_data_dir, self.prefix + '_pos1.npy')
+        pos2 = os.path.join(FLAGS.processed_data_dir, self.prefix + '_pos2.npy')
+        mask = os.path.join(FLAGS.processed_data_dir, self.prefix + '_mask.npy')
+        length = os.path.join(FLAGS.processed_data_dir, self.prefix + '_length.npy')
+        label = os.path.join(FLAGS.processed_data_dir, self.prefix + '_label.npy')
+        entity_pos = os.path.join(FLAGS.processed_data_dir, self.prefix + '_entity_pos.npy')
+        head_enttype = os.path.join(FLAGS.processed_data_dir, self.prefix + '_head_enttype.npy')
+        tail_enttype = os.path.join(FLAGS.processed_data_dir, self.prefix + '_tail_enttype.npy')
+        enttype_length = os.path.join(FLAGS.processed_data_dir, self.prefix + '_enttype_length.npy')
+        word_vec = os.path.join(FLAGS.processed_data_dir, 'word_vec.npy')
+        entpair2scope = os.path.join(FLAGS.processed_data_dir, self.prefix + '_entpair2scope' + self.ext)
+        relfact2scope = os.path.join(FLAGS.processed_data_dir, self.prefix + '_relfact2scope' + self.ext)
+        word2id = os.path.join(FLAGS.processed_data_dir, 'word2id' + self.ext)
+        rel2id = os.path.join(FLAGS.processed_data_dir, 'rel2id' + self.ext)
+        enttype2id = os.path.join(FLAGS.processed_data_dir, 'enttype2id' + self.ext)
+
+        self.f_exists = {'word': os.path.exists(word), 'pos1': os.path.exists(pos1), 'pos2': os.path.exists(pos2),
+                         'mask': os.path.exists(mask), 'length': os.path.exists(length), 'label': os.path.exists(label),
+                         'head_enttype': os.path.exists(head_enttype), 'tail_enttype': os.path.exists(tail_enttype),
+                         'enttype_length': os.path.exists(enttype_length), 'word_vec': os.path.exists(word_vec),
+                         'entpair2scope': os.path.exists(entpair2scope), 'relfact2scope': os.path.exists(relfact2scope),
+                         'word2id': os.path.exists(word2id), 'rel2id': os.path.exists(rel2id),
+                         'enttype2id': os.path.exists(enttype2id), 'entity_pos': os.path.exists(entity_pos)}
+        if False in self.f_exists.values():
             return False
         print("Pre-processed files exist. Loading them...")
-        self.data_word = np.load(word_file_name)
-        self.data_pos1 = np.load(pos1_file_name)
-        self.data_pos2 = np.load(pos2_file_name)
-        self.data_mask = np.load(mask_file_name)
-        self.data_length = np.load(length_file_name)
-        self.data_label = np.load(label_file_name)
-        self.head_enttype = np.load(head_enttype_file_name)
-        self.tail_enttype = np.load(tail_enttype_file_name)
-        self.word_vec = np.load(word_vec_file_name)
-        self.entpair2scope = self.load_file(entpair2scope_file_name)
-        self.relfact2scope = self.load_file(relfact2scope_file_name)
-        self.rel2id = self.load_file(rel2id_file_name)
-        self.word2id = self.load_file(word2id_file_name)
-        self.enttype2id = self.load_file(enttype2id_file_name)
+        self.data_word = np.load(word)
+        self.data_pos1 = np.load(pos1)
+        self.data_pos2 = np.load(pos2)
+        self.data_mask = np.load(mask)
+        self.data_length = np.load(length)
+        self.data_label = np.load(label)
+        self.entity_pos = np.load(entity_pos)
+        self.head_enttype = np.load(head_enttype)
+        self.tail_enttype = np.load(tail_enttype)
+        self.enttype_length = np.load(enttype_length)
+        if file_data_loader.word_vec is None:
+            file_data_loader.word_vec = np.load(word_vec)
+        self.entpair2scope = self.load_file(entpair2scope)
+        self.relfact2scope = self.load_file(relfact2scope)
+        # if len(file_data_loader.word2id) == 0:
+        #     file_data_loader.word2id = self.load_file(word2id)
+        if len(file_data_loader.rel2id) == 0:
+            file_data_loader.rel2id = self.load_file(rel2id)
+        if len(file_data_loader.enttype2id) == 0:
+            file_data_loader.enttype2id = self.load_file(enttype2id)
         if self.data_word.shape[1] != FLAGS.max_length:
             print("Pre-processed files don't match current settings. Reprocessing...")
             return False
         print("Finish loading")
         return True
 
-    def _preprocess(self, case_sensitive=False):
-        origin_data_file_name = os.path.join(FLAGS.dataset_dir, self.prefix + self.ext)
-        word_vec_file_name = os.path.join(FLAGS.dataset_dir, 'word_vec' + self.ext)
-        rel2id_file_name = os.path.join(FLAGS.dataset_dir, 'rel2id' + self.ext)
-        enttype2id_file_name = os.path.join(FLAGS.dataset_dir, 'enttype2id' + self.ext)
-        # Check files
-        if origin_data_file_name is None or not os.path.isfile(origin_data_file_name):
+    def _preprocess(self):
+        # load origin files
+        self._load_origin_files()
+
+        # eliminate case sensitive
+        self._eliminate_case_sensitive()
+
+        # sort origin_data by entities and relations
+        print("Sort origin_data...")
+        self.origin_data.sort(key=lambda a: a['head']['id'] + '#' + a['tail']['id'] + '#' + a['relation'])
+        print("Finish sorting")
+
+        # preprocess origin_data
+        self._preprocess_origin_data()
+
+        self._store_processed_files()
+
+    def _load_origin_files(self):
+        origin_data = os.path.join(FLAGS.dataset_dir, self.prefix + self.ext)
+        origin_word_vec = os.path.join(FLAGS.dataset_dir, 'word_vec' + self.ext)
+        origin_rel2id = os.path.join(FLAGS.dataset_dir, 'rel2id' + self.ext)
+        origin_enttype2id = os.path.join(FLAGS.dataset_dir, 'enttype2id' + self.ext)
+
+        if origin_data is None or not os.path.isfile(origin_data):
             raise Exception("[ERROR] data file doesn't exist")
-        if word_vec_file_name is None or not os.path.isfile(word_vec_file_name):
-            raise Exception("[ERROR] word vector file doesn't exist")
-        if rel2id_file_name is None or not os.path.isfile(rel2id_file_name):
-            raise Exception("[ERROR] rel2id file doesn't exist")
-        if enttype2id_file_name is None or not os.path.isfile(enttype2id_file_name):
-            raise Exception("[ERROR] enttype2id file doesn't exist")
-
-        # Load files
         print("Loading origin_data file...")
-        self.origin_data = self.load_file(origin_data_file_name)
+        self.origin_data = self.load_file(origin_data)
         print("Finish origin_data loading")
-        print("Loading word vector file...")
-        self.origin_word_vec = self.load_file(word_vec_file_name)
-        print("Finish word vector loading")
-        print("Loading rel2id file...")
-        self.rel2id = self.load_file(rel2id_file_name)
-        print("Finish rel2id loading")
-        print("Loading enttype2id file...")
-        self.enttype2id = self.load_file(enttype2id_file_name)
-        print("Finish enttype2id loading")
+        if not self.f_exists['word_vec'] or not self.f_exists['word2id']:
+            if origin_word_vec is None or not os.path.isfile(origin_word_vec):
+                raise Exception("[ERROR] word vector file doesn't exist")
+            print("Loading word vector file...")
+            file_data_loader.origin_word_vec = self.load_file(origin_word_vec)
+            print("Finish word vector loading")
+            # preprocess word vec
+            self._preprocess_word_vec()
+        if file_data_loader.word_vec is None or len(file_data_loader.word2id) == 0:
+            file_data_loader.word_vec = np.load(os.path.join(FLAGS.processed_data_dir, 'word_vec.npy'))
+            file_data_loader.word2id = self.load_file(os.path.join(FLAGS.processed_data_dir, 'word2id' + self.ext))
+            file_data_loader.word_vec_tot = len(file_data_loader.word_vec)
+            file_data_loader.word_vec_dim = len(file_data_loader.word_vec[0])
+            file_data_loader.UNK = file_data_loader.word_vec_tot
+            file_data_loader.BLANK = file_data_loader.word_vec_tot + 1
+        if not self.f_exists['rel2id'] or len(file_data_loader.rel2id) == 0:
+            if origin_rel2id is None or not os.path.isfile(origin_rel2id):
+                raise Exception("[ERROR] rel2id file doesn't exist")
+            print("Loading rel2id file...")
+            file_data_loader.rel2id = self.load_file(origin_rel2id)
+            print("Finish rel2id loading")
+        if not self.f_exists['enttype2id'] or len(file_data_loader.enttype2id) == 0:
+            if origin_enttype2id is None or not os.path.isfile(origin_enttype2id):
+                raise Exception("[ERROR] enttype2id file doesn't exist")
+            print("Loading enttype2id file...")
+            file_data_loader.enttype2id = self.load_file(origin_enttype2id)
+            print("Finish enttype2id loading")
 
-        # Eliminate case sensitive
-        if not case_sensitive:
+    def _eliminate_case_sensitive(self):
+        if not file_data_loader.case_sensitive:
             print("Eliminating case sensitive problem...")
             for i in range(len(self.origin_data)):
                 self.origin_data[i]['sentence'] = self.origin_data[i]['sentence'].lower()
@@ -148,31 +199,27 @@ class file_data_loader:
                 self.origin_data[i]['tail']['word'] = self.origin_data[i]['tail']['word'].lower()
             print("Finish eliminating")
 
-        # Sort origin_data by entities and relations
-        print("Sort origin_data...")
-        self.origin_data.sort(key=lambda a: a['head']['id'] + '#' + a['tail']['id'] + '#' + a['relation'])
-        print("Finish sorting")
-
-        # Pre-process word vec
-        self.word2id = {}
-        self.word_vec_tot = len(self.origin_word_vec)
-        UNK = self.word_vec_tot
-        BLANK = self.word_vec_tot + 1
-        self.word_vec_dim = len(self.origin_word_vec[0]['vec'])
-        print("Got {} words of {} dims".format(self.word_vec_tot, self.word_vec_dim))
+    @staticmethod
+    def _preprocess_word_vec():
+        file_data_loader.word_vec_tot = len(file_data_loader.origin_word_vec)
+        file_data_loader.word_vec_dim = len(file_data_loader.origin_word_vec[0]['vec'])
+        file_data_loader.UNK = file_data_loader.word_vec_tot
+        file_data_loader.BLANK = file_data_loader.word_vec_tot + 1
+        print("Got {} words of {} dims".format(file_data_loader.word_vec_tot, file_data_loader.word_vec_dim))
         print("Building word vector matrix and mapping...")
-        self.word_vec = np.zeros((self.word_vec_tot, self.word_vec_dim), dtype=np.float32)
-        for i, word_vec in enumerate(self.origin_word_vec):
+        file_data_loader.word_vec = np.zeros((file_data_loader.word_vec_tot, file_data_loader.word_vec_dim),
+                                             dtype=np.float32)
+        for i, word_vec in enumerate(file_data_loader.origin_word_vec):
             w = word_vec['word']
-            if not case_sensitive:
+            if not file_data_loader.case_sensitive:
                 w = w.lower()
-            self.word2id[w] = i
-            self.word_vec[i, :] = word_vec['vec']
-        self.word2id['UNK'] = UNK
-        self.word2id['BLANK'] = BLANK
+            file_data_loader.word2id[w] = i
+            file_data_loader.word_vec[i, :] = word_vec['vec']
+        file_data_loader.word2id['UNK'] = file_data_loader.UNK
+        file_data_loader.word2id['BLANK'] = file_data_loader.BLANK
         print("Finish building")
 
-        # Pre-process origin_data
+    def _preprocess_origin_data(self):
         print("Pre-processing origin_data...")
         self.instance_tot = len(self.origin_data)
         self.data_word = np.zeros((self.instance_tot, FLAGS.max_length), dtype=np.int32)
@@ -181,8 +228,10 @@ class file_data_loader:
         self.data_mask = np.zeros((self.instance_tot, FLAGS.max_length), dtype=np.int32)
         self.data_length = np.zeros(self.instance_tot, dtype=np.int32)
         self.data_label = np.zeros(self.instance_tot, dtype=np.int32)
+        self.entity_pos = np.zeros((self.instance_tot, 2), dtype=np.int32)
         self.head_enttype = np.zeros((self.instance_tot, FLAGS.et_max_length), dtype=np.int32)
         self.tail_enttype = np.zeros((self.instance_tot, FLAGS.et_max_length), dtype=np.int32)
+        self.enttype_length = np.zeros((self.instance_tot, 2), dtype=np.int32)
         self.entpair2scope = {}  # (head, tail) -> scope
         self.relfact2scope = {}  # (head, tail, relation) -> scope
         last_entpair = ''
@@ -230,9 +279,9 @@ class file_data_loader:
             for j, word in enumerate(words):
                 if j < FLAGS.max_length:
                     if word in self.word2id:
-                        self.data_word[i][j] = self.word2id[word]
+                        self.data_word[i][j] = file_data_loader.word2id[word]
                     else:
-                        self.data_word[i][j] = UNK
+                        self.data_word[i][j] = file_data_loader.UNK
                 if cur_pos == p1:
                     pos1 = j
                     p1 = -1
@@ -241,7 +290,7 @@ class file_data_loader:
                     p2 = -1
                 cur_pos += len(word) + 1
             for j in range(len(words), FLAGS.max_length):
-                self.data_word[i][j] = BLANK
+                self.data_word[i][j] = file_data_loader.BLANK
 
             if pos1 == -1 or pos2 == -1:
                 raise Exception(
@@ -251,41 +300,43 @@ class file_data_loader:
                 pos1 = FLAGS.max_length - 1
             if pos2 >= FLAGS.max_length:
                 pos2 = FLAGS.max_length - 1
-            pos_min = min(pos1, pos2)
-            pos_max = max(pos1, pos2)
+            self.entity_pos[i][0] = min(pos1, pos2)
+            self.entity_pos[i][1] = max(pos1, pos2)
             for j in range(FLAGS.max_length):
                 self.data_pos1[i][j] = j - pos1 + FLAGS.max_length
                 self.data_pos2[i][j] = j - pos2 + FLAGS.max_length
                 if j >= self.data_length[i]:
                     self.data_mask[i][j] = 0
-                elif j <= pos_min:
+                elif j <= self.entity_pos[i][0]:
                     self.data_mask[i][j] = 1
-                elif j <= pos_max:
+                elif j <= self.entity_pos[i][1]:
                     self.data_mask[i][j] = 2
                 else:
                     self.data_mask[i][j] = 3
 
-            if instance['relation'] in self.rel2id:
-                self.data_label[i] = self.rel2id[instance['relation']]
+            if instance['relation'] in file_data_loader.rel2id:
+                self.data_label[i] = file_data_loader.rel2id[instance['relation']]
             else:
-                self.data_label[i] = self.rel2id['NA']
+                self.data_label[i] = file_data_loader.rel2id['NA']
 
             types = instance['head']['type'].split(',')
+            self.enttype_length[i][0] = len(types)
             for j, t in enumerate(types):
-                if t in self.enttype2id:
-                    self.head_enttype[i][j] = self.enttype2id[t]
+                if t in file_data_loader.enttype2id:
+                    self.head_enttype[i][j] = file_data_loader.enttype2id[t]
                 else:
-                    self.head_enttype[i][j] = len(self.enttype2id)
+                    self.head_enttype[i][j] = len(file_data_loader.enttype2id)
             for j in range(len(types), FLAGS.et_max_length):
-                self.head_enttype[i][j] = len(self.enttype2id) + 1
+                self.head_enttype[i][j] = len(file_data_loader.enttype2id) + 1
             types = instance['tail']['type'].split(',')
+            self.enttype_length[i][1] = len(types)
             for j, t in enumerate(types):
-                if t in self.enttype2id:
-                    self.tail_enttype[i][j] = self.enttype2id[t]
+                if t in file_data_loader.enttype2id:
+                    self.tail_enttype[i][j] = file_data_loader.enttype2id[t]
                 else:
-                    self.tail_enttype[i][j] = len(self.enttype2id)
+                    self.tail_enttype[i][j] = len(file_data_loader.enttype2id)
             for j in range(len(types), FLAGS.et_max_length):
-                self.tail_enttype[i][j] = len(self.enttype2id) + 1
+                self.tail_enttype[i][j] = len(file_data_loader.enttype2id) + 1
 
             cur_entpair = instance['head']['id'] + '#' + instance['tail']['id']
             cur_relfact = instance['head']['id'] + '#' + instance['tail']['id'] + '#' + instance['relation']
@@ -299,42 +350,45 @@ class file_data_loader:
                     self.relfact2scope[last_relfact] = [last_relfact_pos, i]
                 last_relfact = cur_relfact
                 last_relfact_pos = i
-
         if last_entpair != '':
             self.entpair2scope[last_entpair] = [last_entpair_pos, self.instance_tot]  # left closed right open
         if last_relfact != '':
             self.relfact2scope[last_relfact] = [last_relfact_pos, self.instance_tot]
-
         print("Finish pre-processing")
 
-        self._store_processed_files()
+    def np_save_file(self, data, file_name):
+        util.con_exec(not self.f_exists[file_name[len(self.prefix) + 1 if file_name.startswith(self.prefix) else 0:-4]],
+                      lambda: np.save(os.path.join(FLAGS.processed_data_dir, file_name), data))
+
+    def json_save_file(self, data, file_name):
+        util.con_exec(not self.f_exists[file_name[len(self.prefix) + 1 if file_name.startswith(self.prefix) else 0:-5]],
+                      lambda: json.dump(data, open(os.path.join(FLAGS.processed_data_dir, file_name), 'w')))
 
     @staticmethod
     def load_file(file_name):
         raise NotImplementedError
 
-    @staticmethod
-    def save_file(data, file_name):
+    def save_file(self, data, file_name):
         raise NotImplementedError
 
     def _store_processed_files(self):
         print("Storing processed files...")
-        if not os.path.isdir(FLAGS.processed_data_dir):
-            os.mkdir(FLAGS.processed_data_dir)
-        np.save(os.path.join(FLAGS.processed_data_dir, self.prefix + '_word.npy'), self.data_word)
-        np.save(os.path.join(FLAGS.processed_data_dir, self.prefix + '_pos1.npy'), self.data_pos1)
-        np.save(os.path.join(FLAGS.processed_data_dir, self.prefix + '_pos2.npy'), self.data_pos2)
-        np.save(os.path.join(FLAGS.processed_data_dir, self.prefix + '_mask.npy'), self.data_mask)
-        np.save(os.path.join(FLAGS.processed_data_dir, self.prefix + '_length.npy'), self.data_length)
-        np.save(os.path.join(FLAGS.processed_data_dir, self.prefix + '_label.npy'), self.data_label)
-        np.save(os.path.join(FLAGS.processed_data_dir, self.prefix + '_head_enttype.npy'), self.head_enttype)
-        np.save(os.path.join(FLAGS.processed_data_dir, self.prefix + '_tail_enttype.npy'), self.tail_enttype)
-        np.save(os.path.join(FLAGS.processed_data_dir, 'word_vec.npy'), self.word_vec)
+        self.np_save_file(self.data_word, self.prefix + '_word.npy')
+        self.np_save_file(self.data_pos1, self.prefix + '_pos1.npy')
+        self.np_save_file(self.data_pos2, self.prefix + '_pos2.npy')
+        self.np_save_file(self.data_mask, self.prefix + '_mask.npy')
+        self.np_save_file(self.data_length, self.prefix + '_length.npy')
+        self.np_save_file(self.data_label, self.prefix + '_label.npy')
+        self.np_save_file(self.entity_pos, self.prefix + '_entity_pos.npy')
+        self.np_save_file(self.head_enttype, self.prefix + '_head_enttype.npy')
+        self.np_save_file(self.tail_enttype, self.prefix + '_tail_enttype.npy')
+        self.np_save_file(self.enttype_length, self.prefix + '_enttype_length.npy')
+        self.np_save_file(file_data_loader.word_vec, 'word_vec.npy')
         self.save_file(self.entpair2scope, self.prefix + '_entpair2scope' + self.ext)
         self.save_file(self.relfact2scope, self.prefix + '_relfact2scope' + self.ext)
-        self.save_file(self.rel2id, 'rel2id' + self.ext)
-        self.save_file(self.word2id, 'word2id' + self.ext)
-        self.save_file(self.enttype2id, 'enttype2id' + self.ext)
+        self.save_file(file_data_loader.word2id, 'word2id' + self.ext)
+        self.save_file(file_data_loader.rel2id, 'rel2id' + self.ext)
+        self.save_file(file_data_loader.enttype2id, 'enttype2id' + self.ext)
         print("Finish storing")
 
     def _set_weights_table(self):
@@ -359,7 +413,9 @@ class file_data_loader:
     def batch_data(self, index, scope=None, multi_label=None):
         batch_data = {'word': self.data_word[index], 'pos1': self.data_pos1[index], 'pos2': self.data_pos2[index],
                       'mask': self.data_mask[index], 'length': self.data_length[index],
-                      'head_enttype': self.head_enttype[index], 'tail_enttype': self.tail_enttype[index]
+                      'entity_pos': self.entity_pos[index],
+                      'head_enttype': self.head_enttype[index], 'tail_enttype': self.tail_enttype[index],
+                      'enttype_length': self.enttype_length[index],
                       }
         if self.mode == self.MODE_INSTANCE:
             batch_data.update({'label': self.data_label[index]})
@@ -385,25 +441,39 @@ class file_data_loader:
             if batch_data.__contains__('mask') else self.data_mask[b:e]
         batch_data['length'] = np.concatenate([batch_data['length'], self.data_length[b:e]]) \
             if batch_data.__contains__('length') else self.data_length[b:e]
+        batch_data['entity_pos'] = np.concatenate([batch_data['entity_pos'], self.entity_pos[b:e]]) \
+            if batch_data.__contains__('entity_pos') else self.entity_pos[b:e]
         batch_data['head_enttype'] = np.concatenate([batch_data['head_enttype'], self.head_enttype[b:e]]) \
             if batch_data.__contains__('head_enttype') else self.head_enttype[b:e]
         batch_data['tail_enttype'] = np.concatenate([batch_data['tail_enttype'], self.tail_enttype[b:e]]) \
             if batch_data.__contains__('tail_enttype') else self.tail_enttype[b:e]
+        batch_data['enttype_length'] = np.concatenate([batch_data['enttype_length'], self.enttype_length[b:e]]) \
+            if batch_data.__contains__('enttype_length') else self.enttype_length[b:e]
 
-    @staticmethod
-    def batch_padding(batch_data, b, e, batch_size):
+    def batch_padding(self, batch_data, b, e, batch_size):
         if e - b < batch_size:
             padding = batch_size - (e - b)
             batch_data['word'] = np.concatenate([batch_data['word'], np.zeros((padding, FLAGS.max_length), np.int32)])
             batch_data['pos1'] = np.concatenate([batch_data['pos1'], np.zeros((padding, FLAGS.max_length), np.int32)])
             batch_data['pos2'] = np.concatenate([batch_data['pos2'], np.zeros((padding, FLAGS.max_length), np.int32)])
-            batch_data['mask'] = np.concatenate([batch_data['mask'], np.zeros((padding, FLAGS.max_length), np.int32)])
-            batch_data['length'] = np.concatenate([batch_data['length'], np.zeros(padding, dtype=np.int32)])
-            batch_data['label'] = np.concatenate([batch_data['label'], np.zeros(padding, dtype=np.int32)])
-            batch_data['head_enttype'] = np.concatenate([batch_data['head_enttype'],
-                                                         np.zeros((padding, FLAGS.et_max_length), np.int32)])
-            batch_data['tail_enttype'] = np.concatenate([batch_data['tail_enttype'],
-                                                         np.zeros((padding, FLAGS.et_max_length), np.int32)])
+            if self.data_require['mask']:
+                batch_data['mask'] = np.concatenate([batch_data['mask'], np.zeros((padding, FLAGS.max_length),
+                                                                                  np.int32)])
+            if self.data_require['length']:
+                batch_data['length'] = np.concatenate([batch_data['length'], np.zeros(padding, dtype=np.int32)])
+            if self.data_require['label']:
+                batch_data['label'] = np.concatenate([batch_data['label'], np.zeros(padding, dtype=np.int32)])
+            if self.data_require['entity_pos']:
+                batch_data['entity_pos'] = np.concatenate([batch_data['entity_pos'], np.zeros((padding, 2), np.int32)])
+            if self.data_require['head_enttype']:
+                batch_data['head_enttype'] = np.concatenate([batch_data['head_enttype'],
+                                                             np.zeros((padding, FLAGS.et_max_length), np.int32)])
+            if self.data_require['tail_enttype']:
+                batch_data['tail_enttype'] = np.concatenate([batch_data['tail_enttype'],
+                                                             np.zeros((padding, FLAGS.et_max_length), np.int32)])
+            if self.data_require['enttype_length']:
+                batch_data['enttype_length'] = np.concatenate([batch_data['enttype_length'],
+                                                               np.zeros((padding, 2), np.int32)])
 
     def next_batch(self, batch_size):
         if self.begin >= len(self.order):
@@ -415,20 +485,31 @@ class file_data_loader:
         if end > len(self.order):
             end = len(self.order)
 
-        batch_data = {'word': [], 'pos1': [], 'pos2': [], 'mask': [], 'length': [], 'label': [],
-                      'head_enttype': [], 'tail_enttype': []}
+        batch_data = {'word': [], 'pos1': [], 'pos2': [], 'mask': [], 'length': [], 'label': [], 'entity_pos': [],
+                      'head_enttype': [], 'tail_enttype': [], 'enttype_length': []}
         if self.mode == self.MODE_INSTANCE:
             batch_data['word'] = self.data_word[self.begin:end]
             batch_data['pos1'] = self.data_pos1[self.begin:end]
             batch_data['pos2'] = self.data_pos2[self.begin:end]
-            batch_data['mask'] = self.data_mask[self.begin:end]
-            batch_data['length'] = self.data_length[self.begin:end]
-            batch_data['label'] = self.data_label[self.begin:end]
-            batch_data['head_enttype'] = self.head_enttype[self.begin:end]
-            batch_data['tail_enttype'] = self.tail_enttype[self.begin:end]
+            if self.data_require['mask']:
+                batch_data['mask'] = self.data_mask[self.begin:end]
+            if self.data_require['length']:
+                batch_data['length'] = self.data_length[self.begin:end]
+            if self.data_require['label']:
+                batch_data['label'] = self.data_label[self.begin:end]
+            if self.data_require['entity_pos']:
+                batch_data['entity_pos'] = self.entity_pos[self.begin:end]
+            if self.data_require['head_enttype']:
+                batch_data['head_enttype'] = self.head_enttype[self.begin:end]
+            if self.data_require['tail_enttype']:
+                batch_data['tail_enttype'] = self.tail_enttype[self.begin:end]
+            if self.data_require['enttype_length']:
+                batch_data['enttype_length'] = self.enttype_length[self.begin:end]
         elif self.mode == self.MODE_ENTPAIR_BAG or self.mode == self.MODE_RELFACT_BAG:
-            batch_data['instance_label'] = []
-            batch_data['scope'] = [0]
+            if self.data_require['instance_label']:
+                batch_data['instance_label'] = []
+            if self.data_require['scope']:
+                batch_data['scope'] = [0]
             batch_data['multi_label'] = []
             batch_data['entpair'] = []
             cur_pos = 0
@@ -437,13 +518,24 @@ class file_data_loader:
                 batch_data['word'].append(self.data_word[b:e])
                 batch_data['pos1'].append(self.data_pos1[b:e])
                 batch_data['pos2'].append(self.data_pos2[b:e])
-                batch_data['mask'].append(self.data_mask[b:e])
-                batch_data['length'].append(self.data_length[b:e])
-                batch_data['label'].append(self.data_label[b])
-                batch_data['instance_label'].append(self.data_label[b:e])
-                batch_data['scope'].append(batch_data['scope'][cur_pos] + e - b)
-                batch_data['head_enttype'].append(self.head_enttype[b:e])
-                batch_data['tail_enttype'].append(self.tail_enttype[b:e])
+                if self.data_require['mask']:
+                    batch_data['mask'].append(self.data_mask[b:e])
+                if self.data_require['length']:
+                    batch_data['length'].append(self.data_length[b:e])
+                if self.data_require['label']:
+                    batch_data['label'].append(self.data_label[b])
+                if self.data_require['instance_label']:
+                    batch_data['instance_label'].append(self.data_label[b:e])
+                if self.data_require['entity_pos']:
+                    batch_data['entity_pos'].append(self.entity_pos[b:e])
+                if self.data_require['scope']:
+                    batch_data['scope'].append(batch_data['scope'][cur_pos] + e - b)
+                if self.data_require['head_enttype']:
+                    batch_data['head_enttype'].append(self.head_enttype[b:e])
+                if self.data_require['tail_enttype']:
+                    batch_data['tail_enttype'].append(self.tail_enttype[b:e])
+                if self.data_require['enttype_length']:
+                    batch_data['enttype_length'].append(self.enttype_length[b:e])
                 if self.mode == self.MODE_ENTPAIR_BAG:
                     _one_multi_label = np.zeros(self.rel_tot, dtype=np.int32)
                     _one_multi_label[self.data_label[b:e]] = 1
@@ -455,22 +547,36 @@ class file_data_loader:
             batch_data['word'] = np.concatenate(batch_data['word'])
             batch_data['pos1'] = np.concatenate(batch_data['pos1'])
             batch_data['pos2'] = np.concatenate(batch_data['pos2'])
-            batch_data['mask'] = np.concatenate(batch_data['mask'])
-            batch_data['length'] = np.concatenate(batch_data['length'])
-            batch_data['label'] = np.stack(batch_data['label'])
-            batch_data['instance_label'] = np.concatenate(batch_data['instance_label'])
-            batch_data['scope'] = np.stack(batch_data['scope'])
-            batch_data['head_enttype'] = np.concatenate(batch_data['head_enttype'])
-            batch_data['tail_enttype'] = np.concatenate(batch_data['tail_enttype'])
+            if self.data_require['mask']:
+                batch_data['mask'] = np.concatenate(batch_data['mask'])
+            if self.data_require['length']:
+                batch_data['length'] = np.concatenate(batch_data['length'])
+            if self.data_require['label']:
+                batch_data['label'] = np.stack(batch_data['label'])
+            if self.data_require['instance_label']:
+                batch_data['instance_label'] = np.concatenate(batch_data['instance_label'])
+            if self.data_require['entity_pos']:
+                batch_data['entity_pos'] = np.concatenate(batch_data['entity_pos'])
+            if self.data_require['scope']:
+                batch_data['scope'] = np.stack(batch_data['scope'])
+            if self.data_require['head_enttype']:
+                batch_data['head_enttype'] = np.concatenate(batch_data['head_enttype'])
+            if self.data_require['tail_enttype']:
+                batch_data['tail_enttype'] = np.concatenate(batch_data['tail_enttype'])
+            if self.data_require['enttype_length']:
+                batch_data['enttype_length'] = np.concatenate(batch_data['enttype_length'])
             if self.mode == self.MODE_ENTPAIR_BAG:
                 batch_data['multi_label'] = np.stack(batch_data['multi_label'])
                 batch_data['entpair'] = np.stack(batch_data['entpair'])
             if cur_pos < batch_size:
                 padding = batch_size - cur_pos
-                batch_data['instance_label'] = np.concatenate([batch_data['instance_label'],
-                                                               np.zeros(padding, dtype=np.int32)])
-                batch_data['scope'] = np.append(batch_data['scope'], range(batch_data['scope'][cur_pos] + 1,
-                                                                           batch_data['scope'][cur_pos] + 1 + padding))
+                if self.data_require['instance_label']:
+                    batch_data['instance_label'] = np.concatenate([batch_data['instance_label'],
+                                                                   np.zeros(padding, dtype=np.int32)])
+                if self.data_require['scope']:
+                    batch_data['scope'] = np.append(batch_data['scope'],
+                                                    range(batch_data['scope'][cur_pos] + 1,
+                                                          batch_data['scope'][cur_pos] + 1 + padding))
                 if self.mode == self.MODE_ENTPAIR_BAG:
                     batch_data['multi_label'] = np.concatenate([batch_data['multi_label'],
                                                                 [[0] * self.rel_tot] * padding])
@@ -549,9 +655,8 @@ class npy_data_loader(file_data_loader):
     def load_file(file_name):
         return np.load(file_name)
 
-    @staticmethod
-    def save_file(data, file_name):
-        np.save(os.path.join(FLAGS.processed_data_dir, file_name), data)
+    def save_file(self, data, file_name):
+        self.np_save_file(data, file_name)
 
 
 """
@@ -565,13 +670,13 @@ class npy_data_loader(file_data_loader):
                 },
                 ...
             ]
-        word_vec_file_name: Json file storing word vectors in the following format
+        word_vec: Json file storing word vectors in the following format
             [
                 {'word': 'the', 'vec': [0.418, 0.24968, ...]},
                 {'word': ',', 'vec': [0.013441, 0.23682, ...]},
                 ...
             ]
-        rel2id_file_name: Json file storing relation-to-id diction in the following format
+        rel2id: Json file storing relation-to-id diction in the following format
             {
                 'NA': 0
                 'founder': 1
@@ -596,6 +701,5 @@ class json_file_data_loader(file_data_loader):
     def load_file(file_name):
         return json.load(open(file_name, "r"))
 
-    @staticmethod
-    def save_file(data, file_name):
-        json.dump(data, open(os.path.join(FLAGS.processed_data_dir, file_name), 'w'))
+    def save_file(self, data, file_name):
+        self.json_save_file(data, file_name)

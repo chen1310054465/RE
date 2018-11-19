@@ -204,23 +204,27 @@ class framework:
             model.pos1: batch_data['pos1'],
             model.pos2: batch_data['pos2'],
         }
-        if model.mask is not None:  # hasattr(model, "mask"):
+        if hasattr(model, "mask"):  # model.mask is not None:
             feed_dict.update({model.mask: batch_data['mask']})
-        if model.length is not None:
+        if hasattr(model, "length"):
             feed_dict.update({model.length: batch_data['length']})
-        if model.label is not None:
+        if hasattr(model, "label"):
             feed_dict.update({model.label: batch_data['label']})
-        if model.instance_label is not None and 'instance_label' in batch_data:
+        if hasattr(model, "instance_label"):
             feed_dict.update({model.instance_label: batch_data['instance_label']})
-        if model.scope is not None and 'scope' in batch_data:
+        if hasattr(model, "entity_pos"):
+            feed_dict.update({model.entity_pos: batch_data['entity_pos']})
+        if hasattr(model, "scope"):
             feed_dict.update({model.scope: batch_data['scope']})
         if model.is_training:
             weights = batch_data['weights'] if weights is None else weights
             feed_dict.update({model.weights: weights})
-        if model.head_enttype is not None and 'head_enttype' in batch_data:
+        if hasattr(model, "head_enttype"):
             feed_dict.update({model.head_enttype: batch_data['head_enttype']})
-        if model.tail_enttype is not None and 'tail_enttype' in batch_data:
+        if hasattr(model, "tail_enttype"):
             feed_dict.update({model.tail_enttype: batch_data['tail_enttype']})
+        if hasattr(model, "enttype_length"):
+            feed_dict.update({model.enttype_length: batch_data['enttype_length']})
 
         if fd_updater is not None:
             fd_updater(feed_dict)

@@ -2,10 +2,10 @@ import json
 
 import tensorflow as tf
 
+import framework as fw
 import data_loader as dl
 import model.model_base as mb
 import model.model_rl as mr
-import framework as fw
 
 FLAGS = tf.flags.FLAGS
 
