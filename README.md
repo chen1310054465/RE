@@ -8,7 +8,7 @@ Features:
 
 - JSON data support.
 - Multi GPU training.
-- Validating while training.
+- Validating while training. 
 
 ## Overview
 
