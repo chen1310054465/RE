@@ -4,18 +4,32 @@
       <w>adadelta</w>
       <w>adagrad</w>
       <w>bircnn</w>
+      <w>birnn</w>
       <w>birpcnn</w>
+      <w>ckpt</w>
       <w>conv</w>
       <w>convolutional</w>
+      <w>dataset</w>
       <w>datasets</w>
+      <w>dtype</w>
+      <w>entpair</w>
       <w>enttype</w>
       <w>enttypes</w>
       <w>jiang</w>
+      <w>logit</w>
+      <w>lstm</w>
+      <w>onehot</w>
+      <w>pcnn</w>
+      <w>pred</w>
       <w>preprocess</w>
+      <w>pretrain</w>
       <w>rcnn</w>
       <w>regularizer</w>
+      <w>relfact</w>
       <w>relu</w>
+      <w>repre</w>
       <w>rpcnn</w>
+      <w>softmax</w>
       <w>tanh</w>
     </words>
   </dictionary>
