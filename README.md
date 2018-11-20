@@ -30,7 +30,7 @@ It is a TensorFlow-based framework for easily building relation extraction (RE) 
   * Softmax Loss Function
   * Output
   
-All those methods could be combined freely.  
+All those methods could be combined freely. 
 
 We also provide training and testing framework for sentence-level RE and bag-level RE. A plotting tool is also in the package.
 
