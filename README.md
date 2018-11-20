@@ -123,7 +123,7 @@ git clone https://github.com/dtera/RE.git --depth 1
 ```
 RE
 |-- ... 
-|-- data
+|-- origin_data
     |
     |-- {DATASET_NAME_1}
     |   |
