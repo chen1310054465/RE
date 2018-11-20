@@ -159,13 +159,13 @@ python draw_plot.py {MODEL_NAME_1} {MODEL_NAME_2} ...
 
 All the results of the models mentioned will be printed and precision-recall curves containing all the models will be saved in `./test_result/pr_curve.png`.
 
-6. **If you have the checkpoint of the model and want to evaluate it, run `test.py {DATASET_NAME} {ENCODER_NAME} {SELECTOR_NAME}`. For example:**
+6. **If you have the checkpoint of the model and want to evaluate it, run `test.py [--ds dataset] [--en encoder] [--se selector]...`. For example:**
 
 ```
 python test.py [--ds nyt] [--en pcnn] [--se att]...
 ```
 
-The prediction results will be stored in `test_result/nyt_pcnn_att_pred.json`.
+The prediction results will be stored in `test_result/nyt/nyt_pcnn_att_pred.json`.
 
 ## Test Results
 
