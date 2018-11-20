@@ -109,13 +109,13 @@ We've provided a toolkit to convert the original NYT10 data into JSON format tha
 2. **Clone the RE repository:**
 
 ```bash
-git clone https://github.com/zhaohuiqiang/RE.git
+git clone https://github.com/dtera/RE.git
 ```
 
 Since there are too many history commits of this project and the `.git` folder is too large, you could use the following command to download only the latest commit:
 
 ```bash
-git clone https://github.com/zhaohuiqiang/RE.git --depth 1
+git clone https://github.com/dtera/RE.git --depth 1
 ```
 
 3. **Make data folder in the following structure**
