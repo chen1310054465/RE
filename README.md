@@ -165,7 +165,7 @@ All the results of the models mentioned will be printed and precision-recall cur
 python test.py [--ds nyt] [--en pcnn] [--se att]...
 ```
 
-The prediction results will be stored in `test_result/nyt/nyt_pcnn_att_pred.json`.
+The prediction results will be stored in `test_result/nyt/nyt_pcnn_att_pred.json`. 
 
 ## Test Results
 
