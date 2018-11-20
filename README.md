@@ -39,8 +39,8 @@ This project is under MIT license.
 ## Requirements
 
 - Python (>=2.7)
-- Numpy (>=1.13.3)
-- TensorFlow (>=1.4.1)
+- numpy (>=1.13.3)
+- tensorFlow (>=1.4.1)
     - CUDA (>=8.0) if you are using gpu
 - matplotlib (>=2.0.0)
 - scikit-learn (>=0.18)
