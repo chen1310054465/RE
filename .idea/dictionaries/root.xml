@@ -20,6 +20,7 @@
       <w>lstm</w>
       <w>onehot</w>
       <w>pcnn</w>
+      <w>prec</w>
       <w>pred</w>
       <w>preprocess</w>
       <w>pretrain</w>

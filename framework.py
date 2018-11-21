@@ -323,8 +323,8 @@ class framework:
                     best_metric = metric
                     best_prec = self.cur_prec
                     best_recall = self.cur_recall
-                    print("Best model, storing...")
 
+                    print("Best model, storing...")
                     path = self.saver.save(self.sess, os.path.join(FLAGS.ckpt_dir, FLAGS.model_name))
                     print("Finish storing, saved path: " + path)
                     not_best_count = 0
