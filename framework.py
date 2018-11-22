@@ -32,7 +32,10 @@ tf.flags.DEFINE_integer('et_hidden_size', 80, 'entity type hidden size')
 tf.flags.DEFINE_integer('batch_size', 160, 'batch size')
 tf.flags.DEFINE_integer('max_length', 120, 'word max length')
 tf.flags.DEFINE_integer('et_max_length', 100, 'entity type max length')
+tf.flags.DEFINE_integer('word_dim', 50, 'word embedding dimensionality')
+tf.flags.DEFINE_integer('pos_dim', 5, 'pos embedding dimensionality')
 tf.flags.DEFINE_integer('et_dim', 12, 'entity type embedding dimensionality')
+tf.flags.DEFINE_integer('et_concat_axis', -1, 'which axis head and tail entity type embedding concat at')
 tf.flags.DEFINE_integer('et_encoder_mode', 0, 'organize et_encoder mode')
 tf.flags.DEFINE_integer('li_encoder_mode', 0, 'organize encoder mode')
 tf.flags.DEFINE_float('learning_rate', 0.5, 'learning rate')
@@ -61,11 +64,11 @@ def init(is_training=True):
     if 'help' in sys.argv:
         print('Usage: python3 ' + sys.argv[0] + ' [--dn dataset_name] [--et: ent_type] [--en encoder] [--se selector]'
               + ('[--cl classifier] [--ac activation] [--op optimizer] [--ad adversarial_training]\n       '
-                 + '[--gn gpu_nums] [--pm pretrain_model] [--max_epoch max epoch] [--save_epoch save epoch]'
-                 + ' [--hidden_size hidden size] [--et_hidden_size hidden size of entity type]'
-                 + '\n       [--batch_size batch size] [--learning_rate learning rate] '
-                 + '[--li_encoder_mode organize encoder mode] [--et_encoder_mode et_encoder mode]'
-                 if is_training else ''))
+                 + '[--gn gpu_nums] [--pm pretrain_model] [--max_epoch] [--save_epoch] '
+                 + '[--learning_rate] ' if is_training else '')
+                 + '[--hidden_size] [--et_hidden_size] [--rnn_hidden_size] [--cnn_hidden_size]\n       '
+                 + '[--word_dim] [--pos_dim] [--et_dim] [--et_concat_axis] [--batch_size] '
+                 + '[--li_encoder_mode] [--et_encoder_mode]')
         print('**************************************args details**********************************************')
         print('**  --dn: (dataset_name)[nyt(New York Times dataset)...], put it in origin_data dir           **')
         print('**  --et: (ent_type)whether to add entity type info(default 0), 0(no), 1(yes)                 **')
@@ -80,18 +83,24 @@ def init(is_training=True):
             print('**  --ad: (adversarial_training)whether to perturb while training(default 0), 0(no), 1(yes)   **')
             print('**  --gn: (gpu_nums)denotes num of gpu for training(default 1)                                **')
             print('**  --pm: (pretrain_model)whether to pretrain model(default 0), 0(no), 1(yes)                 **')
-            print('**  --hidden_size: hidden size of encoder(default 230)                                        **')
-            print('**  --rnn_hidden_size: hidden size of rnn encoder for rcnn model(default 230)                 **')
-            print('**  --cnn_hidden_size: hidden size of cnn encoder for rcnn model(default 230)                 **')
-            print('**  --et_hidden_size: hidden size of entity type encoder(default 80)                          **')
             print('**  --max_epoch: max epoch util stopping training(default 120)                                **')
             print('**  --save_epoch: how many epoch to save result while training(default 2)                     **')
-            print('**  --batch_size: batch size of corpus for each step of training(default 160)                 **')
             print('**  --learning_rate: learning rate(default 0.5 when training, whereas 1 when testing)         **')
-            print('**  --li_encoder_mode: organize encoder mode(0 denotes concat, 1 denotes linear transform)    **')
-            print('**  --et_encoder_mode: et_encoder mode(default 0), 0(cnn), 1(densely-connected)               **')
+        print('**  --hidden_size: hidden size of encoder(default 230)                                        **')
+        print('**  --et_hidden_size: hidden size of entity type encoder(default 80)                          **')
+        print('**  --rnn_hidden_size: hidden size of rnn encoder for rcnn model(default 230)                 **')
+        print('**  --cnn_hidden_size: hidden size of cnn encoder for rcnn model(default 230)                 **')
+        print('**  --word_dim: word embedding dimensionality(default 50)                                     **')
+        print('**  --pos_dim: pos embedding dimensionality(default 5)                                        **')
+        print('**  --et_dim: entity type embedding dimensionality(default 12)                                **')
+        print('**  --et_concat_axis: [-1, 1], which axis head and tail et_embedding concat(default -1)       **')
+        print('**  --batch_size: batch size of corpus for each step(default 160)                             **')
+        print('**  --li_encoder_mode: organize encoder mode(0 denotes concat, 1 denotes linear transform)    **')
+        print('**  --et_encoder_mode: et_encoder mode(default 0), 0(cnn), 1(densely-connected)               **')
         print('************************************************************************************************')
         exit()
+    if FLAGS.et:
+        assert FLAGS.et_concat_axis in [-1, 1]
 
 
 def dropout(x, keep_prob=1.0):

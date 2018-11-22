@@ -71,13 +71,13 @@ class model:
 
     def _embedding(self):
         if not hasattr(self, 'wp_embedding'):
-            self.w_embedding, self.p_embedding = embedding.word_position_embedding(self.word, self.word_vec,
-                                                                                   self.pos1, self.pos2)
+            self.w_embedding, self.p_embedding = embedding.wp_embedding(self.word, self.word_vec, self.pos1,
+                                                                        self.pos2, FLAGS.word_dim, FLAGS.pos_dim)
             self.wp_embedding = embedding.concat(self.w_embedding, self.p_embedding)
         if FLAGS.et and not hasattr(self, 'et_embedding'):
-            self.het_embedding, self.tet_embedding = embedding.ent_type_embedding(self.head_enttype, self.tail_enttype,
-                                                                                  self.enttype_tot, FLAGS.et_dim)
-            self.et_embedding = embedding.concat(self.het_embedding, self.tet_embedding, axis=1)
+            self.het_embedding, self.tet_embedding = embedding.et_embedding(self.head_enttype, self.tail_enttype,
+                                                                            self.enttype_tot, FLAGS.et_dim)
+            self.et_embedding = embedding.concat(self.het_embedding, self.tet_embedding, axis=FLAGS.et_concat_axis)
 
     def _encoder(self):
         if FLAGS.en == "cnn" or FLAGS.en == "pcnn":
