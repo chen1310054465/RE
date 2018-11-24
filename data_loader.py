@@ -584,7 +584,7 @@ class file_data_loader:
         if self.data_require['enttype_mask']:
             bs = (len(batch_data['enttype_length']) + padding) if padding > 0 else len(batch_data['enttype_length'])
             batch_data['enttype_mask'] = np.zeros((bs, 2 * FLAGS.et_max_length), np.int32)
-            for i in range(bs):
+            for i in range(len(batch_data['enttype_length'])):
                 h_len = batch_data['enttype_length'][i][0]
                 t_len = batch_data['enttype_length'][i][1]
                 batch_data['enttype_mask'][i][0:h_len] = [1] * h_len
