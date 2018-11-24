@@ -35,17 +35,17 @@ tf.flags.DEFINE_integer('et_max_length', 100, 'entity type max length')
 tf.flags.DEFINE_integer('word_dim', 50, 'word embedding dimensionality')
 tf.flags.DEFINE_integer('pos_dim', 5, 'pos embedding dimensionality')
 tf.flags.DEFINE_integer('et_dim', 12, 'entity type embedding dimensionality')
-tf.flags.DEFINE_integer('et_concat_axis', -1, 'which axis head and tail entity type embedding concat at')
-tf.flags.DEFINE_integer('et_encoder_mode', 0, 'organize et_encoder mode')
+tf.flags.DEFINE_integer('et_concat_axis', 1, 'which axis head and tail entity type embedding concat at')
 tf.flags.DEFINE_integer('li_encoder_mode', 0, 'organize encoder mode')
 tf.flags.DEFINE_float('learning_rate', 0.5, 'learning rate')
+tf.flags.DEFINE_string('et_en', 'pcnn', 'entity type encoder')
 tf.flags.DEFINE_string('ckpt_dir', os.path.join('checkpoint', FLAGS.dn), 'checkpoint dir')
 tf.flags.DEFINE_string('summary_dir', os.path.join('summary', FLAGS.dn), 'summary dir')
 tf.flags.DEFINE_string('test_result_dir', os.path.join('test_result', FLAGS.dn), 'test result dir')
 tf.flags.DEFINE_string('dataset_dir', os.path.join('origin_data', FLAGS.dn), 'origin dataset dir')
 tf.flags.DEFINE_string('processed_data_dir', os.path.join('processed_data', FLAGS.dn), 'processed data dir')
-tf.flags.DEFINE_string('model_name', (FLAGS.dn + '_' + (('etd_' if FLAGS.et_encoder_mode else 'et_')
-                                                        if FLAGS.et else '') +  # dataset_name entity_type
+tf.flags.DEFINE_string('model_name', (FLAGS.dn + '_' + ('et' + (FLAGS.et_en[0] + '_' if FLAGS.et_en in ['pcnn', 'dense']
+                                                        else 'c_') if FLAGS.et else '') +  # dataset_name entity_type
                                       ('li_' if FLAGS.li_encoder_mode and (FLAGS.et or re.search("r.*cnn", FLAGS.en))
                                        else '') + FLAGS.en + "_" + FLAGS.se +  # encoder selector
                                       (('_' + FLAGS.cl) if FLAGS.cl != 'softmax' else '') +  # classifier
@@ -67,8 +67,8 @@ def init(is_training=True):
                  + '[--gn gpu_nums] [--pm pretrain_model] [--max_epoch] [--save_epoch] '
                  + '[--learning_rate] ' if is_training else '')
                  + '[--hidden_size] [--et_hidden_size] [--rnn_hidden_size] [--cnn_hidden_size]\n       '
-                 + '[--word_dim] [--pos_dim] [--et_dim] [--et_concat_axis] [--batch_size] '
-                 + '[--li_encoder_mode] [--et_encoder_mode]')
+                 + '[--word_dim] [--pos_dim] [--et_en entity type encoder] [--et_dim] [--et_concat_axis] '
+                 + '[--batch_size] [--li_encoder_mode]')
         print('**************************************args details**********************************************')
         print('**  --dn: (dataset_name)[nyt(New York Times dataset)...], put it in origin_data dir           **')
         print('**  --et: (ent_type)whether to add entity type info(default 0), 0(no), 1(yes)                 **')
@@ -92,11 +92,11 @@ def init(is_training=True):
         print('**  --cnn_hidden_size: hidden size of cnn encoder for rcnn model(default 230)                 **')
         print('**  --word_dim: word embedding dimensionality(default 50)                                     **')
         print('**  --pos_dim: pos embedding dimensionality(default 5)                                        **')
+        print('**  --et_en: (entity type encoder)[cnn pcnn dense](default cnn)                               **')
         print('**  --et_dim: entity type embedding dimensionality(default 12)                                **')
-        print('**  --et_concat_axis: [-1, 1], which axis head and tail et_embedding concat(default -1)       **')
+        print('**  --et_concat_axis: [-1, 1], which axis head and tail et_embedding concat(default 1)        **')
         print('**  --batch_size: batch size of corpus for each step(default 160)                             **')
         print('**  --li_encoder_mode: organize encoder mode(0 denotes concat, 1 denotes linear transform)    **')
-        print('**  --et_encoder_mode: et_encoder mode(default 0), 0(cnn), 1(densely-connected)               **')
         print('************************************************************************************************')
         exit()
     if FLAGS.et:
@@ -213,33 +213,35 @@ class framework:
             model.pos1: batch_data['pos1'],
             model.pos2: batch_data['pos2'],
         }
-        if hasattr(model, "mask"):  # model.mask is not None:
+        if model.mask is not None:  # hasattr(model, "mask"):
             feed_dict.update({model.mask: batch_data['mask']})
-        if hasattr(model, "length"):
+        if model.length is not None:
             feed_dict.update({model.length: batch_data['length']})
-        if hasattr(model, "label"):
+        if model.label is not None:
             feed_dict.update({model.label: batch_data['label']})
-        if hasattr(model, "instance_label"):
+        if model.instance_label is not None:
             feed_dict.update({model.instance_label: batch_data['instance_label']})
-        if hasattr(model, "entity_pos"):
+        if model.entity_pos is not None:
             feed_dict.update({model.entity_pos: batch_data['entity_pos']})
-        if hasattr(model, "scope"):
+        if model.scope is not None:
             feed_dict.update({model.scope: batch_data['scope']})
         if model.is_training:
             weights = batch_data['weights'] if weights is None else weights
             feed_dict.update({model.weights: weights})
-        if hasattr(model, "head_enttype"):
+        if model.head_enttype is not None:
             feed_dict.update({model.head_enttype: batch_data['head_enttype']})
-        if hasattr(model, "tail_enttype"):
+        if model.tail_enttype is not None:
             feed_dict.update({model.tail_enttype: batch_data['tail_enttype']})
-        if hasattr(model, "enttype_length"):
+        if model.enttype_length is not None:
             feed_dict.update({model.enttype_length: batch_data['enttype_length']})
+        if model.enttype_mask is not None:
+            feed_dict.update({model.enttype_mask: batch_data['enttype_mask']})
 
         if fd_updater is not None:
             fd_updater(feed_dict)
         if self.step % 50 == 0:
-            merged_summary = self.sess.run(tf.summary.merge_all(), feed_dict=feed_dict)
-            self.summary_writer.add_summary(merged_summary, self.step)
+            # merged_summary = self.sess.run(tf.summary.merge_all(), feed_dict=feed_dict)
+            # self.summary_writer.add_summary(merged_summary, self.step)
             gc.collect()
 
         return self.sess.run(run_array, feed_dict)

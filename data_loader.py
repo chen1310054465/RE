@@ -450,9 +450,8 @@ class file_data_loader:
         batch_data['enttype_length'] = np.concatenate([batch_data['enttype_length'], self.enttype_length[b:e]]) \
             if batch_data.__contains__('enttype_length') else self.enttype_length[b:e]
 
-    def batch_padding(self, batch_data, b, e, batch_size):
-        if e - b < batch_size:
-            padding = batch_size - (e - b)
+    def batch_padding(self, batch_data, padding):
+        if padding > 0:
             batch_data['word'] = np.concatenate([batch_data['word'], np.zeros((padding, FLAGS.max_length), np.int32)])
             batch_data['pos1'] = np.concatenate([batch_data['pos1'], np.zeros((padding, FLAGS.max_length), np.int32)])
             batch_data['pos2'] = np.concatenate([batch_data['pos2'], np.zeros((padding, FLAGS.max_length), np.int32)])
@@ -484,7 +483,6 @@ class file_data_loader:
         end = self.begin + batch_size
         if end > len(self.order):
             end = len(self.order)
-
         batch_data = {'word': [], 'pos1': [], 'pos2': [], 'mask': [], 'length': [], 'label': [], 'entity_pos': [],
                       'head_enttype': [], 'tail_enttype': [], 'enttype_length': []}
         if self.mode == self.MODE_INSTANCE:
@@ -582,7 +580,17 @@ class file_data_loader:
                                                                 [[0] * self.rel_tot] * padding])
                     batch_data['entpair'] = np.concatenate([batch_data['entpair'], ['None#None'] * padding])
 
-        self.batch_padding(batch_data, self.begin, end, batch_size)
+        padding = batch_size - (end - self.begin)
+        if self.data_require['enttype_mask']:
+            bs = (len(batch_data['enttype_length']) + padding) if padding > 0 else len(batch_data['enttype_length'])
+            batch_data['enttype_mask'] = np.zeros((bs, 2 * FLAGS.et_max_length), np.int32)
+            for i in range(bs):
+                h_len = batch_data['enttype_length'][i][0]
+                t_len = batch_data['enttype_length'][i][1]
+                batch_data['enttype_mask'][i][0:h_len] = [1] * h_len
+                batch_data['enttype_mask'][i][FLAGS.et_max_length:FLAGS.et_max_length + t_len] = [2] * t_len
+
+        self.batch_padding(batch_data, padding)
         if hasattr(self, 'weights_table'):
             batch_data.update({'weights': self.get_weights(batch_data['label'])})
         self.begin = end
