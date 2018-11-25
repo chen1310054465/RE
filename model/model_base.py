@@ -106,7 +106,7 @@ class model:
                                                 activation=self.activation)
             else:
                 self.et_encoder = encoder.cnn(self.et_embedding, self.enttype_mask, hidden_size=FLAGS.et_hidden_size,
-                                              kernel_size=1, activation=self.activation, keep_prob=self.keep_prob)
+                                              activation=self.activation, keep_prob=self.keep_prob)
             if FLAGS.li_encoder_mode:
                 self.encoder = encoder.linear_transform(self.encoder, tf.expand_dims(tf.reduce_sum(self.et_encoder,
                                                                                                    axis=-1), 1))
