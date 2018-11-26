@@ -288,9 +288,12 @@ class framework:
         best_metric = 0
         if FLAGS.pm:
             self.saver.restore(self.sess, os.path.join(FLAGS.ckpt_dir, FLAGS.model_name))
-            x = np.load(os.path.join(FLAGS.test_result_dir, FLAGS.model_name + "_x.npy"))
-            y = np.load(os.path.join(FLAGS.test_result_dir, FLAGS.model_name + "_y.npy"))
-            best_metric = sklearn.metrics.auc(x=x, y=y)
+            x_filename = os.path.join(FLAGS.test_result_dir, FLAGS.model_name + "_x.npy")
+            y_filename = os.path.join(FLAGS.test_result_dir, FLAGS.model_name + "_y.npy")
+            if os.path.exists(x_filename) and os.path.exists(y_filename):
+                x = np.load(x_filename)
+                y = np.load(y_filename)
+                best_metric = sklearn.metrics.auc(x=x, y=y)
         else:
             self.sess.run(tf.global_variables_initializer())
         best_prec = None
