@@ -533,7 +533,7 @@ class file_data_loader:
                     batch_data['head_enttype'].append(self.head_enttype[b:e])
                 if self.data_require['tail_enttype']:
                     batch_data['tail_enttype'].append(self.tail_enttype[b:e])
-                if self.data_require['enttype_length']:
+                if self.data_require['enttype_mask'] or self.data_require['enttype_length']:
                     batch_data['enttype_length'].append(self.enttype_length[b:e])
                 if self.mode == self.MODE_ENTPAIR_BAG:
                     _one_multi_label = np.zeros(self.rel_tot, dtype=np.int32)
