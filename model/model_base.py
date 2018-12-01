@@ -21,7 +21,7 @@ class model:
                         'label': is_training or 'one' in FLAGS.se, 'instance_label': 'att' in FLAGS.se,
                         'entity_pos': False, 'scope': 'instance' not in FLAGS.se,
                         'weights': is_training, 'head_enttype': FLAGS.et, 'tail_enttype': FLAGS.et,
-                        'enttype_length': FLAGS.et_en == 'pcnn', 'enttype_mask': FLAGS.et_en == 'pcnn'}
+                        'enttype_length': False, 'enttype_mask': FLAGS.et and FLAGS.et_en == 'pcnn'}
         data_loader.data_require = data_require
         self.word = tf.placeholder(dtype=tf.int32, shape=[None, FLAGS.max_length], name='word')
         self.pos1 = tf.placeholder(dtype=tf.int32, shape=[None, FLAGS.max_length], name='pos1')
@@ -42,7 +42,7 @@ class model:
         self.tail_enttype = tf.placeholder(dtype=tf.int32, shape=[None, FLAGS.et_max_length], name="tail_enttype") \
             if data_require['tail_enttype'] else None
         self.enttype_length = tf.placeholder(dtype=tf.int32, shape=[None, 2], name="enttype_length") \
-            if data_require['entity_pos'] else None
+            if data_require['enttype_length'] else None
         self.enttype_mask = tf.placeholder(dtype=tf.int32, shape=[None, 2 * FLAGS.et_max_length], name="enttype_mask") \
             if data_require['enttype_mask'] else None
 

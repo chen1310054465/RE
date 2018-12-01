@@ -111,7 +111,7 @@ class file_data_loader:
         self.data_word = np.load(word)
         self.data_pos1 = np.load(pos1)
         self.data_pos2 = np.load(pos2)
-        self.data_mask = np.load(mask)
+        # self.data_mask = np.load(mask)
         self.data_length = np.load(length)
         self.data_label = np.load(label)
         self.entity_pos = np.load(entity_pos)
@@ -389,6 +389,7 @@ class file_data_loader:
         self.save_file(file_data_loader.word2id, 'word2id' + self.ext)
         self.save_file(file_data_loader.rel2id, 'rel2id' + self.ext)
         self.save_file(file_data_loader.enttype2id, 'enttype2id' + self.ext)
+        del self.data_mask, self.word2id
         print("Finish storing")
 
     def _set_weights_table(self):
@@ -455,9 +456,9 @@ class file_data_loader:
             batch_data['word'] = np.concatenate([batch_data['word'], np.zeros((padding, FLAGS.max_length), np.int32)])
             batch_data['pos1'] = np.concatenate([batch_data['pos1'], np.zeros((padding, FLAGS.max_length), np.int32)])
             batch_data['pos2'] = np.concatenate([batch_data['pos2'], np.zeros((padding, FLAGS.max_length), np.int32)])
-            if self.data_require['mask']:
-                batch_data['mask'] = np.concatenate([batch_data['mask'], np.zeros((padding, FLAGS.max_length),
-                                                                                  np.int32)])
+            # if self.data_require['mask']:
+            #     batch_data['mask'] = np.concatenate([batch_data['mask'], np.zeros((padding, FLAGS.max_length),
+            #                                                                       np.int32)])
             if self.data_require['length']:
                 batch_data['length'] = np.concatenate([batch_data['length'], np.zeros(padding, dtype=np.int32)])
             if self.data_require['label']:
@@ -489,19 +490,19 @@ class file_data_loader:
             batch_data['word'] = self.data_word[self.begin:end]
             batch_data['pos1'] = self.data_pos1[self.begin:end]
             batch_data['pos2'] = self.data_pos2[self.begin:end]
-            if self.data_require['mask']:
-                batch_data['mask'] = self.data_mask[self.begin:end]
-            if self.data_require['length']:
+            # if self.data_require['mask']:
+            #     batch_data['mask'] = self.data_mask[self.begin:end]
+            if self.data_require['mask'] or self.data_require['length']:
                 batch_data['length'] = self.data_length[self.begin:end]
             if self.data_require['label']:
                 batch_data['label'] = self.data_label[self.begin:end]
-            if self.data_require['entity_pos']:
+            if self.data_require['mask'] or self.data_require['entity_pos']:
                 batch_data['entity_pos'] = self.entity_pos[self.begin:end]
             if self.data_require['head_enttype']:
                 batch_data['head_enttype'] = self.head_enttype[self.begin:end]
             if self.data_require['tail_enttype']:
                 batch_data['tail_enttype'] = self.tail_enttype[self.begin:end]
-            if self.data_require['enttype_length']:
+            if self.data_require['enttype_mask'] or self.data_require['enttype_length']:
                 batch_data['enttype_length'] = self.enttype_length[self.begin:end]
         elif self.mode == self.MODE_ENTPAIR_BAG or self.mode == self.MODE_RELFACT_BAG:
             if self.data_require['instance_label']:
@@ -516,15 +517,15 @@ class file_data_loader:
                 batch_data['word'].append(self.data_word[b:e])
                 batch_data['pos1'].append(self.data_pos1[b:e])
                 batch_data['pos2'].append(self.data_pos2[b:e])
-                if self.data_require['mask']:
-                    batch_data['mask'].append(self.data_mask[b:e])
-                if self.data_require['length']:
+                # if self.data_require['mask']:
+                #     batch_data['mask'].append(self.data_mask[b:e])
+                if self.data_require['mask'] or self.data_require['length']:
                     batch_data['length'].append(self.data_length[b:e])
                 if self.data_require['label']:
                     batch_data['label'].append(self.data_label[b])
                 if self.data_require['instance_label']:
                     batch_data['instance_label'].append(self.data_label[b:e])
-                if self.data_require['entity_pos']:
+                if self.data_require['mask'] or self.data_require['entity_pos']:
                     batch_data['entity_pos'].append(self.entity_pos[b:e])
                 if self.data_require['scope']:
                     batch_data['scope'].append(batch_data['scope'][cur_pos] + e - b)
@@ -545,15 +546,15 @@ class file_data_loader:
             batch_data['word'] = np.concatenate(batch_data['word'])
             batch_data['pos1'] = np.concatenate(batch_data['pos1'])
             batch_data['pos2'] = np.concatenate(batch_data['pos2'])
-            if self.data_require['mask']:
-                batch_data['mask'] = np.concatenate(batch_data['mask'])
-            if self.data_require['length']:
+            # if self.data_require['mask']:
+            #     batch_data['mask'] = np.concatenate(batch_data['mask'])
+            if self.data_require['mask'] or self.data_require['length']:
                 batch_data['length'] = np.concatenate(batch_data['length'])
             if self.data_require['label']:
                 batch_data['label'] = np.stack(batch_data['label'])
             if self.data_require['instance_label']:
                 batch_data['instance_label'] = np.concatenate(batch_data['instance_label'])
-            if self.data_require['entity_pos']:
+            if self.data_require['mask'] or self.data_require['entity_pos']:
                 batch_data['entity_pos'] = np.concatenate(batch_data['entity_pos'])
             if self.data_require['scope']:
                 batch_data['scope'] = np.stack(batch_data['scope'])
@@ -561,7 +562,7 @@ class file_data_loader:
                 batch_data['head_enttype'] = np.concatenate(batch_data['head_enttype'])
             if self.data_require['tail_enttype']:
                 batch_data['tail_enttype'] = np.concatenate(batch_data['tail_enttype'])
-            if self.data_require['enttype_length']:
+            if self.data_require['enttype_mask'] or self.data_require['enttype_length']:
                 batch_data['enttype_length'] = np.concatenate(batch_data['enttype_length'])
             if self.mode == self.MODE_ENTPAIR_BAG:
                 batch_data['multi_label'] = np.stack(batch_data['multi_label'])
@@ -581,6 +582,17 @@ class file_data_loader:
                     batch_data['entpair'] = np.concatenate([batch_data['entpair'], ['None#None'] * padding])
 
         padding = batch_size - (end - self.begin)
+        if self.data_require['mask']:
+            bs = (len(batch_data['entity_pos']) + padding) if padding > 0 else len(batch_data['entity_pos'])
+            batch_data['mask'] = np.zeros((bs, FLAGS.max_length), np.int32)
+            for i in range(len(batch_data['entity_pos'])):
+                h_pos = batch_data['entity_pos'][i][0]
+                t_pos = batch_data['entity_pos'][i][1]
+                length = batch_data['length'][i]
+                batch_data['mask'][i][0:h_pos + 1] = [1] * (h_pos + 1)
+                batch_data['mask'][i][h_pos + 1: t_pos + 1] = [2] * (t_pos - h_pos)
+                batch_data['mask'][i][t_pos + 1: length] = [3] * (length - 1 - t_pos)
+
         if self.data_require['enttype_mask']:
             bs = (len(batch_data['enttype_length']) + padding) if padding > 0 else len(batch_data['enttype_length'])
             batch_data['enttype_mask'] = np.zeros((bs, 2 * FLAGS.et_max_length), np.int32)
