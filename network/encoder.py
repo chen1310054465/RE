@@ -1,5 +1,6 @@
 import numpy as np
 import tensorflow as tf
+# from keras_applications.resnet50 import identity_block, conv_block
 
 from framework import dropout
 
@@ -28,7 +29,7 @@ def mask_embedding(num_piece):
 
 def _pooling(x):
     with tf.variable_scope("pooling", reuse=tf.AUTO_REUSE):
-        return tf.reduce_max(x, axis=-2)
+        return tf.reduce_max(x, axis=1)
 
 
 def _piecewise_pooling(x, mask):
@@ -40,10 +41,16 @@ def _piecewise_pooling(x, mask):
         return tf.reshape(x, [-1, hidden_size * 3])
 
 
-def _cnn_cell(x, hidden_size=230, kernel_size=3, stride_size=1):
-    with tf.variable_scope("cnn_cell", reuse=tf.AUTO_REUSE):
-        return tf.layers.conv1d(inputs=x, filters=hidden_size, kernel_size=kernel_size, strides=stride_size,
-                                padding='same', kernel_initializer=tf.contrib.layers.xavier_initializer())
+def _cnn_cell(x, hidden_size=230, kernel_size=3, stride_size=1, activation=None, var_scope=None, is_2d=False):
+    with tf.variable_scope(var_scope or "cnn_cell", reuse=tf.AUTO_REUSE):
+        if is_2d:
+            # x = tf.expand_dims(x, axis=1)
+            x = tf.layers.conv2d(inputs=x, filters=hidden_size, kernel_size=[1, kernel_size], strides=[1, stride_size],
+                                    padding='same', kernel_initializer=tf.contrib.layers.xavier_initializer())
+        else:
+            x = tf.layers.conv1d(inputs=x, filters=hidden_size, kernel_size=kernel_size, strides=stride_size,
+                                    padding='same', kernel_initializer=tf.contrib.layers.xavier_initializer())
+        return x if activation is None else activation(x)
 
 
 def cnn(x, mask=None, hidden_size=230, kernel_size=3, stride_size=1, activation=tf.nn.relu,
@@ -53,6 +60,27 @@ def cnn(x, mask=None, hidden_size=230, kernel_size=3, stride_size=1, activation=
         pool = _pooling(cnn_cell) if mask is None else _piecewise_pooling(cnn_cell, mask)
 
         return dropout(activation(pool), keep_prob)
+
+
+def resnet(x, length=None, cell_name='lstm', bidirectional=False, mask=None, hidden_size=230,
+           kernel_size=3, stride_size=1, activation=tf.nn.relu, var_scope=None, keep_prob=1.0):
+    with tf.variable_scope(var_scope or ('resnet' if mask is None else 'presnet'), reuse=tf.AUTO_REUSE):
+        seq = None if length is None else rnn(x, length, hidden_size, cell_name, bidirectional, keep_prob=keep_prob)
+        x = _cnn_cell(x, hidden_size, kernel_size, stride_size, activation=activation)
+        for i in range(4):
+            h1 = _cnn_cell(x, hidden_size, kernel_size, stride_size, activation=activation,
+                           var_scope='conv_' + str(i) + 'a')
+            h2 = _cnn_cell(h1, hidden_size, kernel_size, stride_size, activation=activation,
+                           var_scope='conv_' + str(i) + 'b')
+            x = h2 + x
+        x = _pooling(x) if mask is None else _piecewise_pooling(x, mask)
+
+        # x = conv_block(x, kernel_size, [hidden_size, hidden_size, 256], stage=2, block='a',
+        #                strides=(stride_size, stride_size))
+        # x = identity_block(x, kernel_size, [hidden_size, hidden_size, 256], stage=2, block='b')
+        # x = identity_block(x, kernel_size, [hidden_size, hidden_size, 256], stage=2, block='c')
+        x = dropout(activation(x), keep_prob)
+        return x if seq is None else tf.concat([seq, x], axis=1)
 
 
 def _rnn_cell(hidden_size, cell_name=''):

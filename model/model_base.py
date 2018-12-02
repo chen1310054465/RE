@@ -84,20 +84,32 @@ class model:
         if FLAGS.en == "cnn" or FLAGS.en == "pcnn":
             self.encoder = encoder.cnn(self.wp_embedding, self.mask, FLAGS.hidden_size,
                                        activation=self.activation, keep_prob=self.keep_prob)
+        elif FLAGS.en == "resnet" or FLAGS.en == "resnet_pcnn":
+            self.encoder = encoder.resnet(self.wp_embedding, mask=self.mask, activation=self.activation,
+                                          keep_prob=self.keep_prob)
         elif re.search("r.*nn", FLAGS.en):
             ens = FLAGS.en.split('_')
-            cell_name = ens[1] if len(ens) > 1 else ""
-            if ens[0] == "rnn" or ens[0] == "birnn":
+            cell_name = ens[-1] if len(ens) > 1 else ""
+            en = ens[0]
+            if len(ens) == 3 and ens[0] == 'resnet':
+                en = ens[1]
+            if en == "rnn" or en == "birnn":
                 self.encoder = encoder.rnn(self.wp_embedding, self.length, FLAGS.hidden_size, cell_name=cell_name,
                                            bidirectional=ens[0] == "birnn", keep_prob=self.keep_prob)
-            elif ens[0] == "rcnn" or ens[0] == "rpcnn" or ens[0] == "bircnn" or ens[0] == "birpcnn":
-                self.encoder = encoder.rcnn(self.wp_embedding, self.length, rnn_hidden_size=FLAGS.rnn_hidden_size,
-                                            cell_name=cell_name, bidirectional='bi' in ens[0],
-                                            mask=self.mask, cnn_hidden_size=FLAGS.cnn_hidden_size,
-                                            activation=self.activation, keep_prob=self.keep_prob,
-                                            li_encoder_mode=FLAGS.li_encoder_mode)
+            elif en == "rcnn" or en == "rpcnn" or en == "bircnn" or en == "birpcnn":
+                if ens[0] == 'resnet':
+                    self.encoder = encoder.resnet(self.wp_embedding, self.length, cell_name=cell_name,
+                                                  bidirectional='bi' in en, mask=self.mask,
+                                                  activation=self.activation, keep_prob=self.keep_prob)
+                else:
+                    self.encoder = encoder.rcnn(self.wp_embedding, self.length, rnn_hidden_size=FLAGS.rnn_hidden_size,
+                                                cell_name=cell_name, bidirectional='bi' in ens[0],
+                                                mask=self.mask, cnn_hidden_size=FLAGS.cnn_hidden_size,
+                                                activation=self.activation, keep_prob=self.keep_prob,
+                                                li_encoder_mode=FLAGS.li_encoder_mode)
             else:
                 raise NotImplementedError
+
         else:
             raise NotImplementedError
         if FLAGS.et:

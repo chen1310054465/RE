@@ -16,6 +16,7 @@
       <w>enttype</w>
       <w>enttypes</w>
       <w>jiang</w>
+      <w>keras</w>
       <w>logit</w>
       <w>lstm</w>
       <w>onehot</w>
@@ -23,12 +24,14 @@
       <w>prec</w>
       <w>pred</w>
       <w>preprocess</w>
+      <w>presnet</w>
       <w>pretrain</w>
       <w>rcnn</w>
       <w>regularizer</w>
       <w>relfact</w>
       <w>relu</w>
       <w>repre</w>
+      <w>resnet</w>
       <w>rpcnn</w>
       <w>softmax</w>
       <w>tanh</w>
