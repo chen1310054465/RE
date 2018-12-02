@@ -64,7 +64,7 @@ def cnn(x, mask=None, hidden_size=230, kernel_size=3, stride_size=1, activation=
 
 def resnet(x, length=None, cell_name='lstm', bidirectional=False, mask=None, hidden_size=230,
            kernel_size=3, stride_size=1, activation=tf.nn.relu, var_scope=None, keep_prob=1.0):
-    with tf.variable_scope(var_scope or ('resnet' if mask is None else 'presnet'), reuse=tf.AUTO_REUSE):
+    with tf.variable_scope(var_scope or ('resnet' if mask is None else 'resnet_pcnn'), reuse=tf.AUTO_REUSE):
         seq = None if length is None else rnn(x, length, hidden_size, cell_name, bidirectional, keep_prob=keep_prob)
         x = _cnn_cell(x, hidden_size, kernel_size, stride_size, activation=activation)
         for i in range(4):
