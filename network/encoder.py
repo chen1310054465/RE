@@ -67,15 +67,15 @@ def resnet(x, filters, length=None, cell_name='lstm', bidirectional=False, mask=
     with tf.variable_scope(var_scope or ('resnet' if mask is None else 'resnet_pcnn'), reuse=tf.AUTO_REUSE):
         seq = None if length is None else rnn(x, length, filters[1], cell_name, bidirectional, keep_prob=keep_prob)
         x = _cnn_cell(x, filters[1], kernel_size, stride_size, activation=activation)
-        x = tf.expand_dims(_pooling(x), axis=1) if mask is None else _piecewise_pooling(x, mask, True)
-        # x = tf.expand_dims(x, axis=1)
+        # x = tf.expand_dims(_pooling(x), axis=1) if mask is None else _piecewise_pooling(x, mask, True)
         for i in range(ib_num):
             h1 = _cnn_cell(x, filters[0], kernel_size, stride_size, activation=activation,
                            var_scope='conv_' + str(i) + 'a')
             h2 = _cnn_cell(h1, filters[1], kernel_size, stride_size, activation=activation,
                            var_scope='conv_' + str(i) + 'b')
             x = h2 + x
-        x = tf.squeeze(x) if mask is None else tf.reshape(x, [-1, x.shape[-1] * x.shape[-2]])
+        x = _pooling(x) if mask is None else _piecewise_pooling(x, mask)
+        # x = tf.squeeze(x) if mask is None else tf.reshape(x, [-1, x.shape[-1] * x.shape[-2]])
         # x = conv_block(x, kernel_size, [hidden_size, hidden_size, 256], stage=2, block='a',
         #                strides=(stride_size, stride_size))
         # x = identity_block(x, kernel_size, [hidden_size, hidden_size, 256], stage=2, block='b')
