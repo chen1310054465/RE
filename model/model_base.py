@@ -85,8 +85,8 @@ class model:
             self.encoder = encoder.cnn(self.wp_embedding, self.mask, FLAGS.hidden_size,
                                        activation=self.activation, keep_prob=self.keep_prob)
         elif FLAGS.en == "resnet" or FLAGS.en == "resnet_pcnn":
-            self.encoder = encoder.resnet(self.wp_embedding, mask=self.mask, activation=self.activation,
-                                          keep_prob=self.keep_prob)
+            self.encoder = encoder.resnet(self.wp_embedding, ib_num=FLAGS.ib_num, mask=self.mask,
+                                          activation=self.activation, keep_prob=self.keep_prob)
         elif re.search("r.*nn", FLAGS.en):
             ens = FLAGS.en.split('_')
             cell_name = ens[-1] if len(ens) > 1 else ""
@@ -99,7 +99,7 @@ class model:
             elif en == "rcnn" or en == "rpcnn" or en == "bircnn" or en == "birpcnn":
                 if ens[0] == 'resnet':
                     self.encoder = encoder.resnet(self.wp_embedding, self.length, cell_name=cell_name,
-                                                  bidirectional='bi' in en, mask=self.mask,
+                                                  bidirectional='bi' in en, ib_num=FLAGS.ib_num, mask=self.mask,
                                                   activation=self.activation, keep_prob=self.keep_prob)
                 else:
                     self.encoder = encoder.rcnn(self.wp_embedding, self.length, rnn_hidden_size=FLAGS.rnn_hidden_size,
