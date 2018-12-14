@@ -330,10 +330,10 @@ class framework:
             self.acc_total.clear()
             self.step = 0
             time_sum = 0
+            models, op, lo, out = tower_models, train_op, loss, output
             while True:
                 time_start = time.time()
                 try:
-                    models, op, lo, out = tower_models, train_op, loss, output
                     if FLAGS.et_half and self.step == self.train_data_loader.batch // 2:
                         models, op, lo, out = half_tower_models, half_train_op, half_loss, half_output
                         self.train_data_loader.data_require = models[0].data_require
