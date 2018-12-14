@@ -39,6 +39,7 @@ tf.flags.DEFINE_integer('word_dim', 50, 'word embedding dimensionality')
 tf.flags.DEFINE_integer('pos_dim', 5, 'pos embedding dimensionality')
 tf.flags.DEFINE_integer('et_dim', 12, 'entity type embedding dimensionality')
 tf.flags.DEFINE_integer('et_concat_axis', 1, 'which axis head and tail entity type embedding concat at')
+tf.flags.DEFINE_integer('et_half', 0, ' whether half of dataset use entity type embedding')
 tf.flags.DEFINE_integer('li_encoder_mode', 0, 'organize encoder mode')
 tf.flags.DEFINE_float('learning_rate', 0.5, 'learning rate')
 tf.flags.DEFINE_string('et_en', 'pcnn', 'entity type encoder')
@@ -49,6 +50,7 @@ tf.flags.DEFINE_string('dataset_dir', os.path.join('origin_data', FLAGS.dn), 'or
 tf.flags.DEFINE_string('processed_data_dir', os.path.join('processed_data', FLAGS.dn), 'processed data dir')
 tf.flags.DEFINE_string('model_name', (FLAGS.dn + '_' + ('et' + (FLAGS.et_en[0] + '_' if FLAGS.et_en in ['pcnn', 'dense']
                                                         else 'c_') if FLAGS.et else '') +  # dataset_name entity_type
+                                        ('half_' if FLAGS.et_half else '') +
                                       ('li_' if FLAGS.li_encoder_mode and (FLAGS.et or re.search("r.*cnn", FLAGS.en))
                                        else '') + FLAGS.en + "_" + FLAGS.se +  # encoder selector
                                       (('_' + FLAGS.cl) if FLAGS.cl != 'softmax' else '') +  # classifier
@@ -70,7 +72,7 @@ def init(is_training=True):
                  + '[--gn gpu_nums] [--pm pretrain_model] [--max_epoch] [--save_epoch] '
                  + '[--learning_rate] ' if is_training else '')
                  + '[--hidden_size] [--et_hidden_size] [--rnn_hidden_size] [--cnn_hidden_size]\n       '
-                 + '[--word_dim] [--pos_dim] [--et_en entity type encoder] [--et_dim] [--et_concat_axis] '
+                 + '[--word_dim] [--pos_dim] [--et_en entity type encoder] [--et_dim] [--et_concat_axis] [--et_half] '
                  + '[--f1] [--f2] [--ib_num] [--batch_size] [--li_encoder_mode]')
         print('**************************************args details**********************************************')
         print('**  --dn: (dataset_name)[nyt(New York Times dataset)...], put it in origin_data dir           **')
@@ -98,6 +100,7 @@ def init(is_training=True):
         print('**  --et_en: (entity type encoder)[cnn pcnn dense](default cnn)                               **')
         print('**  --et_dim: entity type embedding dimensionality(default 12)                                **')
         print('**  --et_concat_axis: [-1, 1], which axis head and tail et_embedding concat(default 1)        **')
+        print('**  --et_half: whether half of dataset use entity type embedding(default 1)                   **')
         print('**  --f1: filter1 size for residual network(default 128)                                      **')
         print('**  --f2: filter1 size for residual network(default 230)                                      **')
         print('**  --ib_num: num of identity block for residual network(default 4)                           **')
@@ -264,10 +267,18 @@ class framework:
         # Multi GPUs
         tower_grads = []
         tower_models = []
+        half_tower_grads = []
+        half_tower_models = []
         for gpu_id in range(FLAGS.gn):
             with tf.device("/gpu:%d" % gpu_id):
                 with tf.name_scope("gpu_%d" % gpu_id):
-                    cur_model = model(self.train_data_loader, self.activation)
+                    if FLAGS.et_half:
+                        half_model = model(self.train_data_loader, activation=self.activation)
+                        half_tower_grads.append(optimizer.compute_gradients(half_model.loss))
+                        half_tower_models.append(half_model)
+                        tf.add_to_collection("half_loss", half_model.loss)
+                        tf.add_to_collection("half_train_output", half_model.output)
+                    cur_model = model(self.train_data_loader, et=FLAGS.et, activation=self.activation)
                     tower_grads.append(optimizer.compute_gradients(cur_model.loss))
                     tower_models.append(cur_model)
                     tf.add_to_collection("loss", cur_model.loss)
@@ -280,6 +291,14 @@ class framework:
 
         grads = average_gradients(tower_grads)
         train_op = optimizer.apply_gradients(grads)
+
+        half_loss_collection = tf.get_collection("half_loss") if FLAGS.et_half else None
+        half_loss = tf.add_n(half_loss_collection) / len(half_loss_collection) if FLAGS.et_half else None
+        half_output_collection = tf.get_collection("half_train_output") if FLAGS.et_half else None
+        half_output = tf.concat(half_output_collection, 0) if FLAGS.et_half else None
+
+        half_grads = average_gradients(half_tower_grads) if FLAGS.et_half else None
+        half_train_op = optimizer.apply_gradients(half_grads) if FLAGS.et_half else None
 
         if not os.path.exists(FLAGS.ckpt_dir):
             os.makedirs(FLAGS.ckpt_dir)
@@ -314,8 +333,11 @@ class framework:
             while True:
                 time_start = time.time()
                 try:
-                    iter_loss, iter_output, iter_label = self._one_step_multi_models(tower_models, [train_op, loss,
-                                                                                                    output])[1:]
+                    models, op, lo, out = tower_models, train_op, loss, output
+                    if FLAGS.et_half and self.step == self.train_data_loader.batch // 2:
+                        models, op, lo, out = half_tower_models, half_train_op, half_loss, half_output
+                        self.train_data_loader.data_require = models[0].data_require
+                    iter_loss, iter_output, iter_label = self._one_step_multi_models(models, [op, lo, out])[1:]
                 except StopIteration:
                     break
                 time_end = time.time()
@@ -376,7 +398,7 @@ class framework:
         print("Testing...")
         if self.sess is None:
             self.sess = tf.Session()
-        model = model(self.test_data_loader, self.activation, is_training=False)
+        model = model(self.test_data_loader, et=FLAGS.et, activation=self.activation, is_training=False)
         if not model_name is None:
             saver = tf.train.Saver()
             saver.restore(self.sess, os.path.join(FLAGS.ckpt_dir, model_name))

@@ -54,6 +54,10 @@ class file_data_loader:
         self.scope_name = []
         self.scope = []
         self.set_order()
+        if len(self.order) % FLAGS.batch_size == 0:
+            self.batch = len(self.order) // FLAGS.batch_size
+        else:
+            self.batch = len(self.order) // FLAGS.batch_size + 1
 
         self.begin = 0
         print("Total relation fact: %d" % self.relfact_tot)

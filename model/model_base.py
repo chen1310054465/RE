@@ -8,20 +8,21 @@ FLAGS = tf.flags.FLAGS
 
 
 class model:
-    def __init__(self, data_loader, activation=tf.nn.relu, is_training=True):
+    def __init__(self, data_loader, et=False, activation=tf.nn.relu, is_training=True):
         self.rel_tot = data_loader.rel_tot
         self.enttype_tot = data_loader.enttype_tot
         self.word_vec = data_loader.word_vec
         self.activation = activation
         self.is_training = is_training
         self.keep_prob = 0.5 if is_training else 1.0
+        self.et = et
         batch_size = FLAGS.batch_size // FLAGS.gn if is_training else FLAGS.batch_size
-        # 'entity_pos': 'pcnn' in FLAGS.en      'enttype_length': FLAGS.et
+        # 'entity_pos': 'pcnn' in FLAGS.en      'enttype_length': self.et
         data_require = {'mask': 'pcnn' in FLAGS.en, 'length': re.search("r.*nn", FLAGS.en),
                         'label': is_training or 'one' in FLAGS.se, 'instance_label': 'att' in FLAGS.se,
                         'entity_pos': False, 'scope': 'instance' not in FLAGS.se,
-                        'weights': is_training, 'head_enttype': FLAGS.et, 'tail_enttype': FLAGS.et,
-                        'enttype_length': False, 'enttype_mask': FLAGS.et and FLAGS.et_en == 'pcnn'}
+                        'weights': is_training, 'head_enttype': self.et, 'tail_enttype': self.et,
+                        'enttype_length': False, 'enttype_mask': self.et and FLAGS.et_en == 'pcnn'}
         data_loader.data_require = data_require
         self.word = tf.placeholder(dtype=tf.int32, shape=[None, FLAGS.max_length], name='word')
         self.pos1 = tf.placeholder(dtype=tf.int32, shape=[None, FLAGS.max_length], name='pos1')
@@ -51,7 +52,7 @@ class model:
     def _network(self):
         # embedding
         self._embedding()
-        with tf.variable_scope(('et_' if FLAGS.et else '') +  # entity_type
+        with tf.variable_scope(('et_' if self.et else '') +  # entity_type
                                FLAGS.en + "_" + FLAGS.se +
                                (('_' + FLAGS.cl) if FLAGS.cl != 'softmax' else '') +  # classifier
                                (('_' + FLAGS.ac) if FLAGS.ac != 'relu' else '') +  # activation
@@ -75,7 +76,7 @@ class model:
             self.w_embedding, self.p_embedding = embedding.wp_embedding(self.word, self.word_vec, self.pos1,
                                                                         self.pos2, FLAGS.word_dim, FLAGS.pos_dim)
             self.wp_embedding = embedding.concat(self.w_embedding, self.p_embedding)
-        if FLAGS.et and not hasattr(self, 'et_embedding'):
+        if self.et and not hasattr(self, 'et_embedding'):
             self.het_embedding, self.tet_embedding = embedding.et_embedding(self.head_enttype, self.tail_enttype,
                                                                             self.enttype_tot, FLAGS.et_dim)
             self.et_embedding = embedding.concat(self.het_embedding, self.tet_embedding, axis=FLAGS.et_concat_axis)
@@ -112,18 +113,20 @@ class model:
 
         else:
             raise NotImplementedError
-        if FLAGS.et:
-            if FLAGS.et_en == 'dense':
-                self.et_encoder = encoder.dense(tf.reduce_sum(self.et_embedding, axis=-1), FLAGS.et_hidden_size,
-                                                activation=self.activation)
-            else:
-                self.et_encoder = encoder.cnn(self.et_embedding, self.enttype_mask, hidden_size=FLAGS.et_hidden_size,
-                                              activation=self.activation, keep_prob=self.keep_prob)
-            if FLAGS.li_encoder_mode:
-                self.encoder = encoder.linear_transform(self.encoder, tf.expand_dims(tf.reduce_sum(self.et_encoder,
-                                                                                                   axis=-1), 1))
-            else:
-                self.encoder = tf.concat([self.encoder, self.et_encoder], -1)
+        if self.et:
+            with tf.variable_scope("et", reuse=tf.AUTO_REUSE):
+                if FLAGS.et_en == 'dense':
+                    self.et_encoder = encoder.dense(tf.reduce_sum(self.et_embedding, axis=-1), FLAGS.et_hidden_size,
+                                                    activation=self.activation)
+                else:
+                    self.et_encoder = encoder.cnn(self.et_embedding, self.enttype_mask,
+                                                  hidden_size=FLAGS.et_hidden_size,
+                                                  activation=self.activation, keep_prob=self.keep_prob)
+                if FLAGS.li_encoder_mode:
+                    self.encoder = encoder.linear_transform(self.encoder, tf.expand_dims(tf.reduce_sum(self.et_encoder,
+                                                                                                       axis=-1), 1))
+                else:
+                    self.encoder = tf.concat([self.encoder, self.et_encoder], -1)
 
     def _selector(self):
         ses = FLAGS.se.split('_')
