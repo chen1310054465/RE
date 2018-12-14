@@ -272,17 +272,17 @@ class framework:
         for gpu_id in range(FLAGS.gn):
             with tf.device("/gpu:%d" % gpu_id):
                 with tf.name_scope("gpu_%d" % gpu_id):
+                    cur_model = model(self.train_data_loader, et=FLAGS.et, activation=self.activation)
+                    tower_grads.append(optimizer.compute_gradients(cur_model.loss))
+                    tower_models.append(cur_model)
+                    tf.add_to_collection("loss", cur_model.loss)
+                    tf.add_to_collection("train_output", cur_model.output)
                     if FLAGS.et_half:
                         half_model = model(self.train_data_loader, activation=self.activation)
                         half_tower_grads.append(optimizer.compute_gradients(half_model.loss))
                         half_tower_models.append(half_model)
                         tf.add_to_collection("half_loss", half_model.loss)
                         tf.add_to_collection("half_train_output", half_model.output)
-                    cur_model = model(self.train_data_loader, et=FLAGS.et, activation=self.activation)
-                    tower_grads.append(optimizer.compute_gradients(cur_model.loss))
-                    tower_models.append(cur_model)
-                    tf.add_to_collection("loss", cur_model.loss)
-                    tf.add_to_collection("train_output", cur_model.output)
 
         loss_collection = tf.get_collection("loss")
         loss = tf.add_n(loss_collection) / len(loss_collection)
@@ -330,12 +330,12 @@ class framework:
             self.acc_total.clear()
             self.step = 0
             time_sum = 0
-            models, op, lo, out = tower_models, train_op, loss, output
+            models, op, lo, out = half_tower_models, half_train_op, half_loss, half_output
             while True:
                 time_start = time.time()
                 try:
                     if FLAGS.et_half and self.step == self.train_data_loader.batch // 2:
-                        models, op, lo, out = half_tower_models, half_train_op, half_loss, half_output
+                        models, op, lo, out = tower_models, train_op, loss, output
                         self.train_data_loader.data_require = models[0].data_require
                     iter_loss, iter_output, iter_label = self._one_step_multi_models(models, [op, lo, out])[1:]
                 except StopIteration:
