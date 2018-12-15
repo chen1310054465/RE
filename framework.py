@@ -1,3 +1,4 @@
+import json
 import math
 import os
 import re
@@ -49,8 +50,8 @@ tf.flags.DEFINE_string('test_result_dir', os.path.join('test_result', FLAGS.dn),
 tf.flags.DEFINE_string('dataset_dir', os.path.join('origin_data', FLAGS.dn), 'origin dataset dir')
 tf.flags.DEFINE_string('processed_data_dir', os.path.join('processed_data', FLAGS.dn), 'processed data dir')
 tf.flags.DEFINE_string('model_name', (FLAGS.dn + '_' + ('et' + (FLAGS.et_en[0] + '_' if FLAGS.et_en in ['pcnn', 'dense']
-                                                        else 'c_') if FLAGS.et else '') +  # dataset_name entity_type
-                                        ('half_' if FLAGS.et_half else '') +
+                                                                else 'c_') if FLAGS.et else '') +  # dataset_name entity_type
+                                      ('half_' if FLAGS.et_half else '') +
                                       ('li_' if FLAGS.li_encoder_mode and (FLAGS.et or re.search("r.*cnn", FLAGS.en))
                                        else '') + FLAGS.en + "_" + FLAGS.se +  # encoder selector
                                       (('_' + FLAGS.cl) if FLAGS.cl != 'softmax' else '') +  # classifier
@@ -71,9 +72,9 @@ def init(is_training=True):
               + ('[--cl classifier] [--ac activation] [--op optimizer] [--ad adversarial_training]\n       '
                  + '[--gn gpu_nums] [--pm pretrain_model] [--max_epoch] [--save_epoch] '
                  + '[--learning_rate] ' if is_training else '')
-                 + '[--hidden_size] [--et_hidden_size] [--rnn_hidden_size] [--cnn_hidden_size]\n       '
-                 + '[--word_dim] [--pos_dim] [--et_en entity type encoder] [--et_dim] [--et_concat_axis] [--et_half] '
-                 + '[--f1] [--f2] [--ib_num] [--batch_size] [--li_encoder_mode]')
+              + '[--hidden_size] [--et_hidden_size] [--rnn_hidden_size] [--cnn_hidden_size]\n       '
+              + '[--word_dim] [--pos_dim] [--et_en entity type encoder] [--et_dim] [--et_concat_axis] [--et_half] '
+              + '[--f1] [--f2] [--ib_num] [--batch_size] [--li_encoder_mode]')
         print('**************************************args details**********************************************')
         print('**  --dn: (dataset_name)[nyt(New York Times dataset)...], put it in origin_data dir           **')
         print('**  --et: (ent_type)whether to add entity type info(default 0), 0(no), 1(yes)                 **')
@@ -161,11 +162,14 @@ class accuracy:
     def __init__(self):
         self.correct = 0
         self.total = 0
+        self.acc_idx = []
 
-    def add(self, is_correct):
+    def add(self, is_correct, idx=None):
         self.total += 1
         if is_correct:
             self.correct += 1
+            if idx is not None:
+                self.acc_idx.append(idx)
 
     def get(self):
         self.total += 1
@@ -197,11 +201,12 @@ class framework:
         if FLAGS.op in optimizers:
             self.optimizer = optimizers[FLAGS.op]
 
-    def _summary(self, labels, outputs):
+    def _summary(self, labels, outputs, batch=None):
         for i, label in enumerate(labels):
-            self.acc_total.add(outputs[i] == label)
+            idx = None if batch is None else batch * FLAGS.batch_size + i
+            self.acc_total.add(outputs[i] == label, idx=idx)
             if label != 0:
-                self.acc_not_na.add(outputs[i] == label)
+                self.acc_not_na.add(outputs[i] == label, idx=idx)
 
     def _one_step_multi_models(self, models, run_array, return_label=True):
         batch_label = []
@@ -311,10 +316,10 @@ class framework:
         self.saver = tf.train.Saver(max_to_keep=None)
         # Training
         best_metric = 0
+        x_filename = os.path.join(FLAGS.test_result_dir, FLAGS.model_name + "_x.npy")
+        y_filename = os.path.join(FLAGS.test_result_dir, FLAGS.model_name + "_y.npy")
         if FLAGS.pm:
             self.saver.restore(self.sess, os.path.join(FLAGS.ckpt_dir, FLAGS.model_name))
-            x_filename = os.path.join(FLAGS.test_result_dir, FLAGS.model_name + "_x.npy")
-            y_filename = os.path.join(FLAGS.test_result_dir, FLAGS.model_name + "_y.npy")
             if os.path.exists(x_filename) and os.path.exists(y_filename):
                 x = np.load(x_filename)
                 y = np.load(y_filename)
@@ -386,8 +391,8 @@ class framework:
         if (not best_prec is None) and (not best_recall is None):
             if not os.path.exists(FLAGS.test_result_dir):
                 os.makedirs(FLAGS.test_result_dir)
-            np.save(os.path.join(FLAGS.test_result_dir, FLAGS.model_name + "_x.npy"), best_recall)
-            np.save(os.path.join(FLAGS.test_result_dir, FLAGS.model_name + "_y.npy"), best_prec)
+            np.save(x_filename, best_recall)
+            np.save(y_filename, best_prec)
 
     def test(self, model, model_name=None, return_result=False, mode=file_data_loader.MODE_ENTPAIR_BAG):
         if mode == file_data_loader.MODE_ENTPAIR_BAG:
@@ -417,7 +422,7 @@ class framework:
             iter_logit, iter_output = self._one_step(model, batch_data, [model.logit, model.output])
             time_end = time.time()
             t = time_end - time_start
-            self._summary(batch_data['label'], iter_output)
+            self._summary(batch_data['label'], iter_output, batch=i if return_result else None)
 
             if self.acc_not_na.total > 0:
                 sys.stdout.write("[TEST] step %d time %.2f | not NA accuracy: %f, accuracy: %f\r" % (
@@ -448,7 +453,7 @@ class framework:
         if not return_result:
             return auc
         else:
-            return auc, pred_result
+            return auc, pred_result, self.acc_total.__dict__, self.acc_not_na.__dict__
 
     # rl part
     def _policy_agent_one_step(self, model, batch_data, weights, fd_updater=None, eval_acc=True):
