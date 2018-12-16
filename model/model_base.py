@@ -19,7 +19,7 @@ class model:
         batch_size = FLAGS.batch_size // FLAGS.gn if is_training else FLAGS.batch_size
         # 'entity_pos': 'pcnn' in FLAGS.en      'enttype_length': self.et
         self.data_require = {'mask': 'pcnn' in FLAGS.en, 'length': re.search("r.*nn", FLAGS.en),
-                             'label': is_training or 'one' in FLAGS.se, 'instance_label': 'att' in FLAGS.se,
+                             'label': True, 'instance_label': 'att' in FLAGS.se,
                              'entity_pos': False, 'scope': 'instance' not in FLAGS.se,
                              'weights': is_training, 'head_enttype': self.et, 'tail_enttype': self.et,
                              'enttype_length': False, 'enttype_mask': self.et and FLAGS.et_en == 'pcnn'}
