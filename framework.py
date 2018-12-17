@@ -416,6 +416,7 @@ class framework:
         entpair_tot = 0
         test_result = []
         pred_result = []
+        output = []
 
         for i, batch_data in enumerate(self.test_data_loader):
             time_start = time.time()
@@ -423,6 +424,7 @@ class framework:
             time_end = time.time()
             t = time_end - time_start
             self._summary(batch_data['label'], iter_output, batch=i if return_result else None)
+            output.append(iter_output)
 
             if self.acc_not_na.total > 0:
                 sys.stdout.write("[TEST] step %d time %.2f | not NA accuracy: %f, accuracy: %f\r" % (
@@ -453,7 +455,7 @@ class framework:
         if not return_result:
             return auc
         else:
-            return auc, pred_result, self.acc_total.__dict__, self.acc_not_na.__dict__
+            return auc, pred_result, np.concatenate(output), self.acc_total.__dict__, self.acc_not_na.__dict__
 
     # rl part
     def _policy_agent_one_step(self, model, batch_data, weights, fd_updater=None, eval_acc=True):
