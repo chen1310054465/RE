@@ -1,8 +1,8 @@
 # Relation extraction
 
-An open-source framework for neural relation extraction.
+An open-source framework for relation extraction.
 
-If you want to learn more about neural relation extraction, visit another project of ours [NREPapers](https://github.com/thunlp/NREPapers).
+If you want to learn more about neural relation extraction, visit another project of ours [REPapers](https://github.com/thunlp/NREPapers).
 
 Features:
 
@@ -17,11 +17,12 @@ It is a TensorFlow-based framework for easily building relation extraction (RE) 
 * Embedding
   * Word embedding
   * Position embedding
+  * Entity Type embedding
 * Encoder
+  * CNN  
   * PCNN
-  * CNN
-  * RNN
-  * Bidirectional RNN
+  * (Bi)RNN: LSTM, GRU
+  * RPRN
 * Selector
   * Attention
   * Maximum
@@ -157,7 +158,7 @@ The checkpoint of the best epoch (each epoch will be validated while training) w
 python draw_plot.py {MODEL_NAME_1} {MODEL_NAME_2} ...
 ```
 
-All the results of the models mentioned will be printed and precision-recall curves containing all the models will be saved in `./test_result/pr_curve.png`.
+All the results of the models mentioned will be printed and precision-recall curves containing all the models will be saved in `./test_result/nyt/nyt_pr_curve.png`.
 
 6. **If you have the checkpoint of the model and want to evaluate it, run `test.py [--ds dataset] [--en encoder] [--se selector]...`. For example:**
 
