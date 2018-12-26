@@ -361,12 +361,6 @@ class framework:
             gc.collect()
             print("\nAverage iteration time: %f" % (time_sum / self.step))
 
-            for m in tower_models:
-                if '_rl' in FLAGS.se:
-                    self.pretrain_policy_agent(m, max_epoch=1)
-                    self.train_rl(m, max_epoch=2)
-                    self.train_data_loader.mode = file_data_loader.MODE_RELFACT_BAG
-
             if (epoch + 1) % FLAGS.save_epoch == 0:
                 metric = self.test(model)
                 if metric > best_metric:
