@@ -50,7 +50,7 @@ tf.flags.DEFINE_string('test_result_dir', os.path.join('test_result', FLAGS.dn),
 tf.flags.DEFINE_string('dataset_dir', os.path.join('origin_data', FLAGS.dn), 'origin dataset dir')
 tf.flags.DEFINE_string('processed_data_dir', os.path.join('processed_data', FLAGS.dn), 'processed data dir')
 tf.flags.DEFINE_string('model_name', (FLAGS.dn + '_' + ('et' + (FLAGS.et_en[0] + '_' if FLAGS.et_en in ['pcnn', 'dense']
-                                                                else 'c_') if FLAGS.et else '') +  # dataset_name entity_type
+                                                                else '_') if FLAGS.et else '') +
                                       ('half_' if FLAGS.et_half else '') +
                                       ('li_' if FLAGS.li_encoder_mode and (FLAGS.et or re.search("r.*cnn", FLAGS.en))
                                        else '') + FLAGS.en + "_" + FLAGS.se +  # encoder selector
