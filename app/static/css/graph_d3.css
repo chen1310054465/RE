@@ -1,0 +1,230 @@
+body {
+    background: #1d1d1d;
+    margin: auto;
+}
+
+text {
+    font: 700 14px "Helvetica Neue";
+    text-anchor: middle;
+    color: white;
+}
+
+div.tooltip {
+    /*position: fixed;
+    left: calc(50% - 200px);
+    top: calc(50% - 50px);*/
+    position:absolute;
+    width: 500px;
+    z-index: 1000;
+    height: 100px;
+    pointer-events: none;
+    cursor: default;
+    /*display: none;*/
+    /*opacity: 0;*/
+}
+
+div.tooltip-in {
+    background-color: white;
+    padding: 0;
+    box-shadow: 0px 0px 24px #747474;
+    border-radius: 5em;
+    -webkit-border-radius: 5em;
+    height: 134px;
+    
+}
+
+.tooltip-in .result-poster {
+    width: 155px;
+    float: left;
+    position: relative;
+}
+
+.tooltip-in .result-poster .result-img {
+    /*border-color: rgb(26, 172, 164);
+    border: solid 2px #48bdb6;*/
+    max-width: 130px;
+    background-color: #EEE;
+    overflow: hidden;
+    box-shadow: 3px 4px 10px #545454;
+}
+
+.img-circle {
+    border-radius: 50%;
+}
+
+.result-img a {
+    display: block;
+    width: 100%;
+    height: 0;
+    padding-bottom: 100%;
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-image: url(../image/placeholder.png);
+    
+}
+
+.result-definition h3 {
+    padding-top: 14px;
+    margin-bottom: 7px;
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 1.1;
+}
+
+.result-definition p {
+    margin-right: 32px;
+    line-height: 1.4em;
+    /*color: #6C737A;*/
+    color: #2f2f4f;
+    height: 80px;
+    overflow: hidden;
+}
+
+.result-definition .line-clamp-3 {
+    margin-bottom: 5px;
+    font-size: 10px;
+}
+
+.result-definition .btitle {
+    color: #13a89e;
+}
+
+/* navigation */
+.navigation-bar {
+    position: absolute;
+    right: 20px;
+    top: 100px;
+    width: 64px;
+    border: solid 1px #444;
+    z-index: 990;
+    background-color: rgba(20, 20, 20, .5);
+}
+
+.navigation-bar .item {
+    background-color: #0c62ad;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    -webkit-border-radius: 50%;
+    cursor: pointer;
+}
+
+/* nodes histroy */
+.nodes-history {
+    position: absolute;
+    padding: 20px;
+    top: 80px;
+    z-index: 990;
+    color: white;
+}
+
+.nodes-history .history-item {
+    margin-bottom: 5px;
+}
+
+.nodes-history .history-item .circle {
+    cursor: pointer;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    -webkit-border-radius: 50%;
+    margin-right: 12px;
+    vertical-align: middle;
+    text-align: center;
+    display: inline-block;
+}
+
+.nodes-history .history-item .text {
+    color: white;
+    display: inline-block;
+    vertical-align: middle;
+    text-align: center;
+    line-height: 20px;
+}
+
+.nodes-history .history-item .text:hover {
+    border-bottom: 1px solid white;
+    cursor: pointer;
+}
+
+.subject {
+    cursor: pointer;
+}
+
+.kg-graph .legend {
+    top: 0;
+    left: 0;
+    z-index: 900;
+    background-color: #222;
+    width: 100%;
+    height: 50px;
+    position: absolute;
+}
+
+.kg-graph .legend .li {
+    margin-left: 4px;
+}
+
+.kg-graph .legend .li.first {
+    margin-left: 0px;
+    padding-bottom: 8px;
+}
+
+.kg-graph .legend .li {
+    float: left;
+    height: 50px;
+    margin: 15px 0 0 20px;
+}
+
+.kg-graph .legend .circle {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    -webkit-border-radius: 50%;
+    -moz-border-radius: 50%;
+    -ms-border-radius: 50%;
+    -o-border-radius: 50%;
+    display: inline-block;
+    margin-right: 0px;
+    vertical-align: middle;
+    text-align: center;
+    color: #000;
+}
+
+.kg-graph .legend .circle.small {
+    width: 12px;
+    height: 12px;
+    margin-right: 0px;
+    margin-bottom: -2px;
+}
+
+.kg-graph .legend .text {
+    display: inline-block;
+    vertical-align: middle;
+    line-height: 20px;
+    color: white;
+    font-size: 13px;
+}
+
+.predicate-filter {
+    position: absolute;
+    right: 5px;
+    top: 3px;
+    z-index: 1000;
+}
+/*响应式布局*/
+/*@media only screen (max-width: 640px) {
+    div.tooltip｛
+       width:200px;
+       height:50px;
+       
+    ｝
+    .navigation-bar ｛
+         display: ;
+    ｝
+    
+}*/
