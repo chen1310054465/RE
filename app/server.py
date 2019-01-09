@@ -1,13 +1,23 @@
 import re
 
 import requests
-from flask import Flask, request
+from flask import Flask, request, render_template
 
 app = Flask(__name__)
 
 
 @app.route("/")
 def index():
+    return render_template('index.html')
+
+
+@app.route("/kgView")
+def kg_view():
+    return render_template('kg_view.html')
+
+
+@app.route("/kgv")
+def kgv():
     r = requests.get('http://shuyantech.com/cndbpedia/kggraph?' + str(request.query_string, encoding='utf-8'))
     text = r.text
     # text = re.sub('/(css|semantic/dist|scripts)/(.*?)\.(css|js)', 'http://shuyantech.com/\g<1>/\g<2>.\g<3>', text)
