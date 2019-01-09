@@ -1,5 +1,7 @@
-from flask import Flask, request
+import re
+
 import requests
+from flask import Flask, request
 
 app = Flask(__name__)
 
@@ -7,12 +9,14 @@ app = Flask(__name__)
 @app.route("/")
 def index():
     r = requests.get('http://shuyantech.com/cndbpedia/kggraph?' + str(request.query_string, encoding='utf-8'))
-    # return r.text.replace('/semantic/dist/', 'http://shuyantech.com/semantic/dist/') \
-    #     .replace('/css/', 'http://shuyantech.com/css/') \
-    #     .replace('/scripts/', 'http://shuyantech.com/scripts/')
-    return r.text.replace('/semantic/dist/', '/static/semantic/dist/') \
-        .replace('/css/', '/static/css/') \
-        .replace('/scripts/', '/static/scripts/')
+    text = r.text
+    # text = re.sub('/(css|semantic/dist|scripts)/(.*?)\.(css|js)', 'http://shuyantech.com/\g<1>/\g<2>.\g<3>', text)
+    text = re.sub('/(css|semantic/dist)/(.*?)\.css', '/static/css/\g<2>.css', text)
+    text = re.sub('/(scripts|semantic/dist)/(.*?)\.js', '/static/js/\g<2>.js', text)
+    text = re.sub('>KGGraph<', '>KG Visualization<', text)
+    text = re.sub('velocity\.min\.js"></script>',
+                  'velocity.min.js"></script>\n  <link rel="shortcut icon" href="/static/img/favicon.ico">', text)
+    return text
 
 
 @app.route("/cndbpedia/kggraphData")
