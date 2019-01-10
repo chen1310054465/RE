@@ -241,7 +241,7 @@ $(document).ready(function () {
                     if (!e) return t
                 }
             }).map(function (t) {
-                var e = t.pic ? t.pic : "/image/placeholder.jpg?v=2", n = t.click ? Math.log(t.click) : t.value.length;
+                var e = t.pic ? t.pic : "/static/img/placeholder.jpg?v=2", n = t.click ? Math.log(t.click) : t.value.length;
                 return -1 == r.indexOf(t.attr) && r.push(t.attr), {
                     predicate: t.attr,
                     desc: t.desc,
@@ -285,7 +285,7 @@ $(document).ready(function () {
                     return t
                 }
             }).map(function (t) {
-                var e = t.pic ? t.pic : "/image/placeholder2.jpg", n = t.click ? Math.log(t.click) : t.value.length;
+                var e = t.pic ? t.pic : "/static/img/placeholder2.jpg", n = t.click ? Math.log(t.click) : t.value.length;
                 return {
                     predicate: t.attr,
                     desc: t.desc,
@@ -311,7 +311,7 @@ $(document).ready(function () {
                     t.distance = o * t.distance + s
                 })
             } else 1 == c.length && (c[0].distance = 100);
-            var d = l.property.pic ? l.property.pic : "/image/placeholder.jpg";
+            var d = l.property.pic ? l.property.pic : "/static/img/placeholder.jpg";
             return l.property.pic = d, u && u(l, c)
         })
     }
@@ -337,7 +337,7 @@ $(document).ready(function () {
             e.relations.filter(function (t) {
                 return void 0 !== t.predicate
             }).map(function (t) {
-                var e = t.pic ? t.pic : "/image/placeholder.jpg?v=2";
+                var e = t.pic ? t.pic : "/static/img/placeholder.jpg?v=2";
                 return -1 == n.indexOf(t.predicate) && n.push(t.predicate), {
                     predicate: t.attr,
                     desc: t.desc,

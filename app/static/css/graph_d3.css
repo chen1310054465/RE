@@ -58,7 +58,7 @@ div.tooltip-in {
     height: 0;
     padding-bottom: 100%;
     background-size: cover;
-    background:  no-repeat center center rgb(26, 172, 164); /*url(../img/placeholder.png)*/
+    background: url(/static/img/placeholder.jpg) no-repeat center center rgb(26, 172, 164); /**/
 
 }
 
