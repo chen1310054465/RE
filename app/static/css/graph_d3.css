@@ -26,7 +26,7 @@ div.tooltip {
 div.tooltip-in {
     background-color: white;
     padding: 0;
-    box-shadow: 0px 0px 24px #747474;
+    box-shadow: 0 0 24px #747474;
     border-radius: 5em;
     -webkit-border-radius: 5em;
     height: 134px;
@@ -58,10 +58,8 @@ div.tooltip-in {
     height: 0;
     padding-bottom: 100%;
     background-size: cover;
-    background-position: center center;
-    background-repeat: no-repeat;
-    background-image: url(../image/placeholder.png);
-    
+    background:  no-repeat center center rgb(26, 172, 164); /*url(../img/placeholder.png)*/
+
 }
 
 .result-definition h3 {
@@ -113,7 +111,7 @@ div.tooltip-in {
     cursor: pointer;
 }
 
-/* nodes histroy */
+/* nodes history */
 .nodes-history {
     position: absolute;
     padding: 20px;
@@ -170,7 +168,7 @@ div.tooltip-in {
 }
 
 .kg-graph .legend .li.first {
-    margin-left: 0px;
+    margin-left: 0;
     padding-bottom: 8px;
 }
 
@@ -189,7 +187,7 @@ div.tooltip-in {
     -ms-border-radius: 50%;
     -o-border-radius: 50%;
     display: inline-block;
-    margin-right: 0px;
+    margin-right: 0;
     vertical-align: middle;
     text-align: center;
     color: #000;
@@ -198,7 +196,7 @@ div.tooltip-in {
 .kg-graph .legend .circle.small {
     width: 12px;
     height: 12px;
-    margin-right: 0px;
+    margin-right: 0;
     margin-bottom: -2px;
 }
 
@@ -215,7 +213,9 @@ div.tooltip-in {
     right: 5px;
     top: 3px;
     z-index: 1000;
+    background-color: #5B5B5C;
 }
+
 /*响应式布局*/
 /*@media only screen (max-width: 640px) {
     div.tooltip｛
