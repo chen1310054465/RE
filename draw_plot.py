@@ -19,8 +19,10 @@ result_dir = os.path.join('test_result', FLAGS.dn)
 def main():
     models = sys.argv[1:]
     # fmt = ['rD-', 'g*--', 'bs-.', 'yp:', 'mo--', 'c^--', 'k+--', 'kx--']
-    cs = {'nyt_ete_rprn_att_ad': 'b', 'nyt_ete_rprn_att': 'g', 'nyt_ete_pcnn_att_ad': 'r', 'nyt_ete_pcnn_att': 'c',
-          'nyt_rprn_att_ad': 'm', 'nyt_rprn_att': 'y'}
+    cs = {'nyt_ete_rprn_att_ad': '#990000', 'nyt_ete_rprn_att': '#009900', 'nyt_ete_pcnn_att_ad': '#000099',
+          'nyt_ete_pcnn_att': '#660099', 'nyt_rprn_att_ad': '#990066', 'nyt_rprn_att': '#996633',
+          'nyt_pcnn_att_ad': '#ffff00', 'nyt_bilstm_att': '#ffff99', 'nyt_pcnn_att': '#ffcccc',
+          'nyt_pcnn_one': '#ccffff'}
     ls = ['-', '--', ':', '-.', '--', '--', '--', '--']
 
     for i, model in enumerate(models):
@@ -32,7 +34,7 @@ def main():
         c = 'k'
         if model in cs:
             c = cs[model]
-        plt.plot(x, y, c + ls[i], lw=2, label=model)
+        plt.plot(x, y, color=c, linestyle=ls[i], lw=2, label=model)
         print(model + ' : ' + 'auc = ' + str(auc) + ' | ' + 'max F1 = ' + str(f1))
         print('    P@100: {} | P@200: {} | P@300: {} | Mean: {}'.format(y[100], y[200], y[300],
                                                                         (y[100] + y[200] + y[300]) / 3))
