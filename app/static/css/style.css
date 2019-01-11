@@ -1,0 +1,105 @@
+.video-hero {
+    background-size: cover;
+    position: relative;
+    background-repeat: no-repeat;
+    z-index: 0;
+}
+
+@media screen and (max-width: 768px) {
+    .video-hero {
+        heifght: inherit;
+        padding: 3em 0;
+    }
+}
+
+.video-hero .overlay {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    opacity: 0.92;
+    background: #499bea;
+    background: -moz-linear-gradient(-45deg, #499bea 0%, #798eea 100%);
+    /*background: -webkit-gradient(left top, right bottom, color-stop(0%, #499bea), color-stop(100%, #798eea));*/
+    background: -webkit-linear-gradient(-45deg, #499bea 0%, #798eea 100%);
+    background: -o-linear-gradient(-45deg, #499bea 0%, #798eea 100%);
+    background: -ms-linear-gradient(-45deg, #499bea 0%, #798eea 100%);
+    background: -webkit-linear-gradient(315deg, #499bea 0%, #798eea 100%);
+    background: -o-linear-gradient(315deg, #499bea 0%, #798eea 100%);
+    background: linear-gradient(135deg, #499bea 0%, #798eea 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#499bea', endColorstr='#798eea', GradientType=1);
+    z-index: 1;
+}
+
+.video-hero .display-t {
+    display: table;
+    height: 700px;
+    width: 100%;
+    position: relative;
+    z-index: 2;
+}
+
+@media screen and (max-width: 768px) {
+    .video-hero .display-t {
+        height: 600px;
+    }
+}
+
+.video-hero .display-t.display-t2 {
+    height: 500px;
+}
+
+.video-hero .display-tc {
+    display: table-cell;
+    vertical-align: middle;
+}
+
+.video-hero .display-tc .holder {
+    color: #fff;
+    font-family: "Poppins", Arial, sans-serif;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 7px;
+}
+
+.video-hero .display-tc .holder span {
+    position: relative;
+}
+
+.video-hero .display-tc h2 {
+    color: #fff;
+    font-size: 60px;
+    margin-bottom: 20px;
+    font-weight: 300;
+}
+
+@media screen and (max-width: 768px) {
+    .video-hero .display-tc h2 {
+        font-size: 34px;
+    }
+}
+
+.video-hero .display-tc p {
+    font-family: "Nunito", Arial, sans-serif;
+    color: #fff;
+    font-weight: 200;
+    font-size: 30px;
+}
+
+.video-hero .display-tc p.breadcrumbs {
+    font-size: 14px;
+}
+
+.video-hero .display-tc p.breadcrumbs span {
+    padding-right: 10px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.video-hero .display-tc p.breadcrumbs span a {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.video-hero .display-tc .btn-custom {
+    font-size: 16px;
+}
