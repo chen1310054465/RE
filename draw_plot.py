@@ -19,8 +19,8 @@ result_dir = os.path.join('test_result', FLAGS.dn)
 def main():
     models = sys.argv[1:]
     # fmt = ['rD-', 'g*--', 'bs-.', 'yp:', 'mo--', 'c^--', 'k+--', 'kx--']
-    cs = {'nyt_ete_rprn_att_ad': 'b', 'nyt_ete_rprn_att': 'g', 'nyt_ete_pcnn_att_ad': 'r', 'nyt_ete_pcnn_att': 'c',
-          'nyt_rprn_att_ad': 'm', 'nyt_rprn_att': 'y'}
+    cs = {'nyt_ete_rprn_att_ad': 'b', 'nyt_ete_rprn_att': 'g', 'nyt_ete_pcnn_att_ad': 'r', 'nyt_ete_pcnn_att': 'm',
+          'nyt_rprn_att_ad': 'c', 'nyt_rprn_att': 'y'}
     ls = ['-', '--', ':', '-.', '--', '--', '--', '--']
 
     for i, model in enumerate(models):
@@ -29,7 +29,7 @@ def main():
         f1 = (2 * x * y / (x + y + 1e-20)).max()
         auc = sklearn.metrics.auc(x=x, y=y)
         # plt.plot(x, y, lw=2, label=model + '-auc='+str(auc))
-        c = 'k'
+        c = '#666666'
         if model in cs:
             c = cs[model]
         plt.plot(x, y, color=c, linestyle=ls[i], lw=2, label=model)
