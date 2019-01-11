@@ -19,10 +19,8 @@ result_dir = os.path.join('test_result', FLAGS.dn)
 def main():
     models = sys.argv[1:]
     # fmt = ['rD-', 'g*--', 'bs-.', 'yp:', 'mo--', 'c^--', 'k+--', 'kx--']
-    cs = {'nyt_ete_rprn_att_ad': '#990000', 'nyt_ete_rprn_att': '#009900', 'nyt_ete_pcnn_att_ad': '#000099',
-          'nyt_ete_pcnn_att': '#660099', 'nyt_rprn_att_ad': '#990066', 'nyt_rprn_att': '#996633',
-          'nyt_pcnn_att_ad': '#ffff00', 'nyt_bilstm_att': '#ffff99', 'nyt_pcnn_att': '#ffcccc',
-          'nyt_pcnn_one': '#ccffff'}
+    cs = {'nyt_ete_rprn_att_ad': 'b', 'nyt_ete_rprn_att': 'g', 'nyt_ete_pcnn_att_ad': 'r', 'nyt_ete_pcnn_att': 'c',
+          'nyt_rprn_att_ad': 'm', 'nyt_rprn_att': 'y'}
     ls = ['-', '--', ':', '-.', '--', '--', '--', '--']
 
     for i, model in enumerate(models):
