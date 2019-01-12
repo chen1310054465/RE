@@ -43,7 +43,7 @@ html, body {
 /*search_bar CSS style*/
 .ban_txt {
     width: 100%;
-    height: 60px;
+    height: 50px;
     opacity: 1;
     background-color: #eceff1;
     border-radius: 5px;
@@ -53,7 +53,7 @@ html, body {
 }
 
 .ban_butt {
-    height: 60px;
+    height: 50px;
     width: 123px;
     position: absolute;
     top: 100px;
@@ -108,7 +108,7 @@ input::-webkit-input-placeholder {
     top: 30%;
     left: 2%;
     right: 2%;
-    width: 60%;
+    width: 50%;
     height: 124px;
     margin: 0 auto;
 }
