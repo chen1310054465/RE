@@ -39,3 +39,88 @@ html, body {
     background-size: 1000px 250px;
     background: url('/static/img/xkbg.png') repeat-x center bottom;
 }
+
+/*search_bar CSS style*/
+.ban_txt {
+    width: 100%;
+    height: 60px;
+    opacity: 1;
+    background-color: #eceff1;
+    border-radius: 5px;
+    border: 0;
+    padding-left: 40px;
+    color: #000;
+}
+
+.ban_butt {
+    height: 60px;
+    width: 123px;
+    position: absolute;
+    top: 100px;
+    right: 0;
+    background-color: #ec4d1c;
+    border: 0;
+    color: #696969;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    transition: all .7s ease 0s;
+    font-size: 15px;
+    outline: none;
+    background: -webkit-linear-gradient(top, #f4511e 0, #d84315 100%);
+    background: linear-gradient(to bottom, #f4511e 0, #d84315 100%);
+}
+
+.ban_butt:hover {
+    background-color: #ed3800;
+    background: -webkit-linear-gradient(top, #f03900 0, #bb2c00 100%);
+    background: linear-gradient(to bottom, #f03900 0, #bb2c00 100%);
+}
+
+input::-webkit-input-placeholder {
+    color: #b0bec5;
+    opacity: 1;
+}
+
+.btn {
+    display: inline-block;
+    padding: 6px 12px;
+    margin-bottom: 0;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.42857143;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    -ms-touch-action: manipulation;
+    touch-action: manipulation;
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    background-image: none;
+    border: 1px solid transparent;
+    border-radius: 4px;
+}
+
+#search_bar {
+    position: absolute;
+    top: 30%;
+    left: 2%;
+    right: 2%;
+    width: 60%;
+    height: 124px;
+    margin: 0 auto;
+}
+
+.help-block, .help-block a {
+    color: white;
+}
+
+.animate-box {
+    width: 100%;
+    height: 80px;
+    opacity: 1;
+    color: white;
+    text-align: center;
+}

@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!--suppress HtmlUnknownTarget -->
 <html lang="en" style="overflow: hidden;">
 <head>
     <meta charset="UTF-8">
@@ -44,6 +45,14 @@
     <div class="nodes-history"></div>
     <div class="dummy"></div>
     <div class="dummy2"></div>
+    <div id="search_bar">
+        <form action="/kgView">
+        <input type="text" class="ban_txt" id="search_txt" name="entity" placeholder="输入实体名..">
+        <button class="btn ban_butt" type="submit" id="seo_but">
+            <i class="fa fa-chevron-circle-right"></i>搜索
+        </button>
+    </form>
+    </div>
     <div class="predicate-filter" style="visibility: hidden;">
         <select class="" id="predicate-select" title="predicate select">
             <option value="">筛选关系</option>
