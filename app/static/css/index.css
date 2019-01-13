@@ -124,3 +124,9 @@ input::-webkit-input-placeholder {
     color: white;
     text-align: center;
 }
+
+#waves {
+    position: absolute;
+    top: 0;
+    /*background: url("/static/img/cubes.png") repeat top;*/
+}
