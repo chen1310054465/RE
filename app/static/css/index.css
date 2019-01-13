@@ -48,13 +48,13 @@ html, body {
     background-color: #eceff1;
     border-radius: 5px;
     border: 0;
-    padding-left: 40px;
+    padding-left: 30px;
     color: #000;
 }
 
 .ban_butt {
     height: 50px;
-    width: 123px;
+    width: 120px;
     position: absolute;
     top: 100px;
     right: 0;
@@ -108,7 +108,7 @@ input::-webkit-input-placeholder {
     top: 30%;
     left: 2%;
     right: 2%;
-    width: 50%;
+    width: 40%;
     height: 124px;
     margin: 0 auto;
 }
