@@ -13,7 +13,7 @@ def index():
 
 @app.route("/kgView")
 def kg_view():
-    return render_template('kg_view.html')
+    return render_template('kg_view.html', entity=request.args['entity'])
 
 
 @app.route("/kgv")
