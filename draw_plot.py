@@ -48,7 +48,7 @@ def main():
     # plt.legend(loc="upper right", fontsize='small')
     plt.legend(loc="upper right")
     plt.grid(True)
-    plt.savefig(os.path.join(result_dir, FLAGS.dn + '_pr_curve'), bbox_inches='tight', pad_inches=0)
+    plt.savefig(os.path.join(result_dir, FLAGS.dn + '_pr_curve'), bbox_inches='tight', pad_inches=0.01)
     with PdfPages(os.path.join(result_dir, FLAGS.dn + '_pr_curve') + '.pdf') as pdf:
         pdf.savefig(bbox_inches='tight', pad_inches=0.01)
 
