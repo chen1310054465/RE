@@ -15,6 +15,7 @@
       <w>entpair</w>
       <w>enttype</w>
       <w>enttypes</w>
+      <w>figsize</w>
       <w>fontsize</w>
       <w>jiang</w>
       <w>keras</w>
@@ -36,6 +37,7 @@
       <w>resnet</w>
       <w>rpcnn</w>
       <w>rprn</w>
+      <w>savefig</w>
       <w>softmax</w>
       <w>tanh</w>
     </words>

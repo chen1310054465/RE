@@ -9,6 +9,7 @@ import tensorflow as tf
 # Use 'Agg' so this program could run on a remote server
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
 
 FLAGS = tf.flags.FLAGS
 # define some configurable parameter
@@ -23,6 +24,8 @@ def main():
           'nyt_rprn_att_ad': 'c', 'nyt_rprn_att': 'y'}
     ls = ['-', '--', ':', '-.', '--', '--', '--', '--']
 
+    plt.figure()  # figsize=(5.66, 4.36)
+    # plt.subplots_adjust(0, 0, 1, 1)
     for i, model in enumerate(models):
         x = np.load(os.path.join(result_dir, model + '_x' + '.npy'))
         y = np.load(os.path.join(result_dir, model + '_y' + '.npy'))
@@ -45,7 +48,9 @@ def main():
     # plt.legend(loc="upper right", fontsize='small')
     plt.legend(loc="upper right")
     plt.grid(True)
-    plt.savefig(os.path.join(result_dir, FLAGS.dn + '_pr_curve'))
+    plt.savefig(os.path.join(result_dir, FLAGS.dn + '_pr_curve'), bbox_inches='tight', pad_inches=0)
+    with PdfPages(os.path.join(result_dir, FLAGS.dn + '_pr_curve') + '.pdf') as pdf:
+        pdf.savefig(bbox_inches='tight', pad_inches=0.01)
 
 
 if __name__ == "__main__":
