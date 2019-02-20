@@ -2,6 +2,7 @@ import re
 
 import requests
 from flask import Flask, request, render_template
+from dao.db_neo4j import get_graph_data
 
 app = Flask(__name__)
 
@@ -30,6 +31,11 @@ def kgv():
 
 
 @app.route("/cndbpedia/kggraphData")
+def graph_data():
+    return get_graph_data(entity=request.args['entity'])
+
+
+@app.route("/cndbpedia/graphData")
 def kg_graph_data():
     r = requests.get('http://shuyantech.com/cndbpedia/kggraphData?' + str(request.query_string, encoding='utf-8'))
     return r.text
