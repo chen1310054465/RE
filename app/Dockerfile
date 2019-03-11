@@ -16,5 +16,5 @@ EXPOSE 8888
 # Define environment variable
 ENV NAME RE
 
-# Run app.py when the container launches
+# Run server.py when the container launches
 CMD ["python3", "server.py"]
