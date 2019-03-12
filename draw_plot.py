@@ -22,7 +22,7 @@ def main():
     # fmt = ['rD-', 'g*--', 'bs-.', 'yp:', 'mo--', 'c^--', 'k+--', 'kx--']
     cs = {'nyt_ete_rprn_att_ad': 'b', 'nyt_ete_rprn_att': 'g', 'nyt_ete_pcnn_att_ad': 'r', 'nyt_ete_pcnn_att': 'm',
           'nyt_rprn_att_ad': 'c', 'nyt_rprn_att': 'y'}
-    ls = ['-', '--', ':', '-.', '--', '--', '--', '--']
+    ls = ['-', '--', ':', '-.']
 
     plt.figure()  # figsize=(5.66, 4.36)
     # plt.subplots_adjust(0, 0, 1, 1)
@@ -35,7 +35,8 @@ def main():
         c = '#666666'
         if model in cs:
             c = cs[model]
-        plt.plot(x, y, color=c, linestyle=ls[i], lw=2, label=model)
+        # plt.plot(x, y, lw=2, label=model)
+        plt.plot(x, y, color=c, linestyle=ls[i % 4], lw=2, label=model)
         print(model + ' : ' + 'auc = ' + str(auc) + ' | ' + 'max F1 = ' + str(f1))
         print('    P@100: {} | P@200: {} | P@300: {} | Mean: {}'.format(y[100], y[200], y[300],
                                                                         (y[100] + y[200] + y[300]) / 3))
