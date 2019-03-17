@@ -1,4 +1,5 @@
 import json
+import random
 
 from neo4j import GraphDatabase
 from flask import g
@@ -25,10 +26,12 @@ def get_info_of_entity(tx, name):
     for record in tx.run("MATCH (s)-[p]-(o) "
                          "WHERE s.name = {name} "
                          "RETURN s, p, o", name=name):
-        result["property"]["related"].append({"o": record["o"]['name'], "context": record["o"]['name'], "click": 1000,
+        sub_name = "<a href=\"" + record["s"]['name'] + "\">" + record["s"]['name'] + "</a>"
+        obj_name = "<a href=\"" + record["o"]['name'] + "\">" + record["o"]['name'] + "</a>"
+        result["property"]["related"].append({"o": obj_name, "context": sub_name, "click": random.randrange(1e3, 1e6),
                                               "desc": record["o"]['name']})
 
-        print(record["s"]['name'], "--", record["p"].type, "--", record["o"]['name'])
+        print(sub_name, "--", record["p"].type, "--", obj_name)
     return json.dumps(result, ensure_ascii=False)
 
 

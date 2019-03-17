@@ -1,5 +1,5 @@
 $(document).ready(function () {
-    let t = !1
+    var t = !1
         , n = 0
         , s = Math.PI
         , o = 2 * s
@@ -14,11 +14,11 @@ $(document).ready(function () {
         , i = d3.select(".kg-graph").select(".navigation-bar").style("visibility", "hidden")
         , l = h - 200;
     i.style("height", l + "px");
-    let c = d3.select(".kg-graph").select(".tooltip")
+    var c = d3.select(".kg-graph").select(".tooltip")
         , d = d3.select(".kg-graph").select(".legend");
     d.style("visibility", "hidden"),
         d.select(".searchbar").on("change", function () {
-            let t = d3.event.target.value
+            var t = d3.event.target.value
                 , e = t.split(":");
             null == t || 0 === t.length ? x.select("#relation-container").select(".current").selectAll(".relation")
                 .transition().duration(500).style("opacity", 1) : 1 === e.length ? x.select("#relation-container")
@@ -29,7 +29,7 @@ $(document).ready(function () {
                     return t.predicate === e[1] ? 1 : 0
                 })
         });
-    let u = !0
+    var u = !0
         , p = 0
         , f = 100
         , g = !1
@@ -38,17 +38,17 @@ $(document).ready(function () {
     v.attr("width", m),
         v.attr("height", h),
         v.style("margin-top", 5);
-    let x = v.append("g").attr("class", "canvas").attr("transform", "translate(" + m / 2 + "," + h / 2 + ")");
+    var x = v.append("g").attr("class", "canvas").attr("transform", "translate(" + m / 2 + "," + h / 2 + ")");
     x.append("g").attr("id", "spiral-container"),
         x.append("g").attr("id", "relation-container"),
         x.append("g").attr("id", "node-container"),
         x.append("g").attr("id", "concept-container");
-    let b = d3.arc().innerRadius(23).outerRadius(25).startAngle(Math.PI / 180 * 45).endAngle(3)
+    var b = d3.arc().innerRadius(23).outerRadius(25).startAngle(Math.PI / 180 * 45).endAngle(3)
         , w = x.append("path").style("fill", "#605c62").attr("d", b).attr("id", "loadingCurve")
         .attr("visibility", "hidden")
         , A = d3.zoom().on("zoom", function () {
         if (d3.event.sourceEvent.deltaY && 1 === n) {
-            let t = parseInt(d3.event.sourceEvent.deltaY);
+            var t = parseInt(d3.event.sourceEvent.deltaY);
             t < -20 && (t = -20),
             20 < t && (t = 20),
             (f += t) < 1 && (f = 1),
@@ -56,8 +56,8 @@ $(document).ready(function () {
         }
     });
     v.call(A);
-    for (let M = [], j = window.location.href.split("?")[1].split("&"), X = "", Y = !1, T = 0; T < j.length; T++) {
-        let D = j[T].split("=");
+    for (var M = [], j = window.location.href.split("?")[1].split("&"), X = "", Y = !1, T = 0; T < j.length; T++) {
+        var D = j[T].split("=");
         "entity" === D[0] ? X = D[1] : "lock" === D[0] && (Y = !0)
     }
 
@@ -81,15 +81,15 @@ $(document).ready(function () {
     }
 
     function I() {
-        let t = M[M.length - 1];
+        var t = M[M.length - 1];
         !function (t, n) {
-            let r = t.relations;
+            var r = t.relations;
             r.forEach(function (t, e) {
                 t._graphid = n + "-" + e
             });
-            for (let e = [], a = 0; a < r.length; a++)
+            for (var e = [], a = 0; a < r.length; a++)
                 e.push(d3.randomUniform(3, 5)());
-            let i = d3.sum(e)
+            var i = d3.sum(e)
                 , l = e.map(function (t) {
                 return t / i * o
             })
@@ -110,7 +110,7 @@ $(document).ready(function () {
                 }),
                 $.each(r, function (t, e) {
                     sibs = [];
-                    for (let n = -3; n < 4; n++)
+                    for (var n = r.length > 2 ? -3 : -r.length; n < 4; n++)
                         0 !== n && (cur = (t + n + r.length) % r.length,
                             tmp = {
                                 angle: e.angle - r[cur].angle,
@@ -121,7 +121,7 @@ $(document).ready(function () {
                 }),
                 t.relations = r
         }(t, M.length - 1);
-        let e = x.select("#relation-container").select(".current").selectAll(".relation").data(function (t) {
+        var e = x.select("#relation-container").select(".current").selectAll(".relation").data(function (t) {
                 return t.relations
             }).enter().append("g").attr("class", "relation")
             ,
@@ -184,7 +184,7 @@ $(document).ready(function () {
                             }, 300),
                             g = !0,
                             u = !1;
-                        let t = Math.random() * s / 2 - s / 4
+                        var t = Math.random() * s / 2 - s / 4
                             , e = p
                             , n = t - i.angle;
                         s < n - e && (n -= o);
@@ -197,7 +197,7 @@ $(document).ready(function () {
                                     F(!0)
                             },
                             complete: function (t) {
-                                let e = L(i, a)
+                                var e = L(i, a)
                                     , n = 200;
                                 e === n && (n += .1),
                                     W(110),
@@ -209,7 +209,7 @@ $(document).ready(function () {
                                                 F(!0)
                                         },
                                         complete: function (t) {
-                                            let e = P(i, a, p)
+                                            var e = P(i, a, p)
                                                 , n = R(i, a, p)
                                                 , r = {
                                                 category: i.category,
@@ -245,7 +245,7 @@ $(document).ready(function () {
             return t.predicate ? t.predicate + ": " : ""
         }),
             r.append("tspan").style("fill", "#f8af22").text(function (t, e) {
-                let n = t.name;
+                var n = t.name;
                 return 10 < n.length && (n = n.substring(0, 10) + "..."),
                     n
             }),
@@ -281,7 +281,7 @@ $(document).ready(function () {
     }
 
     function L(t, e, n) {
-        let r = t.distance - f
+        var r = t.distance - f
             , a = h / 3.8 + h / 40 * r;
         n || t.fixedDistance && (a = t.fixedDistance);
         return a < 50 && (a = e % 2 === 0 ? 50 : 40),
@@ -289,7 +289,7 @@ $(document).ready(function () {
     }
 
     function O(t, e) {
-        let n = L(t, e)
+        var n = L(t, e)
             , r = n / 30;
         return h / 10 < (r *= r) && (r = h / 10),
             $.each(t.sibs, function (t, e) {
@@ -320,15 +320,15 @@ $(document).ready(function () {
     }
 
     function S(t, e) {
-        let n = t.angle + e;
+        var n = t.angle + e;
         return o <= n && (n -= o),
             n
     }
 
     function z() {
-        let t = d3.select(".kg-graph .nodes-history").selectAll(".history-item").data(M);
+        var t = d3.select(".kg-graph .nodes-history").selectAll(".history-item").data(M);
         t.exit().remove();
-        let e = t.enter().append("div").attr("class", "history-item");
+        var e = t.enter().append("div").attr("class", "history-item");
         e.append("div").attr("class", "circle").style("background-color", function (t) {
             return B(t)
         }),
@@ -346,7 +346,7 @@ $(document).ready(function () {
 
     function J(t) {
         if (null != t && null != t.relations) {
-            let e = d3.select(".kg-graph").select(".navigation-bar")
+            var e = d3.select(".kg-graph").select(".navigation-bar")
                 , n = t.relations.sort(function (t, e) {
                 return d3.ascending(t.distance, e.distance)
             })
@@ -354,7 +354,7 @@ $(document).ready(function () {
                 , a = 0;
             0 < n.length && (r = n[0].distance,
                 a = 1 < n.length ? n[n.length - 1].distance : r);
-            let i = e.selectAll(".item").data(n);
+            var i = e.selectAll(".item").data(n);
             i.exit().remove(),
                 i.enter().append("div").attr("class", "item").merge(i).style("background-color", function (t) {
                     return B(t)
@@ -375,7 +375,7 @@ $(document).ready(function () {
                     g || c.transition().duration(200).style("opacity", 0)
                 }),
                 e.on("mousemove", function (t) {
-                    let e = d3.event.y - 100;
+                    var e = d3.event.y - 100;
                     W(100 - (99 / l * e + 1))
                 })
         }
@@ -397,11 +397,11 @@ $(document).ready(function () {
 
     function q(t, u) {
         $.get("/cndbpedia/kggraphData?entity=" + t, function (t) {
-            let l = JSON.parse(t)
+            var l = JSON.parse(t)
                 , r = []
                 , c = l.relations.filter(function (t) {
                 if (t.entity && t.entity !== l.property.name) {
-                    for (let e = !1, n = 0; n < M.length; n++)
+                    for (var e = !1, n = 0; n < M.length; n++)
                         if (M[n].name === t.entity) {
                             e = !0;
                             break
@@ -410,7 +410,7 @@ $(document).ready(function () {
                         return t
                 }
             }).map(function (t) {
-                let e = t.pic ? t.pic : "/static/img/placeholder.jpg?v=2"
+                var e = t.pic ? t.pic : "/static/img/placeholder.jpg?v=2"
                     , n = t.click ? Math.log(t.click) : t.value.length;
                 return -1 === r.indexOf(t.attr) && r.push(t.attr),
                     {
@@ -448,19 +448,19 @@ $(document).ready(function () {
                     }
                 }),
             null == l.property.related && (l.property.related = []);
-            let a = l.property.related.filter(function (t) {
+            var a = l.property.related.filter(function (t) {
                 if (t.o) {
-                    let e;
+                    var e;
                     if (null != (e = /<a\s+href=\"(.*?)\">(.*?)<\/a>/.exec(t.o))) {
                         t.entity = e[1],
                             t.value = e[2];
-                        for (let n = 0; n < c.length; n++) {
-                            let r = c[n];
+                        for (var n = 0; n < c.length; n++) {
+                            var r = c[n];
                             if (t.value === r.name || t.entity === r.name)
                                 return null
                         }
-                        for (let a = 0; a < M.length; a++) {
-                            let i = M[a];
+                        for (var a = 0; a < M.length; a++) {
+                            var i = M[a];
                             if (t.entity === i.name)
                                 return null
                         }
@@ -470,7 +470,7 @@ $(document).ready(function () {
                     return t
                 }
             }).map(function (t) {
-                let e = t.pic ? t.pic : "/static/img/placeholder2.jpg"
+                var e = t.pic ? t.pic : "/static/img/placeholder2.jpg"
                     , n = t.click ? Math.log(t.click) : t.value.length;
                 return {
                     predicate: t.attr,
@@ -484,7 +484,7 @@ $(document).ready(function () {
                 }
             })
                 , e = a.filter(function (t, e) {
-                for (let n = -1, r = 0; r < a.length; r++)
+                for (var n = -1, r = 0; r < a.length; r++)
                     if (a[r].name === t.name) {
                         n = r;
                         break
@@ -492,7 +492,7 @@ $(document).ready(function () {
                 return n === e
             });
             if (1 < (c = c.concat(e)).length) {
-                let n = c.map(function (t) {
+                var n = c.map(function (t) {
                     return t.distance
                 })
                     , i = d3.min(n)
@@ -503,7 +503,7 @@ $(document).ready(function () {
                 })
             } else
                 1 === c.length && (c[0].distance = 100);
-            let d = l.property.pic ? l.property.pic : "/static/img/placeholder.jpg";
+            var d = l.property.pic ? l.property.pic : "/static/img/placeholder.jpg";
             return l.property.pic = d,
             u && u(l, c)
         })
@@ -511,7 +511,7 @@ $(document).ready(function () {
 
     function H(t, n) {
         x.selectAll("*").interrupt();
-        let e = M[t]
+        var e = M[t]
             , r = e.x
             , a = e.y;
         M.forEach(function (t) {
@@ -531,12 +531,12 @@ $(document).ready(function () {
     function U(t) {
         if (0 <= t && t < M.length - 1) {
             M.splice(t + 1, M.length - t);
-            let e = M[t]
+            var e = M[t]
                 , n = [];
             e.relations.filter(function (t) {
                 return void 0 !== t.predicate
             }).map(function (t) {
-                let e = t.pic ? t.pic : "/static/img/placeholder.jpg?v=2";
+                var e = t.pic ? t.pic : "/static/img/placeholder.jpg?v=2";
                 return -1 === n.indexOf(t.predicate) && n.push(t.predicate),
                     {
                         predicate: t.attr,
@@ -561,7 +561,7 @@ $(document).ready(function () {
                         }
                     }))
                 });
-            let r = x.select("#relation-container").selectAll(".relations").data(M);
+            var r = x.select("#relation-container").selectAll(".relations").data(M);
             r.exit().remove(),
                 r.classed("current", function (t, e) {
                     return e === M.length - 1
@@ -579,7 +579,7 @@ $(document).ready(function () {
         if (t < 1 && (t = 1),
         110 < t && (t = 110),
         t !== f) {
-            let e = {
+            var e = {
                 easing: "spring",
                 progress: function (t, e, n, r, a) {
                     f = a
@@ -609,7 +609,7 @@ $(document).ready(function () {
                 return 2 * O(t, e)
             }),
             d3.selectAll(".current .object").attr("r", O).style("fill", function (t, e) {
-                let n = C(O(t, e));
+                var n = C(O(t, e));
                 return "medium" === n ? "black" : "big" === n ? "url(#" + t._graphid + ")" : B(t)
             }).style("stroke", function (t) {
                 return B(t)
@@ -619,7 +619,7 @@ $(document).ready(function () {
             d3.selectAll(".current .objectText").attr("visibility", function (t, e) {
                 return "small" === C(O(t, e)) ? "hidden" : "visible"
             }).attr("transform", function (t, e) {
-                let n = this.getBBox()
+                var n = this.getBBox()
                     , r = n.width
                     , a = n.height
                     , i = O(t, e)
@@ -642,12 +642,12 @@ $(document).ready(function () {
 
     q(X, function (g, y) {
         t ? E(g, y) : $.get("/cndbpedia/kggraphConcepts?entity=" + X, function (t) {
-            for (let e = JSON.parse(t), r = [], n = 0; n < e.count; n++)
+            for (var e = JSON.parse(t), r = [], n = 0; n < e.count; n++)
                 r.push(e.ret[n]);
             numSpirals = 3,
                 start = 0,
                 end = 2.5;
-            let a = d3.min([m - 40, h - 40]) / 2
+            var a = d3.min([m - 40, h - 40]) / 2
                 , i = d3.range(start, end + .001, (end - start) / 1e3)
                 , l = d3.scaleLinear().domain([start, end]).range([10, a])
                 , c = d3.radialLine().curve(d3.curveCardinal).angle(function (t) {
@@ -666,23 +666,23 @@ $(document).ready(function () {
                     y: 0,
                     relations: []
                 });
-            let d = x.select("#node-container").selectAll(".node").data(M).enter().append("g").attr("class", "node")
+            var d = x.select("#node-container").selectAll(".node").data(M).enter().append("g").attr("class", "node")
                 .attr("transform", function (t) {
                     return "translate(" + t.x + "," + t.y + ")"
                 })
                 , u = _(d);
             u.style("stroke-width", 0);
-            let p = s / r.length
+            var p = s / r.length
                 , f = x.select("#concept-container").selectAll(".concept").data(r).enter().append("g");
             f.attr("transform", function (t, e) {
-                let n = o.node().getPointAtLength((e + .3) * p);
+                var n = o.node().getPointAtLength((e + .3) * p);
                 return "translate(" + n.x + "," + n.y + ")"
             }),
                 f.transition().duration(1e4).attrTween("opacity", function (t, n) {
                     return function (t) {
                         if (t <= (n + .3) / r.length)
                             return 0;
-                        let e = 10 * (t - (n + .3) / r.length);
+                        var e = 10 * (t - (n + .3) / r.length);
                         return 1 < e && (e = 1),
                             e
                     }
@@ -691,7 +691,7 @@ $(document).ready(function () {
                 f.append("text").text(function (t) {
                     return t[0]
                 }).attr("fill", "white").attr("dy", "0.5em").attr("transform", function (t, e) {
-                    let n = this.getBBox()
+                    var n = this.getBBox()
                         , r = n.width
                         , a = r / 2 + 15;
                     return "translate(" + a + ",0)"
