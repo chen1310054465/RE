@@ -8,7 +8,7 @@ WORKDIR /app
 COPY . /app
 
 # Install any needed packages specified in requirements.txt
-RUN pip3 install --trusted-host pypi.python.org -r requirements.txt
+RUN pip install --trusted-host pypi.python.org -r requirements.txt
 # RUN pip3 install -i http://pypi.douban.com/simple --trusted-host pypi.douban.com -r requirements.txt
 
 # Make port 8888 available to the world outside this container
@@ -18,4 +18,4 @@ EXPOSE 8888
 ENV NAME RE
 
 # Run server.py when the container launches
-CMD ["python3", "server.py"]
+CMD ["python", "server.py"]
