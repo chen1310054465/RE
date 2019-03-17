@@ -18,4 +18,4 @@ EXPOSE 8888
 ENV NAME RE
 
 # Run server.py when the container launches
-CMD ["python", "server.py"]
+ENTRYPOINT ["python", "server.py"]
