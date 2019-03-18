@@ -1,8 +1,12 @@
 import json
+import os
 import random
+import yaml
 
 from neo4j import GraphDatabase
 from flask import g
+
+pDir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
 
 def get_driver(uri, username, password):
@@ -53,7 +57,9 @@ def get_info_of_entity(tx, name):
     return json.dumps(result, ensure_ascii=False)
 
 
-d = get_driver("bolt://192.168.88.23:7687", "neo4j", "zhaohq5133")
+with open(pDir + '/resources/app.yml', 'r') as f:
+    conf = yaml.load(f)
+d = get_driver(conf['neo4j_url'], conf['neo4j_username'], conf['neo4j_password'])
 
 
 def get_graph_data(entity):
