@@ -1,4 +1,4 @@
 Flask
 neo4j
 requests
-yaml
+pyyaml
