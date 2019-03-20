@@ -31,12 +31,12 @@ def kgv():
 
 
 @app.route("/cndbpedia/kggraphData")
-def graph_data():
+def kg_graph_data():
     return get_graph_data(entity=request.args['entity'])
 
 
 @app.route("/cndbpedia/graphData")
-def kg_graph_data():
+def graph_data():
     r = requests.get('http://shuyantech.com/cndbpedia/kggraphData?' + str(request.query_string, encoding='utf-8'))
     return r.text
 
