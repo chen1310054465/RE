@@ -10,6 +10,9 @@ services:
     image: "neo4j"
     ports:
       - "7474:7474"
+      - "7373:7373"
       - "7687:7687"
     volumes:
       - "/var/lib/neo4j/data:/data"
+    environment:
+      - "NEO4J_AUTH=neo4j/zhaohq5133"
