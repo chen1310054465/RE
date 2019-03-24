@@ -5,7 +5,7 @@ services:
     build: .
     ports:
       - "8888:8888"
-    entrypoint: sh -c './wait-for neo4j:7687 -t 120 -- python server.py'
+    entrypoint: sh -c 'wait-for neo4j:7687 -t 120 -- python server.py'
     networks:
       re_net:
         ipv4_address: 172.18.0.3
