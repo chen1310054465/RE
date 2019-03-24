@@ -8,7 +8,7 @@ services:
     entrypoint: sh -c './wait-for neo4j:7687 -- python server.py'
     networks:
       re_net:
-        - ipv4_address: 172.18.0.3
+        ipv4_address: 172.18.0.3
     depends_on:
       - neo4j
   neo4j:
@@ -23,7 +23,7 @@ services:
       - NEO4J_AUTH=neo4j/zhaohq5133
     networks:
       re_net:
-        - ipv4_address: 172.18.0.2
+        ipv4_address: 172.18.0.2
 
 networks:
   re_net:
