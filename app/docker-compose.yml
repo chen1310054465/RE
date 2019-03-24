@@ -5,6 +5,7 @@ services:
     build: .
     ports:
       - "8888:8888"
+    command: sh -c './wait-for neo4j:7687 -- python server.py'
     depends_on:
       - neo4j
   neo4j:
@@ -14,6 +15,6 @@ services:
       - "7373:7373"
       - "7687:7687"
     volumes:
-      - /var/lib/neo4j/data:/data
+      - data/neo4j:/data
     environment:
       - NEO4J_AUTH=neo4j/zhaohq5133
