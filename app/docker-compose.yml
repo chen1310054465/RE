@@ -20,9 +20,9 @@ services:
     volumes:
       - ./data/neo4j/data:/data
       - ./data/neo4j/import:/var/lib/neo4j/import
-      - ./data/neo4j/conf:/var/lib/neo4j/conf
     environment:
       - NEO4J_AUTH=neo4j/zhaohq5133
+      - NEO4J_dbms_memory_heap_max__size=8192M
     networks:
       re_net:
         ipv4_address: 172.18.0.2
