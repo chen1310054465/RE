@@ -18,7 +18,8 @@ services:
       - "7473:7473"
       - "7687:7687"
     volumes:
-      - ./data/neo4j:/data
+      - ./data/neo4j/data:/data
+      - ./data/neo4j/import:/var/lib/neo4j/import
     environment:
       - NEO4J_AUTH=neo4j/zhaohq5133
     networks:
