@@ -5,7 +5,10 @@ services:
     build: .
     ports:
       - "8888:8888"
-    command: sh -c './wait-for neo4j:7687 -- python server.py'
+    entrypoint: sh -c './wait-for neo4j:7687 -- python server.py'
+    networks:
+      re_net:
+        - ipv4_address: 172.18.0.3
     depends_on:
       - neo4j
   neo4j:
@@ -18,3 +21,14 @@ services:
       - ./data/neo4j:/data
     environment:
       - NEO4J_AUTH=neo4j/zhaohq5133
+    networks:
+      re_net:
+        - ipv4_address: 172.18.0.2
+
+networks:
+  re_net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        subnet: 172.18.0.0/16
