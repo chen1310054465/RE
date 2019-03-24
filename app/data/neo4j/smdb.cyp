@@ -20,14 +20,12 @@ WITH {
 USING PERIODIC COMMIT 500
 LOAD CSV WITH HEADERS FROM 'file:///option.csv' AS cl
 CREATE (option:Option {id: cl.id, name: cl.name, standard: cl.standard})
-RETURN option
 
 //set up the relationship of option data
 USING PERIODIC COMMIT 500
 LOAD CSV WITH HEADERS FROM 'file:///option.csv' AS cl
 MATCH (option:Option {id: cl.id}), (parent:Option {id: cl.parent_id})
 CREATE (option)-[:CHILD_OF]->(parent)
-RETURN option, parent
 
 
 // load agency data
@@ -35,14 +33,12 @@ USING PERIODIC COMMIT 500
 LOAD CSV WITH HEADERS FROM 'file:///agency.csv' AS cl
 CREATE (agency:Agency {id: cl.id, name: cl.name, type: cl.type, style: cl.style, category: cl.category,
         organizer: cl.organizer, standard: cl.standard, istop: cl.istop, ismiddle: cl.ismiddle, homepage: cl.homepage})
-RETURN agency
 
 //set up the relationship of agency data
 USING PERIODIC COMMIT 500
 LOAD CSV WITH HEADERS FROM 'file:///agency.csv' AS cl
 MATCH (agency:Agency {id: cl.id}), (parent:Agency {id: cl.subjection_id}), (province:Option {id: cl.province_id})
 CREATE (agency)-[:CHILD_OF]->(parent), (agency)-[:IN_PLACE]->(province)
-RETURN agency, parent
 
 
 // load person data
@@ -50,14 +46,12 @@ USING PERIODIC COMMIT 500
 LOAD CSV WITH HEADERS FROM 'file:///person.csv' AS cl
 CREATE (person:Person {id: cl.id, name: cl.name, gender: cl.gender, email: cl.email, phone: cl.phone,
         language: cl.language, research_field: cl.research_field, degree: cl.degree})
-RETURN person
 
 //set up the relationship of person data
 USING PERIODIC COMMIT 500
 LOAD CSV WITH HEADERS FROM 'file:///person.csv' AS cl
 MATCH (person:Person {id: cl.id}), (discipline:Option {name: cl.discipline, standard: 'GBT13745-2009'})
 CREATE (person)-[:MAJOR_IN]->(discipline)
-RETURN person
 
 
 // load application data
@@ -66,7 +60,6 @@ LOAD CSV WITH HEADERS FROM 'file:///application.csv' AS cl
 CREATE (app:Application {id: cl.id, name: cl.name, type: cl.type, product_type: cl.product_type, year: cl.year,
         discipline_type: cl.discipline_type, plan_end_date: cl.plan_end_date, status: cl.status,
         applicant_submit_date: cl.applicant_submit_date, final_audit_date: cl.final_audit_date})
-RETURN app
 
 //set up the relationship of application data
 /*foreach (applicant_id in split(cl.applicant_id, "; ")| match (applicant:Person {id: applicant_id})
@@ -82,35 +75,30 @@ MATCH (app:Application {id: cl.id}), (subtype:Option {id: cl.subtype_id}),
 CREATE (app)-[:SUB_TYPE]->(subtype), (app)-[:DISCIPLINE]->(discipline), (app)-[:RESEARCH_TYPE]->(restype),
        (app)-[:UNIVERSITY]->(university), (app)-[:DEPARTMENT]->(department), (app)-[:AUDITOR]->(auditor),
        (app)-[:AUDITOR_AGENCY]->(auditor_agency), (app)-[:PROVINCE]->(province), (app)-[:APPLICANT]->(applicant)
-RETURN app
 
 
 // load discipline data
 USING PERIODIC COMMIT 500
 LOAD CSV WITH HEADERS FROM 'file:///discipline.csv' AS cl
 CREATE (discipline:Discipline {id: cl.id, name: cl.name, code: cl.code})
-RETURN discipline
 
 //set up the relationship of discipline data
 USING PERIODIC COMMIT 500
 LOAD CSV WITH HEADERS FROM 'file:///discipline.csv' AS cl
 MATCH (discipline:Discipline {id: cl.id}), (d:Option {name: cl.discipline}), (university:Agency {id: cl.university_id})
 CREATE (discipline)-[:TYPE]->(d), (discipline)-[:BELONG_TO]->(university)
-RETURN discipline, d, university
 
 
 // load doctoral data
 USING PERIODIC COMMIT 500
 LOAD CSV WITH HEADERS FROM 'file:///doctoral.csv' AS cl
 CREATE (doctoral:Doctoral {id: cl.id, name: cl.name, code: cl.code, is_key: cl.is_key})
-RETURN doctoral
 
 //set up the relationship of doctoral data
 USING PERIODIC COMMIT 500
 LOAD CSV WITH HEADERS FROM 'file:///doctoral.csv' AS cl
 MATCH (doctoral:Doctoral {id: cl.id}), (d:Option {name: cl.discipline}), (university:Agency {id: cl.university_id})
 CREATE (doctoral)-[:TYPE]->(d), (doctoral)-[:BELONG_TO]->(university)
-RETURN doctoral, d, university
 
 
 // create unique constraint
