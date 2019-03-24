@@ -64,7 +64,7 @@ def get_info_of_entity(tx, name):
 
 
 with open(pDir + '/resources/app.yml', 'r') as f:
-    conf = yaml.load(f)
+    conf = yaml.safe_load(f)
 d = get_driver(conf['neo4j_url'], conf['neo4j_username'], conf['neo4j_password'])
 
 

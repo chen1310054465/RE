@@ -2,7 +2,8 @@
 FROM python:3.6-alpine
 
 # Define environment variable
-ENV APP_NAME re-kg
+ENV FLASK_APP re-kg
+ENV FLASK_ENV production
 
 # Set the working directory to /app
 WORKDIR /app
