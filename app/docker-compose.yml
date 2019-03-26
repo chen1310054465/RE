@@ -4,25 +4,25 @@ services:
   web:
     build: .
     ports:
-      - "8888:8888"
+    - "8888:8888"
     entrypoint: sh -c 'wait-for neo4j:7687 -t 120 -- python server.py'
     networks:
       re_net:
         ipv4_address: 172.18.0.3
     depends_on:
-      - neo4j
+    - neo4j
   neo4j:
     image: neo4j
     ports:
-      - "7474:7474"
-      - "7473:7473"
-      - "7687:7687"
+    - "7474:7474"
+    - "7473:7473"
+    - "7687:7687"
     volumes:
-      - ./data/neo4j/data:/data
-      - ./data/neo4j/import:/var/lib/neo4j/import
+    - ./data/neo4j/data:/data
+    - ./data/neo4j/import:/var/lib/neo4j/import
     environment:
-      - NEO4J_AUTH=neo4j/zhaohq5133
-      - NEO4J_dbms_memory_heap_max__size=8192M
+    - NEO4J_AUTH=neo4j/zhaohq5133
+    - NEO4J_dbms_memory_heap_max__size=8192M
     networks:
       re_net:
         ipv4_address: 172.18.0.2
@@ -33,4 +33,4 @@ networks:
     ipam:
       driver: default
       config:
-        - subnet: 172.18.0.0/16
+      - subnet: 172.18.0.0/16
